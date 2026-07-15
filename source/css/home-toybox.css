@@ -455,8 +455,8 @@ body.toybox-home #page-header #nav-utilities {
   flex: 0 0 auto;
   gap: 12px;
   height: 55px;
-  padding-left: 14px;
-  border-left: 1px dashed #c9c1b6;
+  margin-left: 16px;
+  padding-left: 0;
 }
 
 body.toybox-home #page-header #search-button,
