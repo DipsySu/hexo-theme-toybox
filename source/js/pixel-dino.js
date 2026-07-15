@@ -1,6 +1,11 @@
 ;(function () {
   'use strict'
 
+  function rootPath(path) {
+    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
+    return root.replace(/\/?$/, '/') + String(path || '').replace(/^\/+/, '')
+  }
+
   function setupToyboxSidePacman() {
     if (document.getElementById('toybox-side-pacman')) return
 
@@ -57,7 +62,7 @@
       encounterAtlasReady = true
       draw()
     }
-    encounterAtlas.src = '/img/toybox-sprites/atlas.png?v=platform-1'
+    encounterAtlas.src = rootPath('img/toybox-sprites/atlas.png?v=platform-1')
 
     function animationOff() {
       try {

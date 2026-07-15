@@ -119,7 +119,7 @@ body.toybox-theme:not(.toybox-home) #page-header #blog-info .site-icon {
   margin: 0;
   border: 3px solid #202524;
   border-radius: 8px;
-  background: #cfe8ff url('/img/avatar-pixel.png') center / 52px 52px no-repeat;
+  background: #cfe8ff url('../img/avatar-pixel.png') center / 52px 52px no-repeat;
   box-shadow: 0 5px 0 #5f89ad, 0 8px 0 #2f4d67, inset 0 0 0 4px #f8fcff;
   object-fit: contain;
   image-rendering: pixelated;

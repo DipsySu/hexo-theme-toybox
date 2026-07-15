@@ -558,6 +558,7 @@
   }
 
   function translateMenus () {
+    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
     var routeKeys = {
       '/': 'nav.home',
       '/archives/': 'nav.archives',
@@ -570,7 +571,9 @@
       var key
       try {
         var url = new URL(anchor.href, window.location.origin)
-        key = url.origin === window.location.origin ? routeKeys[url.pathname] : /github\.com$/i.test(url.hostname) ? 'nav.github' : ''
+        var pathname = url.pathname
+        if (root !== '/' && pathname.indexOf(root) === 0) pathname = '/' + pathname.slice(root.length)
+        key = url.origin === window.location.origin ? routeKeys[pathname] : /github\.com$/i.test(url.hostname) ? 'nav.github' : ''
       } catch (error) {}
       if (key) bind(span, key)
     })

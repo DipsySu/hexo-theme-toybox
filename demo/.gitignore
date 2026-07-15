@@ -1,0 +1,4 @@
+.deploy_git/
+db.json
+public/
+themes/toybox

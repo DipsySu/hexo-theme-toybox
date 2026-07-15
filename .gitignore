@@ -5,3 +5,7 @@ npm-debug.log*
 .DS_Store
 .idea/
 .vscode/
+demo/.deploy_git/
+demo/db.json
+demo/public/
+demo/themes/toybox

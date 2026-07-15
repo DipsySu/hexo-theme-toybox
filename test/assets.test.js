@@ -41,6 +41,34 @@ test('keeps static custom asset references inside the theme package', () => {
   assert.deepEqual([...missing], [])
 })
 
+test('supports deployment below a project site root', () => {
+  const cssFiles = collectTextFiles(path.join(themeRoot, 'source/css')).filter(file => file.endsWith('.css'))
+  const runtimeFiles = [
+    'source/js/pixel-anim-toggle.js',
+    'source/js/pixel-dino.js',
+    'source/js/pixel-particles.js'
+  ].map(file => fs.readFileSync(path.join(themeRoot, file), 'utf8'))
+
+  cssFiles.forEach(file => {
+    const css = fs.readFileSync(file, 'utf8')
+    assert.doesNotMatch(css, /url\(["']?\/(?:img|fonts|cursors)\//, path.relative(themeRoot, file))
+  })
+  runtimeFiles.forEach(runtime => assert.match(runtime, /GLOBAL_CONFIG\.root/))
+
+  const homeRuntime = runtimeFiles[0]
+  assert.match(homeRuntime, /function relativePath\(path\)/)
+  assert.match(homeRuntime, /relativePath\(location\.pathname\)/)
+
+  const sidebar = fs.readFileSync(path.join(themeRoot, 'layout/includes/sidebar.pug'), 'utf8')
+  assert.match(sidebar, /url_for\(theme\.error_img\.flink\)/)
+
+  const notFound = fs.readFileSync(path.join(themeRoot, 'layout/includes/404.pug'), 'utf8')
+  assert.match(notFound, /theme\.error_404\.background \|\| theme\.error_img\.post_page/)
+
+  const runtimeConfig = fs.readFileSync(path.join(themeRoot, 'layout/includes/head/config.pug'), 'utf8')
+  assert.match(runtimeConfig, /window\.GLOBAL_CONFIG\s*=\s*{/)
+})
+
 test('exposes one persistent preferences trigger in the main navigation', () => {
   const nav = fs.readFileSync(path.join(themeRoot, 'layout/includes/header/nav.pug'), 'utf8')
   const rightside = fs.readFileSync(path.join(themeRoot, 'layout/includes/rightside.pug'), 'utf8')

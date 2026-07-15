@@ -1,6 +1,7 @@
 # Hexo Theme Toybox
 
 [![CI](https://github.com/DipsySu/hexo-theme-toybox/actions/workflows/ci.yml/badge.svg)](https://github.com/DipsySu/hexo-theme-toybox/actions/workflows/ci.yml)
+[![Demo](https://img.shields.io/badge/demo-GitHub%20Pages-f14b41)](https://dipsysu.github.io/hexo-theme-toybox/)
 [![License](https://img.shields.io/github/license/DipsySu/hexo-theme-toybox)](LICENSE)
 [![Hexo](https://img.shields.io/badge/Hexo-%3E%3D5.3-0e83cd?logo=hexo)](https://hexo.io/)
 
@@ -8,6 +9,8 @@ Toybox 是一个独立维护的 Hexo 像素掌机主题。它提供卡带式首�
 随机 Sprite 彩蛋、本地搜索，以及运行时的浅色/深色/自动配色和三语言界面。
 
 ![Toybox 首页预览](docs/toybox-home.jpg)
+
+[打开在线 Demo](https://dipsysu.github.io/hexo-theme-toybox/)
 
 主题所需的布局、样式、脚本、字体、光标和图片都包含在仓库中，不需要向站点
 `source` 目录复制额外文件。
@@ -87,6 +90,16 @@ npm pack --dry-run
 
 完整页面需要将本仓库放到 Hexo 站点的 `themes/toybox` 后运行站点构建。
 提交改动前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+仓库内置了一套不含个人内容的 Pages 示例站：
+
+```bash
+npm ci --prefix demo
+npm run build --prefix demo
+```
+
+构建结果位于 `demo/public`。`main` 分支更新后，GitHub Actions 会自动重新部署
+在线 Demo。
 
 ## 许可与致谢
 

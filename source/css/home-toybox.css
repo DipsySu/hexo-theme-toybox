@@ -251,7 +251,7 @@ body:not(.toybox-home) #pixel-sprite-test-btn {
   display: block;
   width: 32px;
   height: 32px;
-  background-image: url('/img/toybox-sprites/atlas.png?v=platform-1');
+  background-image: url('../img/toybox-sprites/atlas.png?v=platform-1');
   background-position: var(--sprite-x) var(--sprite-y);
   background-repeat: no-repeat;
   image-rendering: pixelated;
@@ -326,7 +326,7 @@ body.toybox-home #page-header.full_page #site-info::before {
   padding: 0;
   border: 3px solid #202524;
   border-radius: 8px;
-  background: #cfe8ff url('/img/avatar-pixel.png') center / 56px 56px no-repeat;
+  background: #cfe8ff url('../img/avatar-pixel.png') center / 56px 56px no-repeat;
   box-shadow:
     0 5px 0 #5f89ad,
     0 8px 0 #2f4d67,

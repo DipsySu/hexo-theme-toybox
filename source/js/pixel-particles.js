@@ -1,7 +1,18 @@
 ;(function () {
   'use strict'
 
-  var ATLAS_URL = '/img/toybox-sprites/atlas.png?v=platform-1'
+  function rootPath(path) {
+    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
+    return root.replace(/\/?$/, '/') + String(path || '').replace(/^\/+/, '')
+  }
+
+  function relativePath(path) {
+    var root = rootPath('')
+    if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
+    return path
+  }
+
+  var ATLAS_URL = rootPath('img/toybox-sprites/atlas.png?v=platform-1')
   var ATLAS_COLUMNS = 8
   var CELL_SIZE = 32
   var FRAME_INTERVAL = 1000 / 30
@@ -63,7 +74,7 @@
   }
 
   function pageKind() {
-    var path = window.location.pathname.replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
+    var path = relativePath(window.location.pathname).replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
     var isHome = (path === '/' || /^\/page\/\d+$/.test(path)) && document.getElementById('recent-posts')
     if (isHome) return 'home'
     if (document.querySelector('#body-wrap.post #post')) return 'post'

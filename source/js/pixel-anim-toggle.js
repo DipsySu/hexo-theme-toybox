@@ -35,6 +35,18 @@
   var toyboxHistoryBound = false
   var TOYBOX_PAGE_MOTION_KEY = 'toyboxPageMotion:v1'
 
+  function rootPath(path) {
+    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
+    return root.replace(/\/?$/, '/') + String(path || '').replace(/^\/+/, '')
+  }
+
+  function relativePath(path) {
+    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
+    root = root.replace(/\/?$/, '/')
+    if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
+    return path
+  }
+
   function toyboxText(key, params, fallback) {
     if (window.ToyboxSettings) return window.ToyboxSettings.t(key, params)
     return fallback || key
@@ -113,7 +125,7 @@
   }
 
   function coverRelicUrl(palette) {
-    return palette.relic ? 'url("/img/pixel-relics/' + palette.relic + '")' : spriteUrl(palette.sprite, 6)
+    return palette.relic ? 'url("' + rootPath('img/pixel-relics/' + palette.relic) + '")' : spriteUrl(palette.sprite, 6)
   }
 
   function ensureSprite(el, className, palette) {
@@ -361,7 +373,7 @@
   function setToyboxCover(cover, sources) {
     if (!cover || !sources) return
 
-    var assetBase = '/img/home-toybox/'
+    var assetBase = rootPath('img/home-toybox/')
     var primaryAsset = assetBase + sources[0]
     var fallbackAsset = assetBase + (sources[1] || sources[0])
     cover.classList.add('toybox-cover')
@@ -697,7 +709,7 @@
     var body = document.body
     var wrap = document.getElementById('body-wrap')
     var posts = document.getElementById('recent-posts')
-    var path = location.pathname.replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
+    var path = relativePath(location.pathname).replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
     var isHomePath = path === '/' || /^\/page\/\d+$/.test(path)
     var isToyboxHome = Boolean(body && wrap && posts && isHomePath && wrap.querySelector('#page-header.full_page'))
 
@@ -806,10 +818,10 @@
     dock.className = 'toybox-collection-dock'
     bindToyboxText(dock, 'home.contentShelf', null, 'aria-label', '内容收藏架')
     dock.innerHTML = [
-      '<a href="/archives/"><i class="fas fa-book-open" aria-hidden="true"></i><span>' + (statValues[0] || '0') + '</span><small></small></a>',
-      '<a href="/tags/"><i class="fas fa-tag" aria-hidden="true"></i><span>' + (statValues[1] || '0') + '</span><small></small></a>',
-      '<a href="/categories/"><i class="fas fa-folder-open" aria-hidden="true"></i><span>' + (statValues[2] || '0') + '</span><small></small></a>',
-      '<a class="toybox-save-progress" href="/archives/"><i class="fas fa-save" aria-hidden="true"></i><span>' + clearedPostCount() + '</span><small></small></a>'
+      '<a href="' + rootPath('archives/') + '"><i class="fas fa-book-open" aria-hidden="true"></i><span>' + (statValues[0] || '0') + '</span><small></small></a>',
+      '<a href="' + rootPath('tags/') + '"><i class="fas fa-tag" aria-hidden="true"></i><span>' + (statValues[1] || '0') + '</span><small></small></a>',
+      '<a href="' + rootPath('categories/') + '"><i class="fas fa-folder-open" aria-hidden="true"></i><span>' + (statValues[2] || '0') + '</span><small></small></a>',
+      '<a class="toybox-save-progress" href="' + rootPath('archives/') + '"><i class="fas fa-save" aria-hidden="true"></i><span>' + clearedPostCount() + '</span><small></small></a>'
     ].join('')
     var dockItems = dock.querySelectorAll('a')
     bindToyboxText(dockItems[0].querySelector('small'), 'home.articles', null, null, '文章')
@@ -1165,7 +1177,7 @@
     post.style.setProperty('--article-quest-shadow', p.shadow)
     post.style.setProperty('--article-quest-highlight', p.highlight)
     post.style.setProperty('--article-quest-sprite', spriteUrl(p.sprite, 4))
-    post.style.setProperty('--article-sleeve-relic', 'url("/img/pixel-relics/' + p.relic + '")')
+    post.style.setProperty('--article-sleeve-relic', 'url("' + rootPath('img/pixel-relics/' + p.relic) + '")')
     post.classList.add('pixel-article-manual')
 
     var postInfo = document.querySelector('#post-info')
@@ -1174,7 +1186,7 @@
       postInfo.style.setProperty('--article-quest-bg-end', p.bg[1])
       postInfo.style.setProperty('--article-quest-shadow', p.shadow)
       postInfo.style.setProperty('--article-quest-highlight', p.highlight)
-      postInfo.style.setProperty('--article-sleeve-relic', 'url("/img/pixel-relics/' + p.relic + '")')
+      postInfo.style.setProperty('--article-sleeve-relic', 'url("' + rootPath('img/pixel-relics/' + p.relic) + '")')
       bindToyboxDataset(postInfo, 'pixelQuestTitle', 'post.cartridge')
       postInfo.dataset.pixelQuestLevel = stage
       postInfo.dataset.pixelQuestStage = stage
@@ -1395,14 +1407,14 @@
       actions.className = 'pixel-error-actions'
 
       var home = document.createElement('a')
-      home.href = '/'
+      home.href = rootPath('')
       home.className = 'pixel-error-action is-home'
       bindToyboxText(home, 'notFound.home', null, null, '返回主页')
       home.dataset.pixelAction = 'RESPAWN'
       actions.appendChild(home)
 
       var archive = document.createElement('a')
-      archive.href = '/archives/'
+      archive.href = rootPath('archives/')
       archive.className = 'pixel-error-action'
       bindToyboxText(archive, 'notFound.archives', null, null, '查看归档')
       archive.dataset.pixelAction = 'MAP'

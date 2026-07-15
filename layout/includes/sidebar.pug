@@ -2,7 +2,7 @@
   #menu-mask
   #sidebar-menus
     .avatar-img.is-center
-      img(src=url_for(theme.avatar.img) onerror=`onerror=null;src='${theme.error_img.flink}'` alt="avatar")
+      img(src=url_for(theme.avatar.img) onerror=`onerror=null;src='${url_for(theme.error_img.flink)}'` alt="avatar")
     .sidebar-site-data.site-data.is-center
       a(href=url_for(config.archive_dir) + '/')
         .headline(data-toybox-i18n="home.articles")= _p('aside.articles')

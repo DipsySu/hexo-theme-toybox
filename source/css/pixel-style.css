@@ -18,10 +18,10 @@
   --game-ui-bg: var(--pixel-bg-card);
   --game-ui-border: var(--pixel-border-color);
   --game-ui-shadow: var(--pixel-text-secondary);
-  --pixel-cursor-normal: url('/cursors/sword-normal.png') 4 4;
-  --pixel-cursor-action: url('/cursors/sword-click.png') 4 4;
-  --pixel-cursor-text: url('/cursors/TextSelect.cur');
-  --pixel-cursor-move: url('/cursors/Move.cur');
+  --pixel-cursor-normal: url('../cursors/sword-normal.png') 4 4;
+  --pixel-cursor-action: url('../cursors/sword-click.png') 4 4;
+  --pixel-cursor-text: url('../cursors/TextSelect.cur');
+  --pixel-cursor-move: url('../cursors/Move.cur');
   --pixel-corner-size: 56px;
   --pixel-corner-opacity: 0.75;
   --pixel-corner-layer: 20;
@@ -2104,8 +2104,8 @@ input[type="text"]:focus {
   width: 18px;
   height: 18px;
   background: currentColor;
-  -webkit-mask: url('/img/pixel-icons/search.svg') center / contain no-repeat;
-  mask: url('/img/pixel-icons/search.svg') center / contain no-repeat;
+  -webkit-mask: url('../img/pixel-icons/search.svg') center / contain no-repeat;
+  mask: url('../img/pixel-icons/search.svg') center / contain no-repeat;
   image-rendering: pixelated;
 }
 
@@ -2163,8 +2163,8 @@ input[type="text"]:focus {
   height: 18px;
   background: var(--pixel-primary);
   transform: translateY(-50%);
-  -webkit-mask: url('/img/pixel-icons/search.svg') center / contain no-repeat;
-  mask: url('/img/pixel-icons/search.svg') center / contain no-repeat;
+  -webkit-mask: url('../img/pixel-icons/search.svg') center / contain no-repeat;
+  mask: url('../img/pixel-icons/search.svg') center / contain no-repeat;
   pointer-events: none;
 }
 
@@ -2686,7 +2686,7 @@ a.tag:focus-visible,
   bottom: 16px;
   width: 54px;
   height: 54px;
-  background: url('/img/favicon-lotus.png') center / contain no-repeat;
+  background: url('../img/favicon-lotus.png') center / contain no-repeat;
   image-rendering: pixelated;
   opacity: 0.16;
   pointer-events: none;
