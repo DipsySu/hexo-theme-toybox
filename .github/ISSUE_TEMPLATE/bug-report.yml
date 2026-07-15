@@ -1,0 +1,48 @@
+name: Bug report
+description: Report a reproducible Toybox problem
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve Toybox. Please remove private data before submitting logs or configuration.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Hexo, Node.js, browser, and Toybox versions.
+      placeholder: Hexo 7.x, Node.js 22.x, Chrome 140, Toybox 1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the actual and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant build output or attach screenshots.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I can reproduce this with the latest main branch.
+          required: true

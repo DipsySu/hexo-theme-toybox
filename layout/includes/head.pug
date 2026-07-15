@@ -1,0 +1,42 @@
+- var pageTitle
+- is_archive() ? page.title = findArchivesTitle(page, theme.menu, date) : ''
+- if (is_tag()) pageTitle = _p('page.tag') + ': ' + page.tag
+- else if (is_category()) pageTitle = _p('page.category') + ': ' + page.category
+- else if (is_current('/404.html', [strict])) pageTitle = _p('error404')
+- else pageTitle = page.title || config.title || ''
+- var isSubtitle = config.subtitle ? ' - ' + config.subtitle : ''
+- var tabTitle = is_home() || !pageTitle ? config.title + isSubtitle : pageTitle + ' | ' + config.title
+- var pageAuthor = config.email ? config.author + ',' + config.email : config.author
+
+meta(charset='UTF-8')
+meta(http-equiv='X-UA-Compatible' content='IE=edge')
+meta(name='viewport' content='width=device-width, initial-scale=1.0, viewport-fit=cover')
+title=tabTitle
+meta(name='author' content=pageAuthor)
+meta(name='format-detection' content='telephone=no')
+meta(name='theme-color' content='#f8f6f1')
+
+include ./head/Open_Graph.pug
+!=favicon_tag(theme.favicon || config.favicon)
+link(rel='canonical' href=urlNoIndex(null, config.pretty_urls.trailing_index, config.pretty_urls.trailing_html))
+include ./head/preconnect.pug
+
+link(rel='preload' as='font' type='font/woff2' href=url_for('/fonts/fusion-pixel-12px-monospaced-zh_hans/d040daf63fc0e9c4ed95a6c00d92c125.woff2') crossorigin='anonymous')
+link(rel='stylesheet' href=url_for(theme.asset.main_css))
+link(rel='stylesheet' href=url_for(theme.asset.fontawesome) media='print' onload="this.media='all'")
+if theme.fancybox
+  link(rel='stylesheet' href=url_for(theme.asset.fancybox_css) media='print' onload="this.media='all'")
+link(rel='stylesheet' href=url_for('/css/pixel-style.css'))
+link(rel='stylesheet' href=url_for('/css/pixel-game-ui.css'))
+link(rel='stylesheet' href=url_for('/css/pixel-layout.css'))
+link(rel='stylesheet' href=url_for('/css/pixel-icons.css'))
+link(rel='stylesheet' href=url_for('/css/toybox-theme.css'))
+link(rel='stylesheet' href=url_for('/css/home-toybox.css'))
+link(rel='stylesheet' href=url_for('/css/toybox-settings.css'))
+link(rel='stylesheet' href=url_for('/css/fusion-pixel-fonts.css') media='print' onload="this.media='all'")
+noscript
+  link(rel='stylesheet' href=url_for('/css/fusion-pixel-fonts.css'))
+
+include ./head/config.pug
+include ./head/config_site.pug
+include ./head/noscript.pug

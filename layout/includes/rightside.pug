@@ -1,0 +1,51 @@
+- const { readmode, aside } = theme
+- const toyboxSettings = theme.toybox && theme.toybox.settings && theme.toybox.settings.enable !== false
+
+#rightside
+  #rightside-config-hide(aria-hidden="true")
+  #rightside-config-show
+    if showToc
+      button#mobile-toc-button.close(type="button" title=_p('rightside.toc'))
+        i.fas.fa-list-ul
+
+    button#go-up(type="button" title=_p("rightside.back_to_top"))
+      span.scroll-percent
+      i.fas.fa-arrow-up
+
+if toyboxSettings
+  aside#toybox-preferences-panel(hidden role="dialog" aria-modal="false" aria-labelledby="toybox-preferences-title")
+    header.toybox-preferences-header
+      h2#toybox-preferences-title(data-toybox-i18n="settings.title") 偏好设置
+      button#toybox-preferences-close(type="button" title="关闭设置" aria-label="关闭设置")
+        i.fas.fa-times(aria-hidden="true")
+    .toybox-preferences-body
+      .toybox-preference-row
+        span.toybox-preference-label(data-toybox-i18n="settings.color") 配色模式
+        .toybox-segmented(role="group" aria-label="配色模式" data-toybox-i18n-aria="settings.color")
+          button(type="button" data-toybox-color-mode="light" data-toybox-i18n="mode.light" aria-pressed="false") 浅色
+          button(type="button" data-toybox-color-mode="dark" data-toybox-i18n="mode.dark" aria-pressed="false") 深色
+          button(type="button" data-toybox-color-mode="auto" data-toybox-i18n="mode.auto" aria-pressed="false") 自动
+      .toybox-preference-row
+        span.toybox-preference-label(data-toybox-i18n="settings.language") 界面语言
+        .toybox-segmented(role="group" aria-label="界面语言" data-toybox-i18n-aria="settings.language")
+          button(type="button" data-toybox-locale="en" data-toybox-i18n="locale.en" aria-pressed="false") English
+          button(type="button" data-toybox-locale="zh-CN" data-toybox-i18n="locale.zh-CN" aria-pressed="false") 简体中文
+          button(type="button" data-toybox-locale="zh-TW" data-toybox-i18n="locale.zh-TW" aria-pressed="false") 繁體中文
+      .toybox-preference-row.toybox-preference-tools
+        span.toybox-preference-label(data-toybox-i18n="settings.tools") 快捷功能
+        .toybox-action-grid
+          button#pixel-anim-btn(type="button" title="像素动效" aria-label="切换像素动效" aria-pressed="true")
+            i.fas.fa-gamepad(aria-hidden="true")
+            span.toybox-action-label(data-toybox-i18n="rightside.motionOn") 动效开启
+          if is_home()
+            button#pixel-sprite-test-btn(type="button" title="Sprite 测试台" aria-label="打开 Sprite 测试台" aria-expanded="false")
+              i.fas.fa-th(aria-hidden="true")
+              span.toybox-action-label(data-toybox-i18n="rightside.spriteLab") Sprite 测试台
+          if is_post() && readmode
+            button#readmode(type="button" title=_p('rightside.readmode_title'))
+              i.fas.fa-book-open(aria-hidden="true")
+              span.toybox-action-label(data-toybox-i18n="rightside.readMode") 阅读模式
+          if is_post() && aside.enable && aside.button && page.aside !== false
+            button#hide-aside-btn(type="button" title=_p('rightside.aside') aria-pressed="false")
+              i.fas.fa-arrows-alt-h(aria-hidden="true")
+              span.toybox-action-label(data-toybox-i18n="rightside.hideAside") 单栏和双栏切换

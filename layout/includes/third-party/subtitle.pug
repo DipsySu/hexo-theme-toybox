@@ -1,0 +1,28 @@
+- const subContent = theme.subtitle.sub && theme.subtitle.sub.length ? theme.subtitle.sub : [config.subtitle]
+-
+  const typedOptions = {
+    strings: subContent,
+    startDelay: theme.subtitle.startDelay,
+    typeSpeed: theme.subtitle.typeSpeed,
+    backSpeed: theme.subtitle.backSpeed,
+    loop: theme.subtitle.loop
+  }
+
+script.
+  (() => {
+    const target = document.getElementById('subtitle')
+    const options = !{JSON.stringify(typedOptions)}
+    if (!target || !options.strings.length) return
+
+    if (!{theme.subtitle.effect}) {
+      target.textContent = options.strings[0]
+      return
+    }
+
+    const startTyping = () => {
+      if (typeof Typed === 'function') window.typed = new Typed('#subtitle', options)
+    }
+
+    if (typeof Typed === 'function') startTyping()
+    else getScript('!{url_for(theme.asset.typed)}').then(startTyping)
+  })()

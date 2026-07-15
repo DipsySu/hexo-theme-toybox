@@ -1,0 +1,485 @@
+/* ========================================
+   像素博客布局优化 - Pixel Blog Layout Optimization
+   ======================================== */
+
+/* 全局间距优化 */
+:root {
+  --layout-spacing-xs: 8px;
+  --layout-spacing-sm: 16px;
+  --layout-spacing-md: 24px;
+  --layout-spacing-lg: 32px;
+  --layout-spacing-xl: 48px;
+
+  --card-radius: 0px;  /* 像素风格保持直角 */
+  --card-spacing: 24px;
+}
+
+/* ========================================
+   整体布局 - Overall Layout
+   ======================================== */
+
+/* 增加页面整体边距 */
+.layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px var(--layout-spacing-lg) var(--layout-spacing-lg);
+}
+
+/* 文章页放宽容器上限 */
+#body-wrap.post .layout {
+  max-width: 1600px;
+}
+
+/* #content-inner 即 .layout，不单独限制宽度，避免覆盖上面规则 */
+
+/* ========================================
+   导航栏 - Navigation
+   ======================================== */
+
+/* 首页 banner 高度不覆盖，只调整水平间距 */
+#page-header {
+  /* 保留 Toybox 配置的固定 banner 高度。 */
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* 导航栏内容区域 */
+#page-header .nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 导航项间距 - 紧凑风格 */
+#page-header #nav .site-page {
+  padding: 6px 16px !important;
+  margin: 0 4px;
+  font-size: 13px;
+}
+
+#page-header #nav .nav-text {
+  margin: 0 12px;  /* 调大间距 */
+}
+
+/* 确保打字机效果显示 - 不覆盖 site-info 原有样式 */
+#page-header .site-subtitle {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 移动端导航优化 */
+@media (max-width: 768px) {
+  #page-header {
+    padding: var(--layout-spacing-sm) 0 !important;
+  }
+
+  #page-header #nav .site-page {
+    padding: 10px 16px !important;
+    margin: 4px 0;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ========================================
+   文章区域 - Article Area
+   ======================================== */
+
+/* 首页文章列表 */
+#recent-posts {
+  display: grid;
+  gap: 32px;  /* 文章卡片之间的垂直间距 */
+  padding: var(--layout-spacing-md) 0;
+}
+
+/* 文章卡片优化
+   transition 由 pixel-game-ui.css(.recent-post-item) 单一定义为 0.2s，避免此处 0.3s
+   与之按加载顺序“暗自”覆盖；本文件不再重复声明 transition。 */
+.recent-post-item {
+  padding: var(--layout-spacing-md) !important;
+  margin-bottom: var(--layout-spacing-lg) !important;
+}
+
+/* 文章标题间距 */
+.recent-post-item .post-title {
+  margin: var(--layout-spacing-sm) 0;
+  font-size: 1.8rem;
+  line-height: 1.4;
+}
+
+/* 文章内容/摘要间距 */
+.recent-post-item .post-content {
+  margin: var(--layout-spacing-md) 0;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+/* 文章元数据（日期、标签等） */
+.recent-post-item .post-meta {
+  margin-top: var(--layout-spacing-sm);
+  padding-top: var(--layout-spacing-sm);
+  border-top: 2px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: var(--layout-spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* 文章封面图 */
+.recent-post-item .post-cover {
+  margin-bottom: var(--layout-spacing-md);
+  border-radius: var(--card-radius);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 文章列表单列模式（更宽敞） */
+@media (min-width: 769px) {
+  .layout > .recent-posts .recent-post-item {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ========================================
+   侧边栏 - Sidebar
+   ======================================== */
+
+/* 侧边栏整体 */
+#aside-content {
+  padding: var(--layout-spacing-sm) 0;
+}
+
+/* 侧边栏卡片间距 */
+#aside-content .card-widget {
+  margin-bottom: var(--layout-spacing-lg) !important;
+  padding: var(--layout-spacing-md) !important;
+}
+
+/* 侧边栏卡片标题 */
+#aside-content .card-widget .card-widget__header {
+  margin-bottom: var(--layout-spacing-md);
+  padding-bottom: var(--layout-spacing-sm);
+  border-bottom: 3px solid var(--pixel-border-color);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* 侧边栏内容列表 */
+#aside-content .card-widget .card-widget__content {
+  line-height: 1.8;
+}
+
+#aside-content .card-widget .item-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-spacing-sm);
+}
+
+#aside-content .card-widget .aside-list-item {
+  padding: var(--layout-spacing-sm);
+  margin: 4px 0;
+  border-radius: var(--card-radius);
+  /* 显式列出过渡属性：原 transition:all 会把 hover 的 padding-left 也纳入过渡，
+     每帧触发回流；这里限定只过渡 background 与 padding-left 本身。 */
+  transition: background 0.2s ease, padding-left 0.2s ease;
+}
+
+#aside-content .card-widget .aside-list-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  padding-left: calc(var(--layout-spacing-sm) + 4px);
+}
+
+/* 标签云卡片 */
+#aside-content .card-tag-cloud {
+  line-height: 2;
+}
+
+#aside-content .card-tag-cloud a {
+  margin: 6px;
+  padding: 8px 14px;
+}
+
+/* 分类列表 */
+#aside-content .card-category-list .card-category-list-item {
+  padding: var(--layout-spacing-sm) 0;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+#aside-content .card-category-list .card-category-list-child {
+  padding-left: var(--layout-spacing-md);
+  margin-top: var(--layout-spacing-sm);
+}
+
+/* ========================================
+   分页 - Pagination
+   ======================================== */
+
+.pagination-container {
+  margin: var(--layout-spacing-xl) 0;
+  padding: var(--layout-spacing-md) 0;
+}
+
+.pagination-container .page-number,
+.pagination-container .extend {
+  margin: 0 6px;
+  padding: 12px 16px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+   文章页 - Post Page
+   ======================================== */
+
+/* 文章卡片内边距缩小，减少两侧留白 */
+.layout > div:first-child:not(.recent-posts) {
+  padding: 40px 32px !important;
+}
+
+/* 文章标题 */
+.post-title {
+  font-size: 2.5rem;
+  margin: var(--layout-spacing-lg) 0 var(--layout-spacing-md);
+  line-height: 1.3;
+}
+
+/* 文章元数据 */
+.post-meta {
+  margin-bottom: var(--layout-spacing-lg);
+  padding: var(--layout-spacing-md);
+  background: rgba(0, 0, 0, 0.03);
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 文章内容 */
+.post-content {
+  font-family: var(--article-reading-font);
+  font-size: 1.0625rem;
+  line-height: 1.82;
+  margin: var(--layout-spacing-lg) 0;
+  color: var(--pixel-text, #1a1a1a);
+  max-width: 800px;
+}
+
+.post-content p {
+  margin-bottom: 1.2em;
+  line-height: inherit;
+}
+
+.post-content h2,
+.post-content h3,
+.post-content h4 {
+  margin: 1.7em 0 0.65em;
+  padding: 8px 0;
+  line-height: 1.45;
+}
+
+/* 代码块 */
+.post-content pre {
+  margin: var(--layout-spacing-md) 0;
+  padding: var(--layout-spacing-md);
+  overflow-x: auto;
+}
+
+.post-content code {
+  padding: 2px 6px;
+  margin: 0 2px;
+}
+
+/* 引用块 */
+.post-content blockquote {
+  margin: var(--layout-spacing-md) 0;
+  padding: var(--layout-spacing-md);
+  border-left: 4px solid var(--pixel-primary);
+  background: rgba(138, 43, 226, 0.05);
+}
+
+/* 图片 */
+.post-content img {
+  max-width: 100%;
+  margin: var(--layout-spacing-md) auto;
+  border-radius: var(--card-radius);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 列表 */
+.post-content ul,
+.post-content ol {
+  margin: var(--layout-spacing-md) 0;
+  padding-left: var(--layout-spacing-lg);
+}
+
+.post-content li {
+  margin: var(--layout-spacing-sm) 0;
+  padding-left: var(--layout-spacing-sm);
+}
+
+/* ========================================
+   页脚 - Footer
+   ======================================== */
+
+#footer {
+  margin-top: var(--layout-spacing-xl);
+  padding: var(--layout-spacing-lg) var(--layout-spacing-md);
+}
+
+#footer .footer-data {
+  padding: var(--layout-spacing-md);
+}
+
+#footer .footer-data > div {
+  margin-bottom: var(--layout-spacing-md);
+}
+
+#footer .footer-links a {
+  margin: 6px;
+}
+
+/* ========================================
+   桌面双栏布局 - Desktop Two-column Layout
+   ======================================== */
+
+@media (min-width: 901px) {
+  .layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+  }
+
+  .layout > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+  }
+
+  #aside-content {
+    flex: 0 0 300px;
+    width: 300px !important;
+    padding-right: 0;
+  }
+
+  /* 降低卡片高度影响 */
+  #aside-content .card-widget,
+  .recent-post-item {
+    min-height: auto;  /* 不强制最小高度 */
+  }
+
+  #aside-content .card-widget .card-widget__content,
+  .recent-post-item .post-content {
+    padding: 16px 0;  /* 减少内边距，降低高度 */
+  }
+}
+
+/* ========================================
+   呼吸感优化 - Breathing Room
+   ======================================== */
+
+/* 各部分之间的间距 */
+section {
+  margin: var(--layout-spacing-xl) 0;
+}
+
+/* 容器内边距统一 */
+.container,
+.wrapper {
+  padding: var(--layout-spacing-md);
+}
+
+/* 标题间距 */
+h1, h2, h3, h4, h5, h6 {
+  margin: var(--layout-spacing-md) 0 var(--layout-spacing-sm);
+}
+
+/* 段落间距 */
+p {
+  margin: var(--layout-spacing-sm) 0;
+  line-height: 1.9;
+  color: var(--pixel-text, #1a1a1a);
+}
+
+/* ========================================
+   深色模式适配
+   ======================================== */
+
+[data-theme="dark"] .recent-post-item .post-meta,
+.dark .recent-post-item .post-meta {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] #aside-content .card-widget .aside-list-item:hover,
+.dark #aside-content .card-widget .aside-list-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .post-meta,
+.dark .post-meta {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .post-content blockquote,
+.dark .post-content blockquote {
+  background: rgba(138, 43, 226, 0.15);
+}
+
+/* ========================================
+   移动端优化
+   ======================================== */
+
+@media (max-width: 768px) {
+  :root {
+    --layout-spacing-xs: 6px;
+    --layout-spacing-sm: 12px;
+    --layout-spacing-md: 16px;
+    --layout-spacing-lg: 24px;
+    --layout-spacing-xl: 32px;
+  }
+
+  .layout {
+    padding: var(--layout-spacing-sm);
+  }
+
+  .layout > div:first-child:not(.recent-posts) {
+    padding: var(--layout-spacing-md);
+  }
+
+  #body-wrap.post .layout > #post {
+    padding: 32px 20px !important;
+  }
+
+  .post-title {
+    font-size: 1.8rem;
+  }
+
+  .post-content {
+    font-size: 1rem;
+    line-height: 1.78;
+  }
+
+  #aside-content .card-widget {
+    padding: var(--layout-spacing-sm) !important;
+  }
+}
+
+/* ========================================
+   打印样式
+   ======================================== */
+
+@media print {
+  .layout {
+    padding: 0;
+  }
+
+  #aside-content,
+  #page-header,
+  #footer {
+    display: none;
+  }
+
+  .layout > div:first-child:not(.recent-posts) {
+    padding: 0;
+  }
+}

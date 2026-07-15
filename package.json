@@ -1,0 +1,46 @@
+{
+  "name": "hexo-theme-toybox",
+  "version": "1.0.0",
+  "description": "A self-contained pixel-console theme for Hexo",
+  "keywords": [
+    "hexo",
+    "hexo-theme",
+    "pixel-art",
+    "toybox",
+    "dark-mode",
+    "i18n"
+  ],
+  "homepage": "https://github.com/DipsySu/hexo-theme-toybox",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DipsySu/hexo-theme-toybox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DipsySu/hexo-theme-toybox/issues"
+  },
+  "files": [
+    "_config.yml",
+    "languages",
+    "layout",
+    "scripts",
+    "source",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "peerDependencies": {
+    "hexo": ">=5.3.0"
+  },
+  "dependencies": {
+    "hexo-renderer-pug": "^3.0.0",
+    "hexo-renderer-stylus": "^3.0.1"
+  },
+  "author": "DipsySu",
+  "contributors": [
+    "Jerry (original Butterfly foundation)"
+  ],
+  "license": "Apache-2.0"
+}

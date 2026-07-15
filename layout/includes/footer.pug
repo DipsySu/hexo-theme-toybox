@@ -1,0 +1,19 @@
+#footer-wrap
+  if theme.footer.owner.enable
+    - var now = new Date()
+    - var nowYear = now.getFullYear()
+    if theme.footer.owner.since && theme.footer.owner.since != nowYear
+      .copyright!= `&copy;${theme.footer.owner.since} - ${nowYear} By ${config.author}`
+    else
+      .copyright!= `&copy;${nowYear} By ${config.author}`
+  if theme.footer.copyright
+    .framework-info
+      span(data-toybox-i18n="footer.framework")= _p('footer.framework')
+      span=' '
+      a(href='https://hexo.io')= 'Hexo'
+      span.footer-separator |
+      span(data-toybox-i18n="footer.theme")= _p('footer.theme')
+      span=' '
+      a(href='https://github.com/DipsySu/hexo-theme-toybox')= 'Toybox'
+  if theme.footer.custom_text
+    .footer_custom_text!=`${theme.footer.custom_text}`

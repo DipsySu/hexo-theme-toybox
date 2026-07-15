@@ -1,0 +1,7 @@
+-
+  const coverVal = page.cover_type === 'img' ? page.cover : theme.avatar.img
+  const ogOption = {
+    type: is_post() ? 'article' : 'website',
+    image: coverVal ? full_url_for(coverVal) : ''
+  }
+!=open_graph(ogOption)

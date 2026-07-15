@@ -1,0 +1,22 @@
+div
+  script(src=url_for(theme.asset.utils))
+  script(src=url_for(theme.asset.main))
+
+  if theme.fancybox
+    script(src=url_for(theme.asset.fancybox))
+  if theme.lazyload.enable
+    script(src=url_for(theme.asset.lazyload))
+  if loadSubJs
+    include ./third-party/subtitle.pug
+
+  script(src=url_for('/js/toybox-settings.js'))
+  script(src=url_for('/js/pixel-sprite-assets.js'))
+  script(src=url_for('/js/pixel-particles.js'))
+  script(src=url_for('/js/pixel-dino.js'))
+  script(src=url_for('/js/pixel-anim-toggle.js'))
+
+  if theme.busuanzi.site_uv || theme.busuanzi.site_pv || theme.busuanzi.page_pv
+    script(async src=url_for(theme.asset.busuanzi))
+
+  if theme.local_search.enable
+    include ./third-party/search/local-search.pug

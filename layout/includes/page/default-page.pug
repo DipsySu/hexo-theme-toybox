@@ -1,0 +1,8 @@
+#article-container
+  if page.content && page.content.trim()
+    != page.content
+  else
+    .toybox-empty-slot(role='status')
+      span.toybox-empty-slot__label EMPTY SLOT
+      strong.toybox-empty-slot__title(data-toybox-i18n='empty.title') 这里还没有装入内容
+      span.toybox-empty-slot__hint(data-toybox-i18n='empty.hint') 等待下一张卡带

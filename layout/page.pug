@@ -1,0 +1,15 @@
+extends includes/layout.pug
+
+block content
+  - var toyboxPageType = page.type || 'default'
+  #page(class=`toybox-page--${toyboxPageType}` data-toybox-page=toyboxPageType)
+
+    case page.type
+      when 'tags'
+        include includes/page/tags.pug
+      when 'link'
+        include includes/page/flink.pug
+      when 'categories'
+        include includes/page/categories.pug
+      default
+        include includes/page/default-page.pug

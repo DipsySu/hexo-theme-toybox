@@ -1,0 +1,98 @@
+-
+  var site_title = page.type === '404' ? '页面走丢了' : page.title || page.tag || page.category || config.title
+  var toybox_section = 'PLAYER FILE'
+  var toybox_hint = '个人资料页'
+  var toybox_hint_key = 'page.profile'
+  var toybox_hint_params = ''
+
+  if (is_archive()) {
+    toybox_section = 'SAVE ARCHIVE'
+    toybox_hint = `${site.posts.length} 篇记录`
+    toybox_hint_key = 'page.records'
+    toybox_hint_params = JSON.stringify({ count: site.posts.length })
+  } else if (is_tag()) {
+    toybox_section = 'TAG SLOT'
+    toybox_hint = `${page.total || page.posts.length} 篇文章`
+    toybox_hint_key = 'page.posts'
+    toybox_hint_params = JSON.stringify({ count: page.total || page.posts.length })
+  } else if (is_category()) {
+    toybox_section = 'CATEGORY SLOT'
+    toybox_hint = `${page.total || page.posts.length} 篇文章`
+    toybox_hint_key = 'page.posts'
+    toybox_hint_params = JSON.stringify({ count: page.total || page.posts.length })
+  } else if (page.type === 'tags') {
+    toybox_section = 'TAG DRAWER'
+    toybox_hint = `${site.tags.length} 个标签`
+    toybox_hint_key = 'page.tagCount'
+    toybox_hint_params = JSON.stringify({ count: site.tags.length })
+  } else if (page.type === 'categories') {
+    toybox_section = 'CATEGORY MAP'
+    toybox_hint = `${site.categories.length} 个分类`
+    toybox_hint_key = 'page.categoryCount'
+    toybox_hint_params = JSON.stringify({ count: site.categories.length })
+  } else if (page.type === 'link') {
+    toybox_section = 'LINK PORT'
+    toybox_hint = '好友联机站点'
+    toybox_hint_key = 'page.friends'
+  } else if (page.type === 'gallery') {
+    toybox_section = 'PHOTO ALBUM'
+    toybox_hint = '游戏截图收藏'
+    toybox_hint_key = 'page.screenshots'
+  } else if (page.type === '404') {
+    toybox_section = 'LOST CARTRIDGE'
+    toybox_hint = '返回存档点继续'
+    toybox_hint_key = 'page.lost'
+  }
+
+if !theme.disable_top_img && page.top_img !== false
+  if is_post()
+    - var top_img = page.top_img || page.cover || theme.default_top_img
+  else if is_page()
+    - var top_img = page.top_img || theme.default_top_img
+  else if is_tag()
+    - var top_img = theme.tag_per_img && theme.tag_per_img[page.tag] 
+    - top_img = top_img ? top_img : (theme.tag_img !== false ? theme.tag_img || theme.default_top_img : false)
+  else if is_category()
+    - var top_img = theme.category_per_img && theme.category_per_img[page.category]
+    - top_img = top_img ? top_img : (theme.category_img !== false ? theme.category_img || theme.default_top_img : false)
+  else if is_home()
+    - var top_img = theme.index_img !== false ? theme.index_img || theme.default_top_img : false
+  else if is_archive()
+    - var top_img = theme.archive_img !== false ? theme.archive_img || theme.default_top_img : false
+  else
+    - var top_img = page.top_img || theme.default_top_img
+
+  if top_img !== false
+    - var imgSource = top_img && isImgOrUrl(top_img) ? `background-image: url('${url_for(top_img)}')` : `background: ${top_img}`
+    - var bg_img = top_img ? imgSource : ''
+    - var isHomeClass = is_home() ? 'full_page' : 'not-home-page'
+    - is_post() ? isHomeClass = 'post-bg' : isHomeClass
+  else
+    - var isHomeClass = 'not-top-img'
+else
+  - var top_img = false
+  - var isHomeClass = 'not-top-img'
+
+- const isFixedClass = theme.nav.fixed ? ' fixed' : ''
+
+header#page-header(class=`${isHomeClass+isFixedClass}` style=bg_img)
+  !=partial('includes/header/nav', {}, {cache: true})
+  if is_post()
+    if top_img !== false
+      include ./post-info.pug
+  else if is_home()
+    if top_img !== false
+      #site-info
+        h1#site-title=site_title
+        if theme.subtitle.enable
+          - var loadSubJs = true
+          #site-subtitle
+            span#subtitle
+        if(theme.social)
+          #site_social_icons
+            !=fragment_cache('social', function(){return partial('includes/header/social')})
+  else
+    #page-site-info(data-toybox-section=toybox_section)
+      span.toybox-page-kicker=toybox_section
+      h1#site-title(data-toybox-i18n=page.type === '404' ? 'notFound.title' : false)=site_title
+      span.toybox-page-hint(data-toybox-i18n=toybox_hint_key data-toybox-i18n-params=toybox_hint_params)=toybox_hint

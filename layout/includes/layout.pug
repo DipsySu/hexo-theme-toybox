@@ -1,0 +1,36 @@
+- var htmlClassHideAside = theme.aside.enable && theme.aside.hide ? 'hide-aside' : ''
+- page.aside = is_archive() ? theme.aside.display.archive: is_category() ? theme.aside.display.category : is_tag() ? theme.aside.display.tag : page.aside
+- var suppressToyboxAside = !is_home() && !is_post()
+- var hideAside = !theme.aside.enable || page.aside === false || suppressToyboxAside ? 'hide-aside' : ''
+- var pageType = is_post() ? 'post' : 'page'
+- var toyboxViewClass = is_home() ? 'toybox-home' : is_post() ? 'toybox-post' : (is_archive() || is_tag() || is_category()) ? 'toybox-collection' : 'toybox-page'
+- var toyboxBootClass = is_home() ? 'toybox-ui-pending' : ''
+
+doctype html
+html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside)
+  head
+    include ./head.pug
+  body(class=`toybox-theme ${toyboxViewClass} ${toyboxBootClass}`)
+    !=partial('includes/sidebar', {}, {cache: true})
+
+    if page.type !== '404'
+      #body-wrap(class=pageType)
+        include ./header/index.pug
+
+        main#content-inner.layout(class=hideAside)
+          if body
+            div!= body
+          else
+            block content
+            if theme.aside.enable && page.aside !== false && !suppressToyboxAside
+              include widget/index.pug
+
+        if toyboxViewClass !== 'toybox-home'
+          footer#footer
+            !=partial('includes/footer', {}, {cache: true})
+
+    else
+      include ./404.pug
+
+    include ./rightside.pug
+    include ./additional-js.pug

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Hexo documentation
+    url: https://hexo.io/docs/
+    about: Check Hexo configuration and deployment documentation.

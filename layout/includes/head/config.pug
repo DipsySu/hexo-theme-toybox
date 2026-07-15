@@ -1,0 +1,67 @@
+-
+  let localSearch = 'undefined'
+  if (theme.local_search.enable) {
+    localSearch = JSON.stringify({
+      path: theme.local_search.CDN || config.root + config.search.path,
+      preload: theme.local_search.preload,
+      top_n_per_article: theme.local_search.top_n_per_article,
+      unescape: theme.local_search.unescape,
+      languages: {
+        hits_empty: _p('search.local_search.hits_empty'),
+        hits_stats: _p('search.local_search.hits_stats')
+      }
+    })
+  }
+
+  const toybox = JSON.stringify({
+    colorMode: theme.toybox.settings.color_mode.default || 'auto',
+    locale: theme.toybox.settings.locale.default || 'zh-CN'
+  })
+
+  let highlight = 'undefined'
+  if ((config.highlight && config.highlight.enable) || (config.prismjs && config.prismjs.enable)) {
+    highlight = JSON.stringify({
+      plugin: config.highlight && config.highlight.enable ? 'highlightjs' : 'prismjs',
+      highlightCopy: theme.highlight_copy,
+      highlightLang: theme.highlight_lang,
+      highlightHeightLimit: theme.highlight_height_limit
+    })
+  }
+
+script.
+  const GLOBAL_CONFIG = {
+    root: '!{config.root}',
+    localSearch: !{localSearch},
+    toybox: !{toybox},
+    highlight: !{highlight},
+    copy: {
+      success: '!{_p("copy.success")}',
+      error: '!{_p("copy.error")}',
+      noSupport: '!{_p("copy.noSupport")}'
+    },
+    relativeDate: {
+      homepage: !{theme.post_meta.page.date_format === 'relative'},
+      post: !{theme.post_meta.post.date_format === 'relative'}
+    },
+    dateSuffix: {
+      just: '!{_p("date_suffix.just")}',
+      min: '!{_p("date_suffix.min")}',
+      hour: '!{_p("date_suffix.hour")}',
+      day: '!{_p("date_suffix.day")}',
+      month: '!{_p("date_suffix.month")}'
+    },
+    lightbox: '!{theme.fancybox ? "fancybox" : "null"}',
+    islazyload: !{theme.lazyload.enable},
+    isAnchor: !{theme.anchor.auto_update},
+    isPhotoFigcaption: !{theme.photofigcaption},
+    percent: {
+      toc: !{theme.toc.scroll_percent},
+      rightside: !{theme.rightside_scroll_percent}
+    },
+    Snackbar: undefined,
+    copyright: undefined,
+    noticeOutdate: undefined,
+    runtime: '',
+    source: { justifiedGallery: { js: '', css: '' } },
+    autoDarkmode: false
+  }

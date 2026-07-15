@@ -1,0 +1,32 @@
+nav#nav
+  span#blog-info
+    a.site-brand(href=url_for('/') title=config.title)
+      if theme.nav.logo
+        img.site-icon(src=url_for(theme.nav.logo))
+      else
+        img.site-icon(src=url_for('/img/avatar-pixel.png'))
+      span.site-brand-copy
+        if theme.nav.display_title
+          span.site-name=config.title
+        if config.subtitle
+          span.site-tagline=config.subtitle
+    
+  #menus
+    !=partial('includes/header/menu_item', {}, {cache: true})
+
+    #nav-utilities
+      if theme.local_search.enable
+        #search-button
+          a.site-page.social-icon.search(href="javascript:void(0);")
+            i.fas.fa-search.fa-fw
+            span=' '+_p('search.title')
+
+      if theme.toybox && theme.toybox.settings && theme.toybox.settings.enable !== false
+        #preferences-button
+          button#toybox-preferences-btn.site-page.preferences(type="button" title="配色与语言" aria-label="打开配色与语言设置" aria-controls="toybox-preferences-panel" aria-expanded="false")
+            i.fas.fa-cog.fa-fw(aria-hidden="true")
+            span(data-toybox-i18n="rightside.settings") 设置
+
+    #toggle-menu
+      a.site-page(href="javascript:void(0);")
+        i.fas.fa-bars.fa-fw

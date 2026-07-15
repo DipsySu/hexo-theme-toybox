@@ -1,0 +1,212 @@
+# Hexo Theme Toybox
+# Theme defaults live here. Site-specific values belong in _config.toybox.yml.
+
+nav:
+  logo: /img/avatar-pixel.png
+  display_title: true
+  fixed: false
+
+menu:
+  主页: / || fas fa-home
+  归档: /archives/ || fas fa-archive
+  标签: /tags/ || fas fa-tags
+  分类: /categories/ || fas fa-folder-open
+  GitHub: https://github.com/ || fab fa-github
+
+social: {}
+
+favicon: /img/favicon-lotus.png
+avatar:
+  img: /img/avatar-pixel.png
+  effect: false
+
+disable_top_img: false
+index_img:
+default_top_img:
+archive_img:
+tag_img:
+tag_per_img: {}
+category_img:
+category_per_img: {}
+
+cover:
+  index_enable: true
+  archives_enable: true
+  position: both
+  default_cover: []
+
+error_img:
+  flink: /img/friend_404.gif
+  post_page: /img/avatar-pixel.png
+
+error_404:
+  enable: true
+  subtitle: Page not found
+
+post_meta:
+  page:
+    date_type: created
+    date_format: date
+    categories: true
+    tags: false
+    label: true
+  post:
+    date_type: both
+    date_format: date
+    categories: true
+    tags: true
+    label: true
+
+index_post_content:
+  method: 3
+  length: 500
+
+highlight_theme: light
+highlight_copy: true
+highlight_lang: true
+highlight_shrink: false
+highlight_height_limit: false
+code_word_wrap: false
+
+anchor:
+  button:
+    enable: false
+    always_show: false
+    icon:
+  auto_update: false
+
+copy:
+  enable: true
+
+toc:
+  post: true
+  page: false
+  number: true
+  expand: false
+  style_simple: false
+  scroll_percent: true
+
+post_copyright:
+  enable: true
+  decode: false
+  author_href:
+  license: CC BY-NC-SA 4.0
+  license_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+post_edit:
+  enable: false
+  url:
+
+related_post:
+  enable: true
+  limit: 6
+  date_type: created
+
+post_pagination: 1
+
+footer:
+  owner:
+    enable: true
+    since:
+  custom_text:
+  copyright: true
+
+# Toybox only uses the article table of contents as an aside.
+aside:
+  enable: true
+  hide: false
+  button: true
+  mobile: true
+  position: left
+  display:
+    archive: false
+    tag: false
+    category: false
+
+busuanzi:
+  site_uv: false
+  site_pv: false
+  page_pv: false
+
+local_search:
+  enable: false
+  preload: false
+  top_n_per_article: 1
+  unescape: false
+  CDN:
+
+sharejs:
+  enable: true
+  sites: facebook,twitter,wechat,weibo,qq
+
+subtitle:
+  enable: false
+  effect: true
+  startDelay: 300
+  typeSpeed: 120
+  backSpeed: 45
+  loop: true
+  sub: []
+
+wordcount:
+  enable: false
+  post_wordcount: true
+  min2read: true
+
+fancybox: true
+photofigcaption: false
+
+lazyload:
+  enable: true
+  field: site
+  placeholder:
+  blur: true
+
+readmode: true
+display_mode: light
+rightside_scroll_percent: false
+rightside-bottom: 40px
+rightside_item_order:
+  show: toc
+
+category_ui:
+tag_ui:
+archive_date_format: MMMM YYYY
+css_prefix: true
+enter_transitions: true
+
+font:
+  global-font-size:
+  code-font-size:
+  font-family:
+  code-font-family:
+
+theme_color:
+  enable: false
+
+beautify:
+  enable: false
+  field: post
+
+toybox:
+  settings:
+    enable: true
+    color_mode:
+      default: auto
+    locale:
+      default: zh-CN
+
+# Runtime assets are explicit and version-pinned. No build-time CDN resolver is used.
+asset:
+  main_css: /css/index.css
+  utils: /js/utils.js
+  main: /js/main.js
+  local_search: /js/search/local-search.js
+  fontawesome: https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css
+  typed: https://cdn.jsdelivr.net/npm/typed.js@2.0.16/dist/typed.umd.js
+  lazyload: https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.8.3/dist/lazyload.iife.min.js
+  fancybox_css: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.css
+  fancybox: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.umd.js
+  sharejs_css: https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css
+  sharejs: https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js
+  busuanzi: //busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js
