@@ -13,9 +13,17 @@
     })
   }
 
+  const toyboxRuntimeConfig = theme.toybox || {}
+  const toyboxRuntimeSettings = toyboxRuntimeConfig.settings || {}
+  const toyboxRuntimeColorMode = toyboxRuntimeSettings.color_mode || {}
+  const toyboxRuntimeLocale = toyboxRuntimeSettings.locale || {}
+  const toyboxRuntimeHome = toyboxRuntimeConfig.home || {}
   const toybox = JSON.stringify({
-    colorMode: theme.toybox.settings.color_mode.default || 'auto',
-    locale: theme.toybox.settings.locale.default || 'zh-CN'
+    colorMode: toyboxRuntimeColorMode.default || 'auto',
+    locale: toyboxRuntimeLocale.default || 'zh-CN',
+    home: {
+      fallbackCovers: Array.isArray(toyboxRuntimeHome.fallback_covers) ? toyboxRuntimeHome.fallback_covers : []
+    }
   })
 
   let highlight = 'undefined'

@@ -10,6 +10,7 @@ mixin postUI(posts)
           : position === 'left' ? 'left' : 'right'
         let post_cover = article.cover
         let no_cover = article.cover === false || !theme.cover.index_enable ? 'no-cover' : ''
+        let coverSource = article.toybox_cover_source || (post_cover ? 'explicit' : 'none')
         let primaryCategory = article.categories && article.categories.data.length > 0 ? article.categories.data[0].name : ''
         let primaryTag = article.tags && article.tags.data.length > 0 ? article.tags.data[0].name : ''
       -
@@ -17,9 +18,9 @@ mixin postUI(posts)
         .post_cover(class=leftOrRight)
           a(href=url_for(link) title=title)
             if article.cover_type === 'img'
-              img.post-bg(src=url_for(post_cover) onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt=title)
+              img.post-bg(src=url_for(post_cover) onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt=title data-toybox-cover-source=coverSource)
             else
-              div.post-bg.pixel-cover-fallback(style=`background: ${post_cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag aria-hidden="true")
+              div.post-bg.pixel-cover-fallback(style=`background: ${post_cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag data-toybox-cover-source=coverSource aria-hidden="true")
       .recent-post-info(class=no_cover)
         a.article-title(href=url_for(link) title=title)= title
         .article-meta-wrap

@@ -1,11 +1,12 @@
 {
   "name": "hexo-theme-toybox",
   "version": "1.0.0",
-  "description": "A self-contained pixel-console theme for Hexo",
+  "description": "A self-contained pixel-cartridge library theme for Hexo",
   "keywords": [
     "hexo",
     "hexo-theme",
     "pixel-art",
+    "cartridge",
     "toybox",
     "dark-mode",
     "i18n"
