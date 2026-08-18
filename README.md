@@ -5,8 +5,8 @@
 [![License](https://img.shields.io/github/license/DipsySu/hexo-theme-toybox)](LICENSE)
 [![Hexo](https://img.shields.io/badge/Hexo-%3E%3D5.3-0e83cd?logo=hexo)](https://hexo.io/)
 
-Toybox 是一个独立维护的 Hexo 像素掌机主题。它提供卡带式首页、文章手册、
-随机 Sprite 彩蛋、本地搜索，以及运行时的浅色/深色/自动配色和三语言界面。
+Toybox 是一个独立维护的 Hexo 像素卡带主题。它把首页做成桌面卡带陈列架，
+并让文章、分类、标签与归档沿用同一套纸张、卡带和文章手册视觉语言。
 
 ![Toybox 首页预览](docs/toybox-home.jpg)
 
@@ -17,7 +17,9 @@ Toybox 是一个独立维护的 Hexo 像素掌机主题。它提供卡带式首�
 
 ## 功能
 
-- 卡带式首页、键盘切换与分页过渡
+- 一张主卡带 + 四张紧凑卡带的响应式首页
+- 可配置且稳定的文章封面 fallback，不覆盖文章显式封面
+- 键盘切换、触控滚动与分页过渡
 - 随机像素 Sprite 彩蛋
 - 文章目录、阅读模式、上一篇/下一篇与相关推荐
 - 归档、标签、分类、友情链接和 404 页面
@@ -57,6 +59,10 @@ wordcount:
   enable: true
 
 toybox:
+  home:
+    fallback_covers:
+      - src: /img/home-toybox/featured-island.webp
+      - src: /img/home-toybox/card-aqua-scene.jpg
   settings:
     enable: true
     color_mode:

@@ -24,7 +24,7 @@ beautify()
       content: $title-prefix-icon
       line-height: 1
       transition: all .2s ease-out
-      @extend .fontawesomeIcon
+      fontawesomeIcon()
 
     &:hover
       &:before
@@ -105,7 +105,7 @@ beautify()
   if hexo-config('anchor.button.enable')
     a.headerlink
       &:after
-        @extend .fontawesomeIcon
+        fontawesomeIcon()
         float: right
         color: var(--headline-presudo)
         content: $archor-button-icon
@@ -215,7 +215,7 @@ beautify()
     transition: box-shadow .3s ease-in-out
 
     &:before
-      @extend .fontawesomeIcon
+      fontawesomeIcon()
       position: absolute
       top: 2px
       right: 12px
@@ -254,7 +254,7 @@ beautify()
       border-left: 5px solid $noticeOutdate-border
 
       &:before
-        @extend .fontawesomeIcon
+        fontawesomeIcon()
         position: absolute
         top: 50%
         left: .9em

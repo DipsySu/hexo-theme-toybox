@@ -1,0 +1,101 @@
+/*
+ * Toybox cartridge design tokens.
+ *
+ * Keep shared colour, spacing, depth, and sizing decisions here so the
+ * homepage, article manual, archive, category, and tag views feel like one
+ * product. Component-specific layout stays in toybox-theme.css and
+ * home-toybox.css.
+ */
+body.toybox-theme {
+  --color-desk: #f3eee5;
+  --color-surface: #fffdf8;
+  --color-surface-soft: #f7f3ec;
+  --color-surface-muted: #eee8df;
+  --color-ink: #292a28;
+  --color-muted: #6d6862;
+  --color-border: #d6cec3;
+  --color-border-strong: #aaa39a;
+
+  --accent-primary: #ef4b3e;
+  --accent-primary-depth: #a9342a;
+  --accent-secondary: #1ba5c5;
+  --accent-secondary-depth: #0b687e;
+  --accent-warning: #efb51e;
+  --accent-warning-depth: #a56f06;
+  --accent-success: #65ae68;
+  --accent-success-depth: #347344;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  --radius-chip: 5px;
+  --radius-control: 8px;
+  --radius-card: 11px;
+  --radius-panel: 16px;
+
+  --shadow-pressed: 0 1px 0 rgba(56, 51, 45, 0.34);
+  --shadow-control: 0 4px 0 #c6beb3, 0 8px 16px rgba(61, 52, 43, 0.08);
+  --shadow-card: 0 7px 0 rgba(78, 61, 48, 0.2), 0 16px 28px rgba(67, 52, 40, 0.12);
+  --shadow-panel: 0 8px 0 rgba(89, 73, 59, 0.16), 0 18px 36px rgba(70, 55, 43, 0.12);
+
+  --control-min-size: 44px;
+  --content-max: 1360px;
+  --reading-max: 780px;
+
+  /* Compatibility aliases used by the original component styles. */
+  --toy-ink: var(--color-ink);
+  --toy-muted: var(--color-muted);
+  --toy-paper: var(--color-surface);
+  --toy-paper-soft: var(--color-surface-soft);
+  --toy-paper-line: var(--color-border);
+  --toy-desk: var(--color-desk);
+  --toy-desk-line: #e6ddd1;
+  --toy-wood: #c69869;
+  --toy-wood-dark: #9b6c42;
+  --toy-red: var(--accent-primary);
+  --toy-red-dark: var(--accent-primary-depth);
+  --toy-aqua: var(--accent-secondary);
+  --toy-aqua-soft: #e2f4f2;
+  --toy-yellow: var(--accent-warning);
+  --toy-yellow-soft: #fff2c9;
+  --toy-green: var(--accent-success);
+  --toy-shadow: rgba(78, 55, 34, 0.16);
+  --global-bg: var(--color-desk);
+  --card-bg: var(--color-surface);
+  --sidebar-bg: var(--color-surface-soft);
+}
+
+[data-theme='dark'] body.toybox-theme,
+body.toybox-theme.dark {
+  --color-desk: #1f211f;
+  --color-surface: #2e2d2a;
+  --color-surface-soft: #383632;
+  --color-surface-muted: #262724;
+  --color-ink: #f2eee7;
+  --color-muted: #bdb5ab;
+  --color-border: #5c5751;
+  --color-border-strong: #817970;
+  --accent-primary: #ff6558;
+  --accent-primary-depth: #8d2d27;
+  --accent-secondary: #49c3da;
+  --accent-secondary-depth: #176b79;
+  --accent-warning: #f2c34d;
+  --accent-warning-depth: #8f6811;
+  --accent-success: #79bd7d;
+  --accent-success-depth: #376b43;
+  --toy-desk-line: #383a36;
+  --toy-wood: #594a3d;
+  --toy-wood-dark: #342d27;
+  --toy-aqua-soft: #244044;
+  --toy-yellow-soft: #4b4226;
+  --toy-shadow: rgba(0, 0, 0, 0.28);
+  --shadow-control: 0 4px 0 #171816, 0 8px 18px rgba(0, 0, 0, 0.18);
+  --shadow-card: 0 7px 0 rgba(0, 0, 0, 0.34), 0 18px 30px rgba(0, 0, 0, 0.24);
+  --shadow-panel: 0 8px 0 rgba(0, 0, 0, 0.34), 0 20px 38px rgba(0, 0, 0, 0.26);
+}

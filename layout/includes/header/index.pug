@@ -11,15 +11,19 @@
     toybox_hint_key = 'page.records'
     toybox_hint_params = JSON.stringify({ count: site.posts.length })
   } else if (is_tag()) {
+    var toybox_tag_data = site.tags.findOne({ name: page.tag })
+    var toybox_tag_count = toybox_tag_data ? toybox_tag_data.length : page.posts.length
     toybox_section = 'TAG SLOT'
-    toybox_hint = `${page.total || page.posts.length} 篇文章`
+    toybox_hint = `${toybox_tag_count} 篇文章`
     toybox_hint_key = 'page.posts'
-    toybox_hint_params = JSON.stringify({ count: page.total || page.posts.length })
+    toybox_hint_params = JSON.stringify({ count: toybox_tag_count })
   } else if (is_category()) {
+    var toybox_category_data = site.categories.findOne({ name: page.category })
+    var toybox_category_count = toybox_category_data ? toybox_category_data.length : page.posts.length
     toybox_section = 'CATEGORY SLOT'
-    toybox_hint = `${page.total || page.posts.length} 篇文章`
+    toybox_hint = `${toybox_category_count} 篇文章`
     toybox_hint_key = 'page.posts'
-    toybox_hint_params = JSON.stringify({ count: page.total || page.posts.length })
+    toybox_hint_params = JSON.stringify({ count: toybox_category_count })
   } else if (page.type === 'tags') {
     toybox_section = 'TAG DRAWER'
     toybox_hint = `${site.tags.length} 个标签`

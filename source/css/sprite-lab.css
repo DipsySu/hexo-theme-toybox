@@ -1,0 +1,155 @@
+/* Optional sprite inspection panel. Kept out of homepage layout styles. */
+body:not(.toybox-home) #pixel-sprite-test-btn {
+  display: none !important;
+}
+
+#pixel-sprite-test-btn.is-active {
+  color: #fff !important;
+  background: var(--accent-primary) !important;
+}
+
+.pixel-sprite-test-panel[hidden],
+.pixel-sprite-test-cell[hidden] {
+  display: none !important;
+}
+
+.pixel-sprite-test-panel {
+  box-sizing: border-box;
+  position: fixed;
+  right: 72px;
+  bottom: 72px;
+  z-index: 120;
+  display: flex;
+  width: min(520px, calc(100vw - 96px));
+  max-height: min(720px, calc(100vh - 96px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 3px solid var(--color-ink);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  box-shadow: 8px 8px 0 rgba(54, 55, 52, 0.22);
+  color: var(--color-ink);
+}
+
+.pixel-sprite-test-header {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px 8px 16px;
+  border-bottom: 3px solid var(--color-ink);
+  background: var(--color-surface);
+}
+
+.pixel-sprite-test-header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.pixel-sprite-test-header strong {
+  font-size: 16px;
+}
+
+.pixel-sprite-test-header span,
+.pixel-sprite-test-status {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.pixel-sprite-test-close {
+  width: var(--control-min-size);
+  height: var(--control-min-size);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  color: var(--color-ink);
+}
+
+.pixel-sprite-test-filters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 10px 12px 6px;
+}
+
+.pixel-sprite-test-filters button {
+  min-height: 36px;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 0 3px 0 var(--color-border-strong);
+  font-size: 12px;
+}
+
+.pixel-sprite-test-filters button.is-active {
+  color: #fff;
+  background: var(--accent-primary);
+  box-shadow: 0 3px 0 var(--accent-primary-depth);
+}
+
+.pixel-sprite-test-status {
+  min-height: 28px;
+  padding: 4px 14px 6px;
+}
+
+.pixel-sprite-test-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  padding: 2px 12px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pixel-sprite-test-cell {
+  display: grid;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  padding: 2px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.pixel-sprite-test-cell:hover,
+.pixel-sprite-test-cell:focus-visible,
+.pixel-sprite-test-cell.is-active {
+  border-color: var(--accent-primary);
+  outline: none;
+  background: #fff1e8;
+}
+
+.pixel-sprite-test-icon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background-image: url('../img/toybox-sprites/atlas.png?v=platform-1');
+  background-position: var(--sprite-x) var(--sprite-y);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.pixel-sprite-test-cell small {
+  font-size: 9px;
+  line-height: 1;
+}
+
+@media (max-width: 680px) {
+  .pixel-sprite-test-panel {
+    top: 12px;
+    right: 12px;
+    bottom: 72px;
+    width: calc(100vw - 24px);
+    max-height: none;
+  }
+
+  .pixel-sprite-test-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

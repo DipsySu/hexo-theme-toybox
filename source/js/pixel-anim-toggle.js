@@ -34,6 +34,13 @@
   var toyboxCarouselCleanup = null
   var toyboxHistoryBound = false
   var TOYBOX_PAGE_MOTION_KEY = 'toyboxPageMotion:v1'
+  var DEFAULT_HOME_FALLBACK_COVERS = [
+    { src: '/img/home-toybox/featured-island.webp', fallback: '/img/home-toybox/featured-island.png' },
+    { src: '/img/home-toybox/card-aqua-scene.jpg' },
+    { src: '/img/home-toybox/card-yellow-scene.jpg' },
+    { src: '/img/home-toybox/card-coral-scene.jpg' },
+    { src: '/img/home-toybox/card-mint-wing-scene.png' }
+  ]
 
   function rootPath(path) {
     var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
@@ -45,6 +52,20 @@
     root = root.replace(/\/?$/, '/')
     if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
     return path
+  }
+
+  function themeAssetUrl(path) {
+    if (!path) return ''
+    if (/^(?:(?:[a-z][a-z\d+.-]*:)?\/\/|data:|blob:)/i.test(path)) return path
+    return rootPath(path)
+  }
+
+  function homeFallbackCovers() {
+    var toybox = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.toybox || {}
+    var home = toybox.home || {}
+    return Array.isArray(home.fallbackCovers) && home.fallbackCovers.length
+      ? home.fallbackCovers
+      : DEFAULT_HOME_FALLBACK_COVERS
   }
 
   function toyboxText(key, params, fallback) {
@@ -299,7 +320,7 @@
     card.classList.toggle('is-cleared', cleared)
 
     var badge = card.querySelector('.toybox-cleared-badge')
-    var usesCartridgeShell = card.classList.contains('toybox-featured') || card.classList.contains('toybox-switch-card')
+    var usesCartridgeShell = card.classList.contains('toybox-featured') || card.classList.contains('toybox-cartridge-card')
     if (cleared && usesCartridgeShell && !badge) {
       badge = document.createElement('span')
       badge.className = 'toybox-cleared-badge'
@@ -373,9 +394,14 @@
   function setToyboxCover(cover, sources) {
     if (!cover || !sources) return
 
-    var assetBase = rootPath('img/home-toybox/')
-    var primaryAsset = assetBase + sources[0]
-    var fallbackAsset = assetBase + (sources[1] || sources[0])
+    var sourceList = Array.isArray(sources)
+      ? sources
+      : typeof sources === 'string'
+        ? [sources]
+        : [sources.src || sources.primary, sources.fallback]
+    var primaryAsset = themeAssetUrl(sourceList[0])
+    var fallbackAsset = themeAssetUrl(sourceList[1] || sourceList[0])
+    if (!primaryAsset) return
     cover.classList.add('toybox-cover')
 
     if (cover.tagName === 'IMG') {
@@ -401,7 +427,7 @@
     cover.style.setProperty('background-position', 'center', 'important')
   }
 
-  function setToyboxCardMode(card, featured, currentPage, totalCards) {
+  function setCartridgeCardMode(card, featured, currentPage, totalCards) {
     var title = card.querySelector('.article-title')
     var info = card.querySelector('.recent-post-info')
     var oldBadge = card.querySelector('.toybox-featured-badge')
@@ -411,8 +437,8 @@
     if (oldOpen) oldOpen.remove()
     if (oldArrow) oldArrow.remove()
 
-    card.classList.remove('toybox-featured', 'toybox-switch-card', 'toybox-tone-featured', 'toybox-tone-aqua', 'toybox-tone-yellow', 'toybox-tone-coral')
-    card.classList.add(featured ? 'toybox-featured' : 'toybox-switch-card')
+    card.classList.remove('toybox-featured', 'toybox-cartridge-card', 'toybox-tone-featured', 'toybox-tone-aqua', 'toybox-tone-yellow', 'toybox-tone-coral')
+    card.classList.add(featured ? 'toybox-featured' : 'toybox-cartridge-card')
     card.setAttribute('role', 'listitem')
     bindToyboxText(card, 'home.articlePosition', { current: card.dataset.toyboxNumber, total: totalCards }, 'aria-label', '文章 ' + card.dataset.toyboxNumber + ' / ' + totalCards)
 
@@ -508,8 +534,8 @@
       currentIndex = (nextIndex + cards.length) % cards.length
       var selectedCard = cards[currentIndex]
 
-      setToyboxCardMode(previousCard, false, currentPage, cards.length)
-      setToyboxCardMode(selectedCard, true, currentPage, cards.length)
+      setCartridgeCardMode(previousCard, false, currentPage, cards.length)
+      setCartridgeCardMode(selectedCard, true, currentPage, cards.length)
       updateCounter()
       updateSlideState()
       bindToyboxText(stage, 'home.currentArticle', { title: ((selectedCard.querySelector('.article-title') || {}).textContent || '').trim() }, 'aria-label')
@@ -571,7 +597,7 @@
       if (previousButton) previousButton.disabled = true
       if (nextButton) nextButton.disabled = true
     }
-    document.addEventListener('keydown', onKeydown)
+    deck.addEventListener('keydown', onKeydown)
     var onResize = function() {
       updateSlideState()
       centerSelected(cards[currentIndex], 'auto')
@@ -586,7 +612,7 @@
     window.requestAnimationFrame(function() { centerSelected(cards[0], 'auto') })
 
     toyboxCarouselCleanup = function() {
-      document.removeEventListener('keydown', onKeydown)
+      deck.removeEventListener('keydown', onKeydown)
       window.removeEventListener('resize', onResize)
       viewport.removeEventListener('pointerdown', onPointerDown)
       viewport.removeEventListener('pointerup', onPointerUp)
@@ -717,12 +743,7 @@
     if (!isToyboxHome && toyboxCarouselCleanup) toyboxCarouselCleanup()
     if (!isToyboxHome || posts.dataset.toyboxReady) return
 
-    var articleAssets = [
-      ['featured-island.webp', 'featured-island.png'],
-      ['card-aqua-scene.jpg'],
-      ['card-yellow-scene.jpg'],
-      ['card-coral-scene.jpg']
-    ]
+    var articleAssets = homeFallbackCovers()
     var tones = ['aqua', 'yellow', 'coral']
     var cards = Array.prototype.slice.call(posts.querySelectorAll('.recent-post-item:not(.ads-wrap)'))
     var featuredCard = cards[0]
@@ -743,11 +764,13 @@
       card.dataset.toyboxTone = tones[i % tones.length]
 
       var cover = card.querySelector('.post-bg, .post_cover img')
-      if (articleAssets[i]) setToyboxCover(cover, articleAssets[i])
+      if (cover && cover.dataset.toyboxCoverSource === 'fallback' && articleAssets[i]) {
+        setToyboxCover(cover, articleAssets[i])
+      }
 
       var oldHud = card.querySelector('.pixel-post-hud')
       if (oldHud) oldHud.remove()
-      setToyboxCardMode(card, i === 0, currentPage, cards.length)
+      setCartridgeCardMode(card, i === 0, currentPage, cards.length)
     })
 
     var stage = document.createElement('section')

@@ -102,6 +102,35 @@ test('maps layout and reading controls to the Toybox article manual', () => {
   assert.match(main, /newEle\.dataset\.toyboxI18nAria = 'rightside\.exitReadMode'/)
 })
 
+test('keeps cartridge fallbacks configurable and scoped to fallback covers', () => {
+  const config = fs.readFileSync(path.join(themeRoot, '_config.yml'), 'utf8')
+  const runtimeConfig = fs.readFileSync(path.join(themeRoot, 'layout/includes/head/config.pug'), 'utf8')
+  const postUi = fs.readFileSync(path.join(themeRoot, 'layout/includes/mixins/post-ui.pug'), 'utf8')
+  const runtime = fs.readFileSync(path.join(themeRoot, 'source/js/pixel-anim-toggle.js'), 'utf8')
+  const coverFilter = fs.readFileSync(path.join(themeRoot, 'scripts/filters/random_cover.js'), 'utf8')
+
+  assert.match(config, /toybox:\n\s+home:\n\s+fallback_covers:/)
+  assert.match(runtimeConfig, /fallbackCovers: Array\.isArray\(toyboxRuntimeHome\.fallback_covers\)/)
+  assert.match(postUi, /data-toybox-cover-source=coverSource/)
+  assert.match(coverFilter, /data\.toybox_cover_source = fallbackCover \? 'fallback' : 'none'/)
+  assert.doesNotMatch(coverFilter, /Math\.random/)
+  assert.match(runtime, /cover\.dataset\.toyboxCoverSource === 'fallback'/)
+  assert.match(runtime, /function setCartridgeCardMode\(/)
+  assert.match(runtime, /toybox-cartridge-card/)
+  assert.doesNotMatch(runtime, /toybox-switch-card|setToyboxCardMode/)
+  assert.match(runtime, /deck\.addEventListener\('keydown', onKeydown\)/)
+  assert.match(runtime, /deck\.removeEventListener\('keydown', onKeydown\)/)
+  assert.doesNotMatch(runtime, /document\.(?:add|remove)EventListener\('keydown', onKeydown\)/)
+})
+
+test('shows taxonomy post totals instead of pagination page counts', () => {
+  const header = fs.readFileSync(path.join(themeRoot, 'layout/includes/header/index.pug'), 'utf8')
+
+  assert.match(header, /site\.tags\.findOne\(\{ name: page\.tag \}\)/)
+  assert.match(header, /site\.categories\.findOne\(\{ name: page\.category \}\)/)
+  assert.doesNotMatch(header, /page\.total \|\| page\.posts\.length/)
+})
+
 test('ships as a focused standalone Toybox theme', () => {
   const config = fs.readFileSync(path.join(themeRoot, '_config.yml'), 'utf8')
   const packageJson = JSON.parse(fs.readFileSync(path.join(themeRoot, 'package.json'), 'utf8'))

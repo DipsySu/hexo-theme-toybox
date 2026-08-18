@@ -1,22 +1,5 @@
-/* Shared tactile desk theme. Homepage composition lives in home-toybox.css. */
+/* Shared cartridge library components. Global values live in cartridge-tokens.css. */
 body.toybox-theme {
-  --toy-ink: #292622;
-  --toy-muted: #6d665f;
-  --toy-paper: #fffdf8;
-  --toy-paper-soft: #f7f2e9;
-  --toy-paper-line: #e6ddd0;
-  --toy-desk: #f7efe2;
-  --toy-desk-line: #eadcca;
-  --toy-wood: #c68e50;
-  --toy-wood-dark: #a86f37;
-  --toy-red: #e95848;
-  --toy-red-dark: #a9362c;
-  --toy-aqua: #2aaba5;
-  --toy-aqua-soft: #d8f1ed;
-  --toy-yellow: #e8b84e;
-  --toy-yellow-soft: #fff2c7;
-  --toy-green: #69a96d;
-  --toy-shadow: rgba(78, 55, 34, 0.18);
   --global-bg: var(--toy-desk);
   --card-bg: var(--toy-paper);
   --sidebar-bg: var(--toy-paper-soft);
@@ -27,10 +10,10 @@ body.toybox-post {
 }
 
 body.toybox-theme:not(.toybox-home) {
-  background:
-    repeating-linear-gradient(0deg, transparent 0 31px, rgba(177, 139, 96, 0.045) 31px 32px),
-    repeating-linear-gradient(90deg, transparent 0 31px, rgba(177, 139, 96, 0.035) 31px 32px),
-    var(--toy-desk) !important;
+  background-color: var(--color-desk) !important;
+  background-image: url('../img/textures/toybox-paper-v2.png') !important;
+  background-repeat: repeat !important;
+  background-size: 512px 512px !important;
   color: var(--toy-ink);
 }
 
@@ -1872,20 +1855,9 @@ body.toybox-theme #rightside {
 /* Night desk keeps material contrast without returning to the old purple UI. */
 [data-theme='dark'] body.toybox-theme,
 body.toybox-theme.dark {
-  --toy-ink: #f1ece4;
-  --toy-muted: #c2b9ad;
-  --toy-paper: #35322e;
-  --toy-paper-soft: #2d2a27;
-  --toy-paper-line: #4c4741;
-  --toy-desk: #211f1c;
-  --toy-desk-line: #3e3933;
-  --toy-wood: #755036;
-  --toy-wood-dark: #4f3423;
-  --toy-aqua-soft: #214744;
-  --toy-yellow-soft: #514528;
-  --toy-shadow: rgba(0, 0, 0, 0.34);
   --global-bg: var(--toy-desk);
   --card-bg: var(--toy-paper);
+  background-blend-mode: multiply;
 }
 
 [data-theme='dark'] body.toybox-theme #local-search .local-search-box input,
