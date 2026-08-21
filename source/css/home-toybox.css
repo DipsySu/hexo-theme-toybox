@@ -1177,12 +1177,14 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 /*
  * Wide-screen showcase matches the selected cartridge-library composition:
  * one large lead cartridge, four slightly lower compact cartridges, and a
- * quiet status shelf. The selector remains available at narrower widths,
- * where the rack becomes horizontally scrollable.
+ * quiet status shelf. The shelf scales with the display: the content column
+ * widens fluidly, the five cartridges share the full row (nothing clips or
+ * scrolls sideways), and the page fills the viewport like a console home
+ * screen — rack centered, status shelf docked at the bottom.
  */
 @media (min-width: 1340px) {
   body.toybox-home {
-    --content-max: 1280px;
+    --content-max: min(1840px, calc(100vw - 176px));
   }
 
   body.toybox-home #page-header.full_page {
@@ -1202,7 +1204,22 @@ body.toybox-home.toybox-page-entering .toybox-stage {
   }
 
   body.toybox-home #content-inner.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 142px);
     padding-top: 28px;
+  }
+
+  body.toybox-home #recent-posts {
+    flex: 1 1 auto;
+  }
+
+  body.toybox-home #recent-posts:has(> .toybox-bottom-console) {
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  body.toybox-home .toybox-stage {
+    align-self: center;
   }
 
   body.toybox-home .toybox-deck-header {
@@ -1210,30 +1227,19 @@ body.toybox-home.toybox-page-entering .toybox-stage {
     margin-bottom: 16px;
   }
 
-  body.toybox-home .toybox-card-row {
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-  }
-
   body.toybox-home .toybox-card-track {
-    width: max-content;
-    min-height: 408px;
+    min-height: 0;
   }
 
   body.toybox-home .toybox-card-track > .toybox-featured {
-    flex: 0 0 620px;
-    width: 620px !important;
-  }
-
-  body.toybox-home .toybox-card-track > .toybox-cartridge-card {
-    flex: 0 0 180px;
-    width: 180px !important;
+    flex-basis: clamp(560px, 44%, 800px);
+    width: clamp(560px, 44%, 800px) !important;
   }
 
   body.toybox-home .toybox-featured {
     grid-template-columns: minmax(0, 1fr) minmax(245px, 0.7fr);
-    height: 390px !important;
-    min-height: 390px !important;
+    height: clamp(390px, 24vw, 500px) !important;
+    min-height: clamp(390px, 24vw, 500px) !important;
   }
 
   body.toybox-home .toybox-featured .recent-post-info {
@@ -1245,14 +1251,62 @@ body.toybox-home.toybox-page-entering .toybox-stage {
   }
 
   body.toybox-home .toybox-cartridge-card {
-    grid-template-rows: minmax(0, 190px) minmax(0, 1fr);
-    height: 390px !important;
-    min-height: 390px;
+    grid-template-rows: minmax(0, 56%) minmax(0, 1fr);
+    height: clamp(390px, 24vw, 500px) !important;
+    min-height: clamp(390px, 24vw, 500px);
     margin-top: 10px !important;
   }
 
   body.toybox-home .toybox-bottom-console {
     min-height: 92px;
+  }
+}
+
+/* Roomier tier for 1600px+ displays: larger type, taller shelf, calmer spacing. */
+@media (min-width: 1600px) {
+  body.toybox-home #recent-posts {
+    gap: 26px;
+  }
+
+  body.toybox-home .toybox-deck-header {
+    margin-bottom: 20px;
+  }
+
+  body.toybox-home .toybox-recent-title {
+    font-size: 20px;
+  }
+
+  body.toybox-home .toybox-card-track {
+    gap: 20px;
+  }
+
+  /* The larger type tier needs a taller shelf floor so card text never clips. */
+  body.toybox-home .toybox-featured,
+  body.toybox-home .toybox-cartridge-card {
+    height: clamp(430px, 24vw, 500px) !important;
+    min-height: clamp(430px, 24vw, 500px) !important;
+  }
+
+  body.toybox-home .toybox-featured .recent-post-info {
+    padding: 44px 30px 34px !important;
+  }
+
+  body.toybox-home .toybox-featured .article-title {
+    font-size: clamp(30px, 2.1vw, 42px);
+  }
+
+  body.toybox-home .toybox-featured .content {
+    font-size: 15px;
+    -webkit-line-clamp: 4;
+  }
+
+  body.toybox-home .toybox-cartridge-card .article-title {
+    font-size: 15px !important;
+  }
+
+  body.toybox-home .toybox-bottom-console {
+    min-height: 104px;
+    padding: 18px 22px;
   }
 }
 
