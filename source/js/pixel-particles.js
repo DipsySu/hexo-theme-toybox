@@ -19,7 +19,8 @@
   var PLATFORM_SPRITES = range(80, 122)
   var FEATURED_SPRITES = range(80, 95)
   var CUTE_SPRITES = range(30, 79)
-  var reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
+  var reducedMotion = !!(motionQuery && motionQuery.matches)
   var atlas = new window.Image()
   var atlasReady = false
   var canvas = null
@@ -111,13 +112,24 @@
     return content.getBoundingClientRect()
   }
 
-  function availableSides(rect) {
+  function availableSides(rect, kind) {
     var sides = []
     if (rect.left >= 72) {
       sides.push({ name: 'left', min: 18, max: Math.max(18, rect.left - 22) })
     }
     if (viewportWidth - rect.right >= 72) {
       sides.push({ name: 'right', min: Math.min(viewportWidth - 18, rect.right + 22), max: viewportWidth - 18 })
+    }
+
+    // The cartridge rack intentionally fills most of the homepage. Keep a
+    // narrow edge lane available there instead of treating the full-width
+    // content rectangle as a reason to disable every sprite.
+    if (kind === 'home' && !sides.length) {
+      var edgeLane = Math.max(52, Math.min(96, viewportWidth * 0.075))
+      sides.push(
+        { name: 'left', min: 18, max: edgeLane },
+        { name: 'right', min: viewportWidth - edgeLane, max: viewportWidth - 18 }
+      )
     }
     return sides
   }
@@ -137,8 +149,10 @@
 
     var kind = pageKind()
     var rect = contentRect()
-    var sides = availableSides(rect)
-    if (viewportWidth < 760 || !sides.length) {
+    var sides = availableSides(rect, kind)
+    var compactHome = kind === 'home' && viewportWidth < 760
+    canvas.dataset.pageKind = kind
+    if ((viewportWidth < 760 && !compactHome) || !sides.length) {
       items = []
       canvas.dataset.spriteCount = '0'
       canvas.dataset.spriteIndices = ''
@@ -148,9 +162,12 @@
 
     var seed = hashString(window.location.pathname + '|' + kind)
     var random = seededRandom(seed)
-    var count = spriteCount(kind)
+    var count = compactHome ? 1 : spriteCount(kind)
     var sprites = pickSprites(count, random)
     var startSide = Math.floor(random() * sides.length)
+    var compactHomeY = compactHome
+      ? (Number.isFinite(rect.top) ? Math.max(76, rect.top - 20) : Math.min(210, viewportHeight * 0.27))
+      : 0
 
     items = sprites.map(function (spriteIndex, index) {
       var side = sides[(startSide + index) % sides.length]
@@ -159,9 +176,9 @@
       return {
         spriteIndex: spriteIndex,
         x: side.min + random() * Math.max(0, side.max - side.min),
-        y: Math.max(76, Math.min(viewportHeight - 76, viewportHeight * yStep + yJitter)),
-        size: Math.round(34 + random() * 8),
-        alpha: 0.68 + random() * 0.16,
+        y: compactHome ? compactHomeY : Math.max(76, Math.min(viewportHeight - 76, viewportHeight * yStep + yJitter)),
+        size: compactHome ? 32 : Math.round(34 + random() * 8),
+        alpha: compactHome ? 0.62 : 0.68 + random() * 0.16,
         phase: random() * Math.PI * 2,
         drift: 1.5 + random() * 1.5,
         speed: 0.45 + random() * 0.2
@@ -169,7 +186,6 @@
     })
     canvas.dataset.spriteCount = String(items.length)
     canvas.dataset.spriteIndices = items.map(function (item) { return item.spriteIndex }).join(',')
-    canvas.dataset.pageKind = kind
     draw(0, false)
   }
 
@@ -232,19 +248,8 @@
     frameId = window.requestAnimationFrame(tick)
   }
 
-  function removeCanvas() {
-    stop(false)
-    if (canvas) canvas.remove()
-    canvas = null
-    ctx = null
-    items = []
-  }
-
   function setup() {
-    if (pageKind() === 'home') {
-      removeCanvas()
-      return
-    }
+    var kind = pageKind()
 
     if (!canvas) {
       canvas = document.createElement('canvas')
@@ -263,7 +268,18 @@
       ctx = canvas.getContext('2d')
     }
 
+    // home-toybox.css historically suppresses decorative canvases. The
+    // particle runtime now owns this canvas, so make only this instance
+    // visible without changing any homepage layout rule.
+    if (kind === 'home') canvas.style.setProperty('display', 'block', 'important')
+    else canvas.style.removeProperty('display')
+
     layoutItems()
+    syncMotion()
+  }
+
+  function handleReducedMotionChange(event) {
+    reducedMotion = !!event.matches
     syncMotion()
   }
 
@@ -288,7 +304,12 @@
   window.addEventListener('resize', scheduleResize, { passive: true })
   window.addEventListener('pixel-animation-toggle', syncMotion)
   document.addEventListener('visibilitychange', syncMotion)
+  document.addEventListener('toybox:color-mode-change', syncMotion)
   document.addEventListener('pjax:complete', setup)
+  if (motionQuery) {
+    if (motionQuery.addEventListener) motionQuery.addEventListener('change', handleReducedMotionChange)
+    else if (motionQuery.addListener) motionQuery.addListener(handleReducedMotionChange)
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', setup)

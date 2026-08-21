@@ -93,13 +93,27 @@ test('exposes one persistent preferences trigger in the main navigation', () => 
 
 test('maps layout and reading controls to the Toybox article manual', () => {
   const css = fs.readFileSync(path.join(themeRoot, 'source/css/toybox-theme.css'), 'utf8')
+  const readMode = fs.readFileSync(path.join(themeRoot, 'source/css/_mode/readmode.styl'), 'utf8')
   const main = fs.readFileSync(path.join(themeRoot, 'source/js/main.js'), 'utf8')
 
   assert.match(css, /html\.hide-aside body\.toybox-post \.pixel-manual-index\s*{[^}]*display: none !important;/s)
   assert.match(css, /body\.toybox-post\.read-mode #post > \.pixel-manual-body\s*{[^}]*display: grid !important;/s)
   assert.match(css, /body\.toybox-post\.read-mode #page-header\s*{[^}]*display: none !important;/s)
+  assert.match(readMode, /#post > \*:not\(#post-info\):not\(\.post-content\):not\(\.pixel-manual-body\),/)
   assert.match(main, /hideAsideBtn: button =>/)
   assert.match(main, /newEle\.dataset\.toyboxI18nAria = 'rightside\.exitReadMode'/)
+})
+
+test('keeps the homepage cartridge rack proportionate across desktop and mobile', () => {
+  const css = fs.readFileSync(path.join(themeRoot, 'source/css/home-toybox.css'), 'utf8')
+
+  assert.doesNotMatch(css, /body\.toybox-home #pixel-particles-canvas,[\s\S]*display: none !important;/)
+  assert.match(css, /@media \(min-width: 1340px\)[\s\S]*--content-max: 1280px;/)
+  assert.match(css, /flex: 0 0 620px;\s*width: 620px !important;/)
+  assert.match(css, /flex: 0 0 180px;\s*width: 180px !important;/)
+  assert.match(css, /\.toybox-featured::before\s*{\s*content: none !important;/)
+  assert.match(css, /@media \(max-width: 480px\)[\s\S]*\.toybox-selector-numbers button:not\(\.is-current\)/)
+  assert.match(css, /flex-basis: 44px;\s*min-width: 44px;/)
 })
 
 test('keeps cartridge fallbacks configurable and scoped to fallback covers', () => {

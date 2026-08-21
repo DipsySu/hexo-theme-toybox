@@ -27,7 +27,6 @@ body.toybox-home {
 
 body.toybox-home #toybox-side-pacman,
 body.toybox-home #pacman-canvas,
-body.toybox-home #pixel-particles-canvas,
 body.toybox-home #aside-content,
 body.toybox-home .toybox-standby,
 body.toybox-home .corner-decoration {
@@ -562,6 +561,11 @@ body.toybox-home .toybox-featured {
   border: 2px solid var(--accent-primary) !important;
   border-radius: var(--radius-card) !important;
   box-shadow: 0 8px 0 var(--accent-primary-depth), var(--shadow-card) !important;
+}
+
+/* Remove the legacy game-card stripe; the cartridge border is the accent. */
+body.toybox-home .toybox-featured::before {
+  content: none !important;
 }
 
 body.toybox-home .toybox-featured:hover,
@@ -1176,7 +1180,11 @@ body.toybox-home.toybox-page-entering .toybox-stage {
  * quiet status shelf. The selector remains available at narrower widths,
  * where the rack becomes horizontally scrollable.
  */
-@media (min-width: 1181px) {
+@media (min-width: 1340px) {
+  body.toybox-home {
+    --content-max: 1280px;
+  }
+
   body.toybox-home #page-header.full_page {
     height: 142px !important;
   }
@@ -1194,41 +1202,62 @@ body.toybox-home.toybox-page-entering .toybox-stage {
   }
 
   body.toybox-home #content-inner.layout {
-    padding-top: 50px;
+    padding-top: 28px;
   }
 
   body.toybox-home .toybox-deck-header {
-    display: none;
+    display: flex;
+    margin-bottom: 16px;
+  }
+
+  body.toybox-home .toybox-card-row {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
   }
 
   body.toybox-home .toybox-card-track {
-    min-height: 478px;
+    width: max-content;
+    min-height: 408px;
+  }
+
+  body.toybox-home .toybox-card-track > .toybox-featured {
+    flex: 0 0 620px;
+    width: 620px !important;
+  }
+
+  body.toybox-home .toybox-card-track > .toybox-cartridge-card {
+    flex: 0 0 180px;
+    width: 180px !important;
   }
 
   body.toybox-home .toybox-featured {
     grid-template-columns: minmax(0, 1fr) minmax(245px, 0.7fr);
-    height: 460px !important;
-    min-height: 460px !important;
+    height: 390px !important;
+    min-height: 390px !important;
   }
 
   body.toybox-home .toybox-featured .recent-post-info {
-    padding: 49px 26px 44px !important;
+    padding: 36px 22px 28px !important;
+  }
+
+  body.toybox-home .toybox-featured .content {
+    -webkit-line-clamp: 3;
   }
 
   body.toybox-home .toybox-cartridge-card {
-    grid-template-rows: minmax(0, 228px) minmax(0, 1fr);
-    height: 428px !important;
-    min-height: 428px;
-    margin-top: 32px !important;
+    grid-template-rows: minmax(0, 190px) minmax(0, 1fr);
+    height: 390px !important;
+    min-height: 390px;
+    margin-top: 10px !important;
   }
 
   body.toybox-home .toybox-bottom-console {
-    min-height: 102px;
+    min-height: 92px;
   }
 }
 
 /* Medium desktops keep the rack intact but allow deliberate horizontal browse. */
-@media (max-width: 1180px) {
+@media (max-width: 1339px) {
   body.toybox-home #page-header.full_page #site-info {
     left: 28px;
     width: 340px;
@@ -1279,11 +1308,11 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
 @media (max-width: 900px) {
   body.toybox-home #page-header.full_page {
-    height: 230px !important;
+    height: 208px !important;
   }
 
   body.toybox-home #page-header.full_page #site-info {
-    top: 28px;
+    top: 22px;
     left: 28px;
     width: calc(100% - 56px);
     padding-left: 76px;
@@ -1293,7 +1322,7 @@ body.toybox-home.toybox-page-entering .toybox-stage {
   body.toybox-home #page-header.nav-fixed #nav,
   body.toybox-home #page-header.nav-visible #nav,
   body.toybox-home #page-header.fixed #nav {
-    top: 126px;
+    top: 108px;
     right: 24px;
     left: 24px;
     width: auto;
@@ -1325,7 +1354,7 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
   body.toybox-home .toybox-bottom-console {
     grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
+    gap: 14px;
   }
 
   body.toybox-home .toybox-collection-dock,
@@ -1342,11 +1371,11 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
 @media (max-width: 720px) {
   body.toybox-home #page-header.full_page {
-    height: 218px !important;
+    height: 184px !important;
   }
 
   body.toybox-home #page-header.full_page #site-info {
-    top: 22px;
+    top: 16px;
     left: 18px;
     width: calc(100% - 36px);
     padding-left: 68px;
@@ -1373,15 +1402,15 @@ body.toybox-home.toybox-page-entering .toybox-stage {
   body.toybox-home #page-header.nav-fixed #nav,
   body.toybox-home #page-header.nav-visible #nav,
   body.toybox-home #page-header.fixed #nav {
-    top: 112px;
+    top: 88px;
     right: 10px;
     left: 10px;
-    height: 82px !important;
+    height: 72px !important;
   }
 
   body.toybox-home #page-header #menus {
-    height: 82px;
-    padding: 8px 7px 15px;
+    height: 72px;
+    padding: 6px 7px 11px;
   }
 
   body.toybox-home #page-header #menus .menus_item {
@@ -1395,16 +1424,18 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
   body.toybox-home #content-inner.layout {
     width: 100%;
-    padding: 18px 14px 30px;
+    padding: 12px 14px 26px;
   }
 
   body.toybox-home #recent-posts {
-    gap: 20px;
+    gap: 14px;
   }
 
   body.toybox-home .toybox-deck-header {
     align-items: flex-start;
     flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
   }
 
   body.toybox-home .toybox-deck-controls {
@@ -1463,27 +1494,29 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
   body.toybox-home .toybox-featured .recent-post-info {
     width: 100% !important;
-    padding: 26px 14px 14px !important;
+    padding: 18px 12px 12px !important;
   }
 
   body.toybox-home .toybox-featured .article-title {
-    margin-bottom: 10px;
-    font-size: 24px;
+    margin-bottom: 8px;
+    font-size: 21px;
   }
 
   body.toybox-home .toybox-featured .content {
-    font-size: 13px;
-    -webkit-line-clamp: 3;
+    margin-bottom: 14px;
+    font-size: 12.5px;
+    -webkit-line-clamp: 2;
   }
 
   body.toybox-home .toybox-open-button {
     width: 100%;
+    min-height: 44px;
   }
 
   body.toybox-home .toybox-cartridge-card {
-    grid-template-rows: minmax(0, 255px) minmax(0, 1fr);
-    height: 408px !important;
-    min-height: 408px;
+    grid-template-rows: minmax(0, 210px) minmax(0, 1fr);
+    height: 356px !important;
+    min-height: 356px;
   }
 
   body.toybox-home .toybox-collection-dock {
@@ -1493,6 +1526,8 @@ body.toybox-home.toybox-page-entering .toybox-stage {
 
   body.toybox-home .toybox-collection-dock a {
     min-width: 0;
+    min-height: 48px;
+    padding: 6px 8px;
   }
 
   body.toybox-home #pagination {
@@ -1504,9 +1539,45 @@ body.toybox-home.toybox-page-entering .toybox-stage {
     grid-column: 1;
     grid-row: auto;
   }
+
+  body.toybox-home .toybox-bottom-console {
+    gap: 12px;
+    min-height: 0;
+    padding: 12px;
+  }
 }
 
 @media (max-width: 480px) {
+  body.toybox-home .toybox-deck-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  body.toybox-home .toybox-deck-controls {
+    width: auto;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+
+  body.toybox-home .toybox-selector-numbers button:not(.is-current) {
+    display: none;
+  }
+
+  body.toybox-home .toybox-recent-title::after {
+    display: none;
+  }
+
+  body.toybox-home #page-header #menus .menus_items {
+    gap: 1px;
+  }
+
+  body.toybox-home #page-header #menus .menus_item {
+    flex-basis: 44px;
+    min-width: 44px;
+  }
+
   body.toybox-home #page-header #nav-utilities {
     gap: 6px;
     padding-left: 8px;

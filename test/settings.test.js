@@ -82,8 +82,10 @@ function createRuntime(options) {
   }
   context.matchMedia = () => media
   context.requestAnimationFrame = callback => callback()
-  context.activateDarkMode = () => root.setAttribute('data-theme', 'dark')
-  context.activateLightMode = () => root.setAttribute('data-theme', 'light')
+  if (!(options && options.withoutThemeHelpers)) {
+    context.activateDarkMode = () => root.setAttribute('data-theme', 'dark')
+    context.activateLightMode = () => root.setAttribute('data-theme', 'light')
+  }
   vm.runInNewContext(settingsSource, context, { filename: 'toybox-settings.js' })
   return { attributes, context, events, media, properties, root, storage }
 }
@@ -119,6 +121,20 @@ test('applies light, dark, and system color modes', () => {
   assert.equal(runtime.attributes['data-theme'], 'dark')
   assert.equal(runtime.storage.getItem('toybox-color-mode'), 'auto')
   assert.equal(runtime.storage.getItem('theme'), null)
+})
+
+test('applies color modes when legacy theme helpers are unavailable', () => {
+  const runtime = createRuntime({ prefersDark: true, withoutThemeHelpers: true })
+  const settings = runtime.context.ToyboxSettings
+
+  settings.applyColorMode('light', false)
+  assert.equal(runtime.attributes['data-theme'], 'light')
+
+  settings.applyColorMode('dark', false)
+  assert.equal(runtime.attributes['data-theme'], 'dark')
+
+  settings.applyColorMode('auto', false)
+  assert.equal(runtime.attributes['data-theme'], 'dark')
 })
 
 test('restores persisted visitor preferences', () => {

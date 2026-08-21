@@ -682,6 +682,7 @@
     currentMode = normalizeMode(mode)
     var resolved = resolvedMode(currentMode)
     document.documentElement.dataset.toyboxColorMode = currentMode
+    document.documentElement.setAttribute('data-theme', resolved)
     if (resolved === 'dark' && window.activateDarkMode) window.activateDarkMode()
     if (resolved === 'light' && window.activateLightMode) window.activateLightMode()
     if (persist !== false) {
