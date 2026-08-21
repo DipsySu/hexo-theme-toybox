@@ -565,9 +565,19 @@
       if (!deck.isConnected || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
       var target = event.target
       if (target && ((target.matches && target.matches('input, textarea, select')) || target.isContentEditable)) return
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-      event.preventDefault()
-      select(event.key === 'ArrowLeft' ? -1 : 1)
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault()
+        select(event.key === 'ArrowLeft' ? -1 : 1)
+        return
+      }
+      // Gamepad "A": open the selected cartridge, mirroring its Ⓐ button.
+      if ((event.key === 'a' || event.key === 'A') && !event.repeat) {
+        var selected = cards[currentIndex]
+        var link = selected && selected.querySelector('.toybox-open-button, a.article-title, .toybox-card-arrow')
+        if (!link) return
+        event.preventDefault()
+        link.click()
+      }
     }
 
     function onPointerDown(event) {
@@ -597,7 +607,7 @@
       if (previousButton) previousButton.disabled = true
       if (nextButton) nextButton.disabled = true
     }
-    deck.addEventListener('keydown', onKeydown)
+    document.addEventListener('keydown', onKeydown)
     var onResize = function() {
       updateSlideState()
       centerSelected(cards[currentIndex], 'auto')
@@ -612,7 +622,7 @@
     window.requestAnimationFrame(function() { centerSelected(cards[0], 'auto') })
 
     toyboxCarouselCleanup = function() {
-      deck.removeEventListener('keydown', onKeydown)
+      document.removeEventListener('keydown', onKeydown)
       window.removeEventListener('resize', onResize)
       viewport.removeEventListener('pointerdown', onPointerDown)
       viewport.removeEventListener('pointerup', onPointerUp)
@@ -622,6 +632,38 @@
       toyboxCarouselCleanup = null
     }
   }
+
+  // Gamepad "B": back out one level, matching the console metaphor site-wide.
+  // In read mode it exits read mode; on any non-home page it returns to the
+  // previous same-origin page (falling back to the homepage); on the homepage
+  // it stays quiet so visitors are never yanked off the site.
+  function onToyboxGamepadBack(event) {
+    if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    if (event.key !== 'b' && event.key !== 'B') return
+    var target = event.target
+    if (target && ((target.matches && target.matches('input, textarea, select')) || target.isContentEditable)) return
+
+    if (document.body.classList.contains('read-mode')) {
+      var exitButton = document.querySelector('.exit-readmode')
+      if (exitButton) {
+        event.preventDefault()
+        exitButton.click()
+      }
+      return
+    }
+
+    if (document.body.classList.contains('toybox-home')) return
+
+    event.preventDefault()
+    var cameFromThisSite = false
+    try {
+      cameFromThisSite = !!document.referrer && new URL(document.referrer).origin === window.location.origin
+    } catch (error) {}
+    if (cameFromThisSite && window.history.length > 1) window.history.back()
+    else window.location.href = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root) || '/'
+  }
+
+  document.addEventListener('keydown', onToyboxGamepadBack)
 
   function setupToyboxPageMotion(body, pagination, currentPage) {
     var incomingDirection = ''

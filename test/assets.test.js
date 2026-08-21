@@ -118,6 +118,24 @@ test('keeps the homepage cartridge rack proportionate across desktop and mobile'
   assert.match(css, /flex-basis: 44px;\s*min-width: 44px;/)
 })
 
+test('drives the cartridge library with console gamepad keys', () => {
+  const anim = fs.readFileSync(path.join(themeRoot, 'source/js/pixel-anim-toggle.js'), 'utf8')
+
+  // Arrows work anywhere on the page, not only while the deck has focus.
+  assert.match(anim, /document\.addEventListener\('keydown', onKeydown\)/)
+  assert.match(anim, /document\.removeEventListener\('keydown', onKeydown\)/)
+  assert.doesNotMatch(anim, /deck\.addEventListener\('keydown'/)
+  // "A" opens the selected cartridge, mirroring its on-card Ⓐ button.
+  assert.match(anim, /event\.key === 'a' \|\| event\.key === 'A'/)
+  assert.match(anim, /\.toybox-open-button, a\.article-title, \.toybox-card-arrow/)
+  // "B" exits read mode first, backs out of non-home pages, stays quiet on home.
+  assert.match(anim, /function onToyboxGamepadBack/)
+  assert.match(anim, /document\.addEventListener\('keydown', onToyboxGamepadBack\)/)
+  assert.match(anim, /event\.key !== 'b' && event\.key !== 'B'/)
+  assert.match(anim, /\.exit-readmode/)
+  assert.match(anim, /toybox-home'\)\) return/)
+})
+
 test('keeps cartridge fallbacks configurable and scoped to fallback covers', () => {
   const config = fs.readFileSync(path.join(themeRoot, '_config.yml'), 'utf8')
   const runtimeConfig = fs.readFileSync(path.join(themeRoot, 'layout/includes/head/config.pug'), 'utf8')
@@ -134,9 +152,6 @@ test('keeps cartridge fallbacks configurable and scoped to fallback covers', () 
   assert.match(runtime, /function setCartridgeCardMode\(/)
   assert.match(runtime, /toybox-cartridge-card/)
   assert.doesNotMatch(runtime, /toybox-switch-card|setToyboxCardMode/)
-  assert.match(runtime, /deck\.addEventListener\('keydown', onKeydown\)/)
-  assert.match(runtime, /deck\.removeEventListener\('keydown', onKeydown\)/)
-  assert.doesNotMatch(runtime, /document\.(?:add|remove)EventListener\('keydown', onKeydown\)/)
 })
 
 test('shows taxonomy post totals instead of pagination page counts', () => {
