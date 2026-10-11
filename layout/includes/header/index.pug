@@ -5,36 +5,7 @@
   var toybox_hint_key = 'page.profile'
   var toybox_hint_params = ''
 
-  if (is_archive()) {
-    toybox_section = 'SAVE ARCHIVE'
-    toybox_hint = `${site.posts.length} 篇记录`
-    toybox_hint_key = 'page.records'
-    toybox_hint_params = JSON.stringify({ count: site.posts.length })
-  } else if (is_tag()) {
-    var toybox_tag_data = site.tags.findOne({ name: page.tag })
-    var toybox_tag_count = toybox_tag_data ? toybox_tag_data.length : page.posts.length
-    toybox_section = 'TAG SLOT'
-    toybox_hint = `${toybox_tag_count} 篇文章`
-    toybox_hint_key = 'page.posts'
-    toybox_hint_params = JSON.stringify({ count: toybox_tag_count })
-  } else if (is_category()) {
-    var toybox_category_data = site.categories.findOne({ name: page.category })
-    var toybox_category_count = toybox_category_data ? toybox_category_data.length : page.posts.length
-    toybox_section = 'CATEGORY SLOT'
-    toybox_hint = `${toybox_category_count} 篇文章`
-    toybox_hint_key = 'page.posts'
-    toybox_hint_params = JSON.stringify({ count: toybox_category_count })
-  } else if (page.type === 'tags') {
-    toybox_section = 'TAG DRAWER'
-    toybox_hint = `${site.tags.length} 个标签`
-    toybox_hint_key = 'page.tagCount'
-    toybox_hint_params = JSON.stringify({ count: site.tags.length })
-  } else if (page.type === 'categories') {
-    toybox_section = 'CATEGORY MAP'
-    toybox_hint = `${site.categories.length} 个分类`
-    toybox_hint_key = 'page.categoryCount'
-    toybox_hint_params = JSON.stringify({ count: site.categories.length })
-  } else if (page.type === 'link') {
+  if (page.type === 'link') {
     toybox_section = 'LINK PORT'
     toybox_hint = '好友联机站点'
     toybox_hint_key = 'page.friends'
@@ -95,6 +66,8 @@ header#page-header(class=`${isHomeClass+isFixedClass}` style=bg_img)
         if(theme.social)
           #site_social_icons
             !=fragment_cache('social', function(){return partial('includes/header/social')})
+  else if toyboxCollectionView
+    include ../collection/heading.pug
   else
     #page-site-info(data-toybox-section=toybox_section)
       span.toybox-page-kicker=toybox_section

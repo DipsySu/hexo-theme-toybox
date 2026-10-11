@@ -13,6 +13,47 @@ page:
   category: 分类
   archives: 归档
 
+collection:
+  home: '主页'
+  archives: '归档'
+  tags: '标签'
+  categories: '分类'
+  breadcrumb: '当前位置'
+  sections: '收藏分区'
+  posts: '{{count}} 篇文章'
+  tagCount: '{{count}} 个标签'
+  categoryCount: '{{count}} 个分类'
+  itemLabel: '{{name}}，{{count}} 篇文章'
+  filterTags: '筛选标签'
+  filterPlaceholder: '输入标签名称'
+  clearFilter: '清除筛选'
+  sort: '排序'
+  sortCount: '文章最多'
+  sortName: '名称排序'
+  tagResults: '显示 {{shown}} / {{total}} 个标签'
+  tagAll: '显示全部 {{total}} 个标签'
+  noTags: '没有符合筛选的标签。'
+  resetFilter: '显示全部标签'
+  emptyTags: '还没有标签。'
+  emptyCategories: '还没有分类。'
+  emptyPosts: '这个收藏里还没有文章。'
+  backToLibrary: '返回文章库'
+  latest: '最新：{{title}}'
+  allPosts: '全部文章'
+  allPostsOption: '全部文章（{{count}}）'
+  allTags: '全部标签'
+  allCategories: '全部分类'
+  archiveNav: '归档年份'
+  tagNav: '标签列表'
+  categoryNav: '分类列表'
+  jump: '切换收藏'
+  pagination: '分页'
+  range: '{{start}}-{{end}} / {{total}} 篇文章'
+  previousPage: '上一页'
+  nextPage: '下一页'
+  jumpPage: '跳转到指定页'
+  pageOption: '第 {{current}} 页 / 共 {{total}} 页'
+
 card_post_count: 条评论
 
 sticky: 置顶

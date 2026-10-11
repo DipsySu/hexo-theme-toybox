@@ -13,6 +13,47 @@ page:
   category: Category
   archives: Archives
 
+collection:
+  home: 'Home'
+  archives: 'Archives'
+  tags: 'Tags'
+  categories: 'Categories'
+  breadcrumb: 'Breadcrumb'
+  sections: 'Collections'
+  posts: 'Posts: {{count}}'
+  tagCount: 'Tags: {{count}}'
+  categoryCount: 'Categories: {{count}}'
+  itemLabel: '{{name}}, posts: {{count}}'
+  filterTags: 'Filter tags'
+  filterPlaceholder: 'Type a tag name'
+  clearFilter: 'Clear filter'
+  sort: 'Sort'
+  sortCount: 'Most posts'
+  sortName: 'Name (A–Z)'
+  tagResults: '{{shown}} of {{total}} tags'
+  tagAll: 'Showing all {{total}} tags'
+  noTags: 'No tags match this filter.'
+  resetFilter: 'Show all tags'
+  emptyTags: 'No tags yet.'
+  emptyCategories: 'No categories yet.'
+  emptyPosts: 'No posts in this collection yet.'
+  backToLibrary: 'Back to the library'
+  latest: 'Latest: {{title}}'
+  allPosts: 'All posts'
+  allPostsOption: 'All posts ({{count}})'
+  allTags: 'All tags'
+  allCategories: 'All categories'
+  archiveNav: 'Archive years'
+  tagNav: 'Tag list'
+  categoryNav: 'Category list'
+  jump: 'Go to collection'
+  pagination: 'Pages'
+  range: '{{start}}–{{end}} of {{total}} posts'
+  previousPage: 'Previous page'
+  nextPage: 'Next page'
+  jumpPage: 'Jump to page'
+  pageOption: 'Page {{current}} of {{total}}'
+
 card_post_count: comments
 
 sticky: Sticky

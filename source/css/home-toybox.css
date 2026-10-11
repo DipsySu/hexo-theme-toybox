@@ -3,67 +3,91 @@ body.toybox-home #content-inner { display: block; width: calc(100% - 80px); max-
 body.toybox-home #recent-posts { width: 100%; }
 body.toybox-home #aside-content { display: none; }
 body.toybox-home #rightside { display: none; }
-.toybox-stage { padding: 52px 0 36px; }
+.toybox-stage { padding: 36px 0 24px; }
 .toybox-recent-deck { outline-offset: 8px; }
 .toybox-deck-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 0; }
 .toybox-recent-title { display: flex; align-items: center; gap: 16px; margin: 0; font-size: 24px; line-height: 1.4; }
 .toybox-recent-title i { font-size: 28px; }
 .toybox-recent-title::after { content: ''; width: 44px; height: 3px; margin-left: 2px; background: var(--accent-primary); }
+body.toybox-home { --toybox-key-shine: #ffffffb3; }
 .toybox-deck-controls, .toybox-selector-lights { display: flex; align-items: center; gap: 8px; }
 .toybox-selection-label { margin-right: 12px; color: var(--color-muted); font-size: 12px; white-space: nowrap; }
 .toybox-deck-controls button { flex-basis: 44px; min-width: 44px; height: 44px; padding: 0; font-size: 14px; font-weight: 700; }
-.toybox-selector-lights { gap: 0; padding: 0 3px; border-radius: 6px; background: var(--color-surface-soft); box-shadow: inset 0 1px 3px #15253618; }
+.toybox-selector-lights { gap: 0; padding: 0 3px; border-radius: 6px; background: var(--color-surface-soft); box-shadow: inset 0 2px 0 #1525361a; }
 body.toybox-home .toybox-deck-controls .toybox-slot { display: grid; place-items: center; border: 0; background: transparent; box-shadow: none; border-radius: 4px; }
-.toybox-slot-light { display: block; width: 10px; height: 10px; border: 1px solid var(--color-border-strong); border-radius: 3px; background: var(--color-border); transition: background 180ms, width 180ms; }
-.toybox-slot:hover .toybox-slot-light { border-color: var(--accent-secondary); }
-.toybox-slot.is-current .toybox-slot-light { width: 26px; background: var(--accent-secondary); border-color: var(--accent-secondary-depth); box-shadow: inset 0 1px 0 #fff6; }
-body.toybox-home .toybox-deck-controls [data-toybox-direction] { border-radius: 50%; background: transparent; box-shadow: none; border-color: transparent; color: var(--color-muted); }
-body.toybox-home .toybox-deck-controls [data-toybox-direction]:hover { background: var(--color-surface-soft); color: var(--color-ink); }
+/* Slot lights keep one square size; only the lit state changes. */
+.toybox-slot-light { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--color-border-strong); border-radius: 3px; background: var(--color-surface-muted); box-shadow: inset 0 2px 0 #0000001f; color: var(--color-muted); font: 12px/1 'Fusion Pixel 12px M zh_hans', ui-monospace, monospace; transition: background 160ms steps(2, end), color 160ms steps(2, end); }
+.toybox-slot:hover .toybox-slot-light { border-color: var(--accent-secondary); color: var(--color-ink); }
+.toybox-slot.is-current .toybox-slot-light { background: var(--accent-secondary); border-color: var(--accent-secondary-depth); box-shadow: inset 0 1px 0 #ffffff8c, inset 0 -2px 0 #0000001f; color: #06303b; }
+/* Direction keys: 44px hit area around a smaller square keycap. */
+body.toybox-home .toybox-deck-controls [data-toybox-direction] { display: grid; place-items: center; border-color: transparent; background: transparent; box-shadow: none; color: var(--color-ink); }
+body.toybox-home .toybox-deck-controls [data-toybox-direction] i { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--color-border-strong); border-radius: 4px; background: var(--color-surface); box-shadow: inset 0 1px 0 var(--toybox-key-shine), 0 2px 0 var(--color-border-strong); font-size: 13px; }
+body.toybox-home .toybox-deck-controls [data-toybox-direction]:hover:not(:disabled) i { border-color: var(--accent-secondary); background: var(--color-surface-soft); }
+body.toybox-home .toybox-deck-controls [data-toybox-direction]:active:not(:disabled) i { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--toybox-key-shine); }
 .toybox-deck-counter { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .toybox-card-row { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
-.toybox-card-track { --rack-height: clamp(480px, calc(100svh - 400px), 580px); display: flex; align-items: center; gap: 24px; min-width: 100%; min-height: calc(var(--rack-height) + 48px); padding: 18px 2px 30px; }
+/* Track padding keeps the selection cursor and corner marks inside the scroller. */
+.toybox-card-track { --rack-height: clamp(480px, calc(100svh - 400px), 580px); position: relative; display: flex; align-items: center; gap: 24px; min-width: 100%; min-height: calc(var(--rack-height) + 66px); padding: 34px 12px 32px; }
+/* One plastic shell: embossed slot number, label window, and an inset paper sticker. */
 body.toybox-home #recent-posts .recent-post-item {
-  --cartridge-color: #ef5b54; --cartridge-depth: #ba3633;
+  --cartridge-color: #ef5b54; --cartridge-depth: #ba3633; --cartridge-shine: #ffffff6b; --cartridge-edge: transparent; --cartridge-base: 4px; --cartridge-cast: #1d2c3c1f;
+  --cartridge-sticker: var(--color-surface); --cartridge-sticker-line: #0000002b; --cartridge-sticker-shine: #ffffff;
   flex: 1 1 0; min-width: 0; width: auto; height: calc(var(--rack-height) - 72px);
   display: flex; flex-direction: column; align-items: stretch; position: relative;
-  margin: 0; padding: 0; overflow: visible; border: 1px solid var(--color-border);
-  border-radius: 8px; background: var(--color-surface); box-shadow: var(--shadow-card);
-  transition: flex-grow 320ms cubic-bezier(.2,.75,.25,1), height 320ms cubic-bezier(.2,.75,.25,1), box-shadow 200ms;
+  margin: 0; padding: 24px 7px 8px; overflow: visible; border: 1px solid var(--cartridge-depth);
+  border-radius: 8px 8px 6px 6px; background: var(--cartridge-color);
+  box-shadow: inset 0 0 0 2px var(--cartridge-edge), inset 2px 2px 0 var(--cartridge-shine), inset -2px -3px 0 #00000014, 0 var(--cartridge-base) 0 var(--cartridge-depth), 0 8px 12px var(--cartridge-cast);
+  transition: flex-grow 320ms cubic-bezier(.2,.75,.25,1), height 320ms cubic-bezier(.2,.75,.25,1), box-shadow 160ms;
 }
 body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='aqua'] { --cartridge-color: #29b9db; --cartridge-depth: #0985a4; }
 body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='yellow'] { --cartridge-color: #ffd04c; --cartridge-depth: #c88e1c; }
 body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='green'] { --cartridge-color: #62cb79; --cartridge-depth: #348d4b; }
-body.toybox-home #recent-posts .recent-post-item.toybox-featured { flex-grow: 1.45; height: var(--rack-height); box-shadow: 0 3px 0 #bcc5cf, 0 14px 32px #263f5424; }
-body.toybox-home #recent-posts .recent-post-item:hover { box-shadow: 0 3px 0 var(--cartridge-depth), 0 12px 26px #263f5424; }
+body.toybox-home #recent-posts .recent-post-item.toybox-featured { --cartridge-base: 5px; --cartridge-cast: #1d2c3c29; flex-grow: 1.45; height: var(--rack-height); }
+@media (hover: hover) { body.toybox-home #recent-posts .recent-post-item:hover { --cartridge-edge: #ffffff4d; } }
+body.toybox-home #recent-posts .recent-post-item:has(:focus-visible) { --cartridge-edge: var(--accent-secondary); }
+body.toybox-home #recent-posts .recent-post-item::before { content: '0' attr(data-toybox-number); content: '0' attr(data-toybox-number) / ''; position: absolute; top: 6px; left: 0; right: 0; color: var(--cartridge-depth); font: 12px/1 'Fusion Pixel 12px M zh_hans', ui-monospace, monospace; text-align: center; text-shadow: 0 1px 0 var(--cartridge-shine); pointer-events: none; }
 body.toybox-home .recent-post-item .post_cover {
-  flex: 0 0 56%; width: calc(100% + 4px); height: 56%; margin: -1px -2px 0;
-  padding: 28px 14px 26px; position: relative; float: none; overflow: visible;
-  border: 1px solid var(--cartridge-depth); border-bottom-width: 7px; border-radius: 8px 8px 5px 5px;
-  background: var(--cartridge-color); box-shadow: inset 2px 2px 0 #ffffff65, inset -5px -1px 0 #00000013, 0 3px 0 var(--cartridge-depth);
+  flex: 0 0 52%; width: 100%; height: 52%; margin: 0; padding: 0;
+  position: relative; float: none; overflow: visible;
+  border: 0; border-radius: 0; background: transparent; box-shadow: none;
 }
-body.toybox-home .recent-post-item.toybox-featured .post_cover { flex-basis: 53%; height: 53%; padding-top: 30px; }
-body.toybox-home .post_cover::before, body.toybox-home .post_cover::after { content: ''; position: absolute; top: 20px; width: 7px; height: 3px; background: #0002; box-shadow: 0 8px 0 #0002, 0 16px 0 #0002, 0 24px 0 #0002; }
-body.toybox-home .post_cover::before { left: 0; }
-body.toybox-home .post_cover::after { right: 0; }
-body.toybox-home .post_cover > a { display: block; height: 100%; overflow: hidden; border: 3px solid var(--cartridge-depth); border-radius: 5px; box-shadow: 0 2px 0 #fff5; }
+body.toybox-home .recent-post-item.toybox-featured .post_cover { flex-basis: 46%; height: 46%; }
+/* Grip grooves sit in the shell edge beside the label window. */
+body.toybox-home .post_cover::before, body.toybox-home .post_cover::after { content: ''; position: absolute; top: 12px; width: 4px; height: 2px; background: #00000029; box-shadow: 0 6px 0 #00000029, 0 12px 0 #00000029, 0 18px 0 #00000029; }
+body.toybox-home .post_cover::before { left: -6px; }
+body.toybox-home .post_cover::after { right: -6px; }
+body.toybox-home .post_cover > a { display: block; height: 100%; overflow: hidden; border: 3px solid var(--cartridge-depth); border-radius: 4px; background: var(--cartridge-depth); box-shadow: 0 1px 0 var(--cartridge-shine); }
 body.toybox-home #recent-posts .post_cover .post-bg { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; transform: none; border-radius: 0; }
-body.toybox-home .recent-post-item .recent-post-info { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; padding: 24px 18px 18px; overflow: hidden; }
+body.toybox-home .recent-post-item .recent-post-info { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; width: 100%; margin-top: 7px; padding: 12px 14px; overflow: hidden; border: 1px solid var(--cartridge-sticker-line); border-radius: 3px; background: var(--cartridge-sticker); box-shadow: inset 0 1px 0 var(--cartridge-sticker-shine), 0 1px 0 var(--cartridge-shine); }
+body.toybox-home .recent-post-item .recent-post-info:first-child { margin-top: 0; }
 body.toybox-home #recent-posts .article-title { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; flex: 0 0 auto; margin: 0 0 12px; color: var(--color-ink); font-size: 20px; font-weight: 750; line-height: 1.45; overflow-wrap: anywhere; }
-body.toybox-home #recent-posts .toybox-featured .article-title { font-size: 28px; }
+body.toybox-home #recent-posts .recent-post-info:first-child .article-title { -webkit-line-clamp: 4; }
+body.toybox-home #recent-posts .toybox-featured .article-title { margin-bottom: 8px; font-size: 24px; line-height: 1.35; }
 body.toybox-home #recent-posts .article-meta-wrap { margin: auto 48px 8px 0; color: var(--color-muted); font-size: 12px; line-height: 1.6; }
 body.toybox-home .article-meta-wrap .article-meta, body.toybox-home .article-meta-label { display: none; }
 body.toybox-home .post-meta-date i { margin-right: 8px; }
-body.toybox-home #recent-posts .toybox-featured .article-meta-wrap { margin: 0 0 12px; font-size: 13px; }
+body.toybox-home #recent-posts .toybox-featured .article-meta-wrap { flex-shrink: 0; margin: 0 0 8px; font-size: 13px; }
 body.toybox-home #recent-posts .content { display: none; padding: 0; margin: 0; }
-body.toybox-home #recent-posts .toybox-featured .content { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; font-size: 16px; color: var(--color-muted); line-height: 1.7; overflow: hidden; }
-body.toybox-home .toybox-open-button, body.toybox-home .toybox-card-arrow { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 44px; border: 1px solid var(--cartridge-depth); border-radius: 6px; background: var(--cartridge-color); color: #153844; box-shadow: inset 0 1px 0 #fff6, 0 2px 0 var(--cartridge-depth); font-weight: 650; }
+body.toybox-home #recent-posts .toybox-featured .content { display: -webkit-box; flex-shrink: 0; margin-bottom: 10px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 14px; color: var(--color-muted); line-height: 1.65; overflow: hidden; }
+body.toybox-home .toybox-open-button, body.toybox-home .toybox-card-arrow { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; border: 1px solid var(--cartridge-depth); border-radius: 4px; background: var(--cartridge-color); color: #153844; box-shadow: inset 0 1px 0 var(--cartridge-shine), 0 2px 0 var(--cartridge-depth); font-weight: 650; }
 body.toybox-home .toybox-open-button { display: none; flex-shrink: 0; margin-top: auto; }
-body.toybox-home .toybox-featured .toybox-open-button { display: flex; margin-top: auto; background: #ef4b43; border-color: #bc3a35; box-shadow: 0 2px 0 #b93130, inset 0 1px 0 #ffaaa3; color: #fff; }
-body.toybox-home .toybox-card-arrow { position: absolute; right: 18px; bottom: 18px; width: 44px; }
+body.toybox-home .toybox-featured .toybox-open-button { display: flex; margin-top: auto; background: #cc3b34; border-color: #a62c27; box-shadow: 0 2px 0 #a62c27, inset 0 1px 0 #ffaaa3; color: #fff; }
+body.toybox-home .toybox-open-key { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; border-radius: 3px; background: #fff; color: #b93130; box-shadow: inset 0 -2px 0 #0000001f; font: 12px/1 'Fusion Pixel 12px M zh_hans', ui-monospace, monospace; }
+body.toybox-home .toybox-card-arrow { position: absolute; right: 12px; bottom: 12px; width: 44px; }
 body.toybox-home .toybox-featured .toybox-card-arrow { display: none; }
 body.toybox-home [data-toybox-tone='coral'] .toybox-card-arrow { color: #fff; }
-.toybox-cleared-badge { position: absolute; top: 10px; right: 10px; z-index: 2; padding: 3px 8px; border-radius: 4px; background: var(--color-surface); color: var(--accent-success-depth); font-size: 11px; }
-.toybox-bottom-console { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 0 32px; border-top: 1px solid var(--color-border); }
+/* Physical keys press 2px into the shell and lose their lower edge. */
+body.toybox-home .toybox-open-button:active, body.toybox-home .toybox-card-arrow:active { transform: translateY(2px); box-shadow: inset 0 1px 0 var(--cartridge-shine); }
+body.toybox-home .toybox-featured .toybox-open-button:active { box-shadow: inset 0 1px 0 #ffaaa3; }
+.toybox-cleared-badge { position: absolute; top: 3px; right: 8px; z-index: 2; padding: 0 6px; border: 1px solid var(--cartridge-sticker-line, var(--color-border)); border-radius: 3px; background: var(--cartridge-sticker, var(--color-surface)); color: var(--accent-success-depth); font-size: 11px; line-height: 16px; }
+/* Selection marks are decoration only: a stepped cursor plus four corner marks. */
+body.toybox-home .toybox-selection-frame { position: absolute; inset: -9px; z-index: 1; display: none; pointer-events: none; }
+body.toybox-home .toybox-featured .toybox-selection-frame { display: block; }
+body.toybox-home .toybox-selection-frame::before { content: ''; position: absolute; inset: 0; border: 3px solid var(--color-ink); clip-path: polygon(0 0, 14px 0, 14px 14px, 0 14px, 0 calc(100% - 14px), 14px calc(100% - 14px), 14px 100%, 0 100%, calc(100% - 14px) 100%, calc(100% - 14px) calc(100% - 14px), 100% calc(100% - 14px), 100% 100%, 0 100%, 0 0, calc(100% - 14px) 0, calc(100% - 14px) 14px, 100% 14px, 100% 0); animation: toybox-mark-settle 180ms steps(2, end) both; }
+body.toybox-home .toybox-selection-frame::after { content: ''; position: absolute; top: -16px; left: calc(50% - 9px); width: 18px; height: 10px; background: var(--color-ink); clip-path: polygon(0 0, 18px 0, 18px 2px, 16px 2px, 16px 4px, 14px 4px, 14px 6px, 12px 6px, 12px 8px, 10px 8px, 10px 10px, 8px 10px, 8px 8px, 6px 8px, 6px 6px, 4px 6px, 4px 4px, 2px 4px, 2px 2px, 0 2px); animation: toybox-cursor-settle 180ms steps(2, end) both; }
+@keyframes toybox-mark-settle { from { inset: -4px; } to { inset: 0; } }
+@keyframes toybox-cursor-settle { from { transform: translateY(-4px); } to { transform: none; } }
+.toybox-bottom-console { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 0; border-top: 1px solid var(--color-border); }
 .toybox-collection-dock { display: flex; align-items: center; gap: 20px; }
 .toybox-collection-dock a { display: grid; grid-template-columns: 22px auto; grid-template-rows: 22px 20px; column-gap: 10px; color: var(--color-ink); min-width: 64px; }
 .toybox-collection-dock a + a { border-left: 1px solid var(--color-border); padding-left: 18px; }
@@ -81,6 +105,7 @@ body.toybox-home .toybox-library-pagination { display: flex; align-items: center
 body.toybox-home .toybox-page-step { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-border); border-radius: 6px; box-shadow: var(--shadow-control); }
 body.toybox-home .toybox-page-step.next { background: var(--toy-aqua-soft); border-color: var(--accent-secondary); }
 body.toybox-home .toybox-page-step:hover { border-color: var(--accent-secondary); }
+body.toybox-home .toybox-page-step:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
 .toybox-page-picker { position: relative; }
 .toybox-page-picker select { display: block; width: 168px; height: 44px; padding: 0 30px 0 14px; appearance: none; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); box-shadow: var(--shadow-control); color: var(--color-ink); font-family: inherit; font-size: 13px; font-weight: 600; line-height: 1.4; cursor: pointer; }
 .toybox-page-picker > i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 10px; color: var(--color-muted); }
@@ -89,6 +114,15 @@ body.toybox-home .toybox-page-step:hover { border-color: var(--accent-secondary)
 .toybox-page-leaving[data-toybox-page-direction='previous'] .toybox-card-track { transform: translateX(16px); }
 .toybox-page-entering .toybox-card-track { animation: rack-arrive 400ms ease-out both; }
 @keyframes rack-arrive { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+/* Dark theme: muted plastic tones with dark neutral stickers. */
+[data-theme='dark'] body.toybox-home { --toybox-key-shine: #ffffff1f; }
+[data-theme='dark'] body.toybox-home #recent-posts .recent-post-item { --cartridge-shine: #ffffff26; --cartridge-sticker: #20262d; --cartridge-sticker-line: #00000066; --cartridge-sticker-shine: #ffffff12; }
+[data-theme='dark'] body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='coral'] { --cartridge-color: #b9514b; --cartridge-depth: #7d2d2a; }
+[data-theme='dark'] body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='aqua'] { --cartridge-color: #2a8ca4; --cartridge-depth: #175a6b; }
+[data-theme='dark'] body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='yellow'] { --cartridge-color: #b8963c; --cartridge-depth: #7a5e1c; }
+[data-theme='dark'] body.toybox-home #recent-posts .recent-post-item[data-toybox-tone='green'] { --cartridge-color: #4c9a5e; --cartridge-depth: #2b6038; }
+[data-theme='dark'] body.toybox-home .toybox-card-arrow { background: var(--color-surface-soft); color: var(--color-ink); border-color: var(--cartridge-color); }
+[data-theme='dark'] .toybox-cleared-badge { color: var(--accent-success); }
 @media (min-width: 1600px) { body.toybox-home #content-inner { width: calc(100% - 160px); } }
 @media (max-width: 1180px) {
   body.toybox-home #content-inner { width: calc(100% - 48px); }
@@ -116,9 +150,9 @@ body.toybox-home .toybox-page-step:hover { border-color: var(--accent-secondary)
   .toybox-collection-dock { justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .toybox-card-track, body.toybox-home #recent-posts .recent-post-item { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .toybox-card-track, body.toybox-home #recent-posts .recent-post-item, body.toybox-home .toybox-selection-frame::before, body.toybox-home .toybox-selection-frame::after, .toybox-slot-light { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 @media (max-width: 350px) {
   .toybox-deck-controls { justify-content: center; }
-  .toybox-deck-controls [data-toybox-direction] { display: none; }
+  body.toybox-home .toybox-deck-controls [data-toybox-direction] { display: none; }
 }

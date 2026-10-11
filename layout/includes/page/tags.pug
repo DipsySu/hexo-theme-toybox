@@ -1,2 +1,35 @@
-.tag-cloud-list.is-center
-  !=cloudTags({source: site.tags, orderby: page.orderby || 'random', order: page.order || 1, minfontsize: 1.2, maxfontsize: 2.1, limit: 0, unit: 'em'})
+- var toyboxTags = toybox_tag_index()
+section.toybox-tag-index(data-toybox-tag-index)
+  if toyboxTags.length
+    .toybox-collection-toolbar
+      .toybox-field.toybox-filter-field
+        label(for='toybox-tag-filter' data-toybox-i18n='collection.filterTags')= toybox_text('collection.filterTags')
+        .toybox-filter-input
+          i.fas.fa-search(aria-hidden='true')
+          input#toybox-tag-filter(type='search' autocomplete='off' spellcheck='false' placeholder=toybox_text('collection.filterPlaceholder') data-toybox-i18n-placeholder='collection.filterPlaceholder' aria-controls='toybox-tag-grid' aria-describedby='toybox-tag-status' disabled)
+          button.toybox-filter-clear(type='button' hidden disabled aria-label=toybox_text('collection.clearFilter') title=toybox_text('collection.clearFilter') data-toybox-i18n-aria='collection.clearFilter' data-toybox-i18n-title='collection.clearFilter')
+            i.fas.fa-times(aria-hidden='true')
+      .toybox-field.toybox-sort-field
+        label(for='toybox-tag-sort' data-toybox-i18n='collection.sort')= toybox_text('collection.sort')
+        .toybox-select
+          select#toybox-tag-sort(aria-controls='toybox-tag-grid' disabled)
+            option(value='count' selected data-toybox-i18n='collection.sortCount')= toybox_text('collection.sortCount')
+            option(value='name' data-toybox-i18n='collection.sortName')= toybox_text('collection.sortName')
+          i.fas.fa-chevron-down(aria-hidden='true')
+    p#toybox-tag-status.toybox-filter-status(role='status' aria-live='polite')
+    ul#toybox-tag-grid.toybox-tag-grid(aria-label=toybox_text('collection.tags') data-toybox-i18n-aria='collection.tags')
+      each tag in toyboxTags
+        - var tagParams = { name: tag.name, count: tag.count }
+        li(data-count=tag.count)
+          a.toybox-tag-label(href=tag.url data-tone=tag.tone aria-label=toybox_text('collection.itemLabel', tagParams) data-toybox-i18n-aria='collection.itemLabel' data-toybox-i18n-params=JSON.stringify(tagParams))
+            i.fas.fa-tag(aria-hidden='true')
+            span.toybox-tag-name= tag.name
+            span.toybox-tag-count= tag.count
+    .toybox-filter-empty(hidden)
+      p(data-toybox-i18n='collection.noTags')= toybox_text('collection.noTags')
+      button.toybox-filter-reset(type='button' data-toybox-i18n='collection.resetFilter')= toybox_text('collection.resetFilter')
+  else
+    .toybox-collection-empty
+      i.fas.fa-tags(aria-hidden='true')
+      p(data-toybox-i18n='collection.emptyTags')= toybox_text('collection.emptyTags')
+      a.toybox-collection-empty-link(href=url_for('/') data-toybox-i18n='collection.backToLibrary')= toybox_text('collection.backToLibrary')

@@ -85,7 +85,10 @@ mixin postUI(posts)
             .content!= expert
         if is_home()
           a.toybox-open-button(href=url_for(link) aria-label=title)
+            span.toybox-open-key(aria-hidden='true') A
             span.toybox-open-label(data-toybox-i18n='home.read') 阅读文章
             i.fas.fa-arrow-right(aria-hidden='true')
           a.toybox-card-arrow(href=url_for(link) aria-label=title)
             i.fas.fa-arrow-right(aria-hidden='true')
+      if is_home()
+        span.toybox-selection-frame(aria-hidden='true')

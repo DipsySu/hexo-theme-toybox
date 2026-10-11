@@ -10,6 +10,8 @@ div
     include ./third-party/subtitle.pug
 
   script(src=toybox_asset('/js/toybox-settings.js'))
+  if toyboxCollectionView
+    script(src=toybox_asset('/js/collection-ui.js'))
   script(src=toybox_asset('/js/pixel-sprite-assets.js'))
   script(src=toybox_asset('/js/pixel-particles.js'))
   script(src=toybox_asset('/js/pixel-dino.js'))

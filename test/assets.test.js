@@ -158,9 +158,11 @@ test('keeps cartridge fallbacks configurable and scoped to fallback covers', () 
 
 test('shows taxonomy post totals instead of pagination page counts', () => {
   const header = fs.readFileSync(path.join(themeRoot, 'layout/includes/header/index.pug'), 'utf8')
+  const helper = fs.readFileSync(path.join(themeRoot, 'scripts/helpers/collections.js'), 'utf8')
 
-  assert.match(header, /site\.tags\.findOne\(\{ name: page\.tag \}\)/)
-  assert.match(header, /site\.categories\.findOne\(\{ name: page\.category \}\)/)
+  assert.match(header, /include \.\.\/collection\/heading\.pug/)
+  assert.match(helper, /total: tag \? tag\.length/)
+  assert.match(helper, /total: category \? category\.length/)
   assert.doesNotMatch(header, /page\.total \|\| page\.posts\.length/)
 })
 

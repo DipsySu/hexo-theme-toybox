@@ -159,7 +159,7 @@
   }
 
   function colorTags() {
-    var tags = document.querySelectorAll('.card-tag-cloud a, .tag-cloud-list a, a.tag, .article-meta__tags, .post-meta__tags')
+    var tags = document.querySelectorAll('.card-tag-cloud a, a.tag, .article-meta__tags, .post-meta__tags')
     tags.forEach(function(el, i) {
       // 容器级早退：调色 + 5 次 setProperty 是确定性的，已处理过的标签无需重跑
       // （ensureSprite 本就幂等，此处省去重复遍历与样式写入）
@@ -350,14 +350,6 @@
     document.querySelectorAll('.recent-post-item:not(.ads-wrap)').forEach(function(card) {
       var path = internalPathForLink(card.querySelector('.article-title'))
       syncClearedBadge(card, Boolean(path && posts[path]))
-    })
-
-    document.querySelectorAll('.article-sort-item:not(.year)').forEach(function(item) {
-      var path = internalPathForLink(item.querySelector('.article-sort-item-title'))
-      var cleared = Boolean(path && posts[path])
-      if (!item.dataset.pixelNodeDefault) item.dataset.pixelNodeDefault = item.dataset.pixelNode || ''
-      item.dataset.pixelNode = cleared ? '✓ ' + toyboxText('status.cleared', null, '已通关') : item.dataset.pixelNodeDefault
-      item.classList.toggle('is-cleared', cleared)
     })
 
     var savedCount = Object.keys(posts).length
@@ -911,60 +903,6 @@
       else if (/^\d+$/.test(label)) bindToyboxDataset(el, 'pixelPage', 'common.page', { page: String(parseInt(label, 10)).padStart(2, '0') })
       else bindToyboxDataset(el, 'pixelPage', 'common.catalog')
       el.dataset.pixelPageReady = '1'
-    })
-  }
-
-  function decorateCollectionPages() {
-    [
-      ['#archive', 'archive.title', 'archive.overview'],
-      ['#category', 'archive.categoryTitle', 'archive.category'],
-      ['#tag', 'archive.tagTitle', 'archive.tag']
-    ].forEach(function(config) {
-      var shell = document.querySelector(config[0])
-      if (!shell || shell.dataset.pixelCollectionReady) return
-
-      bindToyboxDataset(shell, 'pixelMapShell', config[1])
-      var title = shell.querySelector('.article-sort-title')
-      if (title) bindToyboxDataset(title, 'pixelMapTitle', config[2])
-      shell.dataset.pixelCollectionReady = '1'
-    })
-
-    document.querySelectorAll('.article-sort-title').forEach(function(title) {
-      if (!title.dataset.pixelMapTitle) bindToyboxDataset(title, 'pixelMapTitle', 'common.catalog')
-    })
-
-    document.querySelectorAll('.article-sort').forEach(function(sort) {
-      var nodeIndex = 0
-      sort.querySelectorAll('.article-sort-item').forEach(function(item) {
-        if (item.classList.contains('year')) {
-          bindToyboxDataset(item, 'pixelYear', 'archive.year')
-          return
-        }
-
-        nodeIndex += 1
-        var text = [
-          getText(item, '.article-sort-item-title'),
-          getText(item, '.article-sort-item-time')
-        ].join(' ')
-        var p = paletteForText(text, nodeIndex)
-        item.style.setProperty('--map-bg-start', p.bg[0])
-        item.style.setProperty('--map-bg-end', p.bg[1])
-        item.style.setProperty('--map-shadow', p.shadow)
-        item.style.setProperty('--map-highlight', p.highlight)
-        item.style.setProperty('--map-sprite', spriteUrl(p.sprite, 3))
-        bindToyboxDataset(item, 'pixelNode', 'archive.entry', { index: String(nodeIndex).padStart(2, '0') })
-      })
-    })
-
-    document.querySelectorAll('.category-lists .category-list-link').forEach(function(link, i) {
-      var text = link.textContent || ''
-      var p = paletteForText(text, i + 3)
-      link.style.setProperty('--category-bg-start', p.bg[0])
-      link.style.setProperty('--category-bg-end', p.bg[1])
-      link.style.setProperty('--category-shadow', p.shadow)
-      link.style.setProperty('--category-highlight', p.highlight)
-      link.style.setProperty('--category-sprite', spriteUrl(p.sprite, 3))
-      bindToyboxDataset(link, 'pixelCategory', 'archive.categoryEntry', { index: String(i + 1).padStart(2, '0') })
     })
   }
 
@@ -1523,7 +1461,6 @@
       decoratePostCards()
       decorateSidebarHud()
       decoratePagination()
-      decorateCollectionPages()
       decorateArticleWidgets()
       decorateArticleMedia()
       decoratePostPage()

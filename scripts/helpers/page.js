@@ -2,21 +2,6 @@
 
 const { prettyUrls } = require('hexo-util')
 
-hexo.extend.helper.register('cloudTags', function (options = {}) {
-  const source = options.limit > 0 ? options.source.limit(options.limit) : options.source
-  const lengths = [...new Set(source.sort('length').map(tag => tag.length))]
-  const maxIndex = Math.max(lengths.length - 1, 1)
-  const min = options.minfontsize || 1
-  const max = options.maxfontsize || min
-  const unit = options.unit || 'em'
-
-  return source.sort(options.orderby || 'name', options.order || 1).map(tag => {
-    const ratio = lengths.indexOf(tag.length) / maxIndex
-    const size = (min + ((max - min) * ratio)).toFixed(2)
-    return `<a href="${this.url_for(tag.path)}" style="font-size:${size}${unit}">${tag.name}</a>`
-  }).join('')
-})
-
 hexo.extend.helper.register('urlNoIndex', function (url = null, trailingIndex = false, trailingHtml = false) {
   return prettyUrls(url || this.url, {
     trailing_index: trailingIndex,

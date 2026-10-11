@@ -4,12 +4,15 @@
 - var hideAside = !theme.aside.enable || page.aside === false || suppressToyboxAside ? 'hide-aside' : ''
 - var pageType = is_post() ? 'post' : 'page'
 - var toyboxViewClass = is_home() ? 'toybox-home' : is_post() ? 'toybox-post' : (is_archive() || is_tag() || is_category()) ? 'toybox-collection' : 'toybox-page'
+- var toyboxIndexType = page.type === 'tags' || page.type === 'categories' ? page.type : (page.tags && !page.tag && !is_post() && !is_page() && !is_home() && !is_archive() && !is_category() ? 'tags' : '')
+- var toyboxCollection = is_archive() || is_tag() || is_category() ? toybox_collection_view() : null
+- var toyboxCollectionView = Boolean(toyboxCollection || toyboxIndexType)
 
 doctype html
 html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside)
   head
     include ./head.pug
-  body(class=`toybox-theme ${toyboxViewClass}`)
+  body(class=`toybox-theme ${toyboxViewClass}${toyboxCollectionView ? ' toybox-collection-view' : ''}`)
     !=partial('includes/sidebar', {}, {cache: true})
 
     if page.type !== '404'

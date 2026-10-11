@@ -1,0 +1,23 @@
+-
+  var rail = toyboxCollection.rail
+  var railSelected = rail.items.find(function (item) { return item.current === 'page' }) || rail.items.find(function (item) { return item.current })
+nav.toybox-collection-rail(aria-label=toybox_text(rail.labelKey) data-toybox-i18n-aria=rail.labelKey)
+  if rail.back
+    a.toybox-rail-back(href=rail.back.url)
+      i.fas.fa-arrow-left(aria-hidden='true')
+      span(data-toybox-i18n=rail.back.key)= toybox_text(rail.back.key)
+  ul.toybox-rail-list
+    each item in rail.items
+      li(style=`--rail-depth: ${item.depth}`)
+        a.toybox-rail-link(href=item.url aria-current=item.current class=item.current ? 'is-current' : '')
+          span.toybox-rail-name(data-toybox-i18n=item.key || false)= item.key ? toybox_text(item.key) : item.label
+          span.toybox-rail-count= item.count
+  .toybox-rail-picker
+    label.toybox-visually-hidden(for='toybox-rail-select' data-toybox-i18n='collection.jump')= toybox_text('collection.jump')
+    select#toybox-rail-select(data-toybox-destination disabled)
+      each item in rail.items
+        if item.optionKey
+          option(value=item.url selected=item === railSelected data-toybox-i18n=item.optionKey data-toybox-i18n-params=JSON.stringify({ count: item.count }))= toybox_text(item.optionKey, { count: item.count })
+        else
+          option(value=item.url selected=item === railSelected)= '\u00a0\u00a0'.repeat(item.depth) + item.label + ' (' + item.count + ')'
+    i.fas.fa-chevron-down(aria-hidden='true')

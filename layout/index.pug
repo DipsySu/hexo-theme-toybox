@@ -16,7 +16,7 @@ block content
             .toybox-selector-lights(role='group' data-toybox-i18n-aria='home.select' aria-label='选择文章')
               each article, index in page.posts.data
                 button.toybox-slot(type='button' data-toybox-index=index title=article.title aria-label=`选择第 ${index + 1} 篇` aria-pressed=index === 0 ? 'true' : 'false' class=index === 0 ? 'is-current' : '')
-                  span.toybox-slot-light(aria-hidden='true')
+                  span.toybox-slot-light(aria-hidden='true')= String(index + 1).padStart(2, '0')
             button(type='button' data-toybox-direction='next' data-toybox-i18n-aria='home.next' aria-label='选择下一篇')
               i.fas.fa-chevron-right(aria-hidden='true')
             span.toybox-deck-counter(aria-live='polite')

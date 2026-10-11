@@ -1,1 +1,47 @@
-.category-lists!= list_categories()
+mixin toyboxCategorySummary(category)
+  span.toybox-category-cover(aria-hidden='true')
+    if category.cover
+      img(src=category.cover alt='' width='80' height='104' loading='lazy' decoding='async' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'`)
+    else
+      i.far.fa-folder-open
+  span.toybox-category-copy
+    span.toybox-category-name= category.name
+    span.toybox-category-count(data-toybox-i18n='collection.posts' data-toybox-i18n-params=JSON.stringify({ count: category.count }))= toybox_text('collection.posts', { count: category.count })
+    if category.latestTitle
+      span.toybox-category-latest(data-toybox-i18n='collection.latest' data-toybox-i18n-params=JSON.stringify({ title: category.latestTitle }))= toybox_text('collection.latest', { title: category.latestTitle })
+  if category.url
+    i.fas.fa-arrow-right.toybox-category-arrow(aria-hidden='true')
+
+mixin toyboxCategoryChildren(children)
+  ul.toybox-category-children
+    each child in children
+      - var childParams = { name: child.name, count: child.count }
+      li
+        if child.url
+          a.toybox-category-child(href=child.url style=`--depth: ${child.depth}` aria-label=toybox_text('collection.itemLabel', childParams) data-toybox-i18n-aria='collection.itemLabel' data-toybox-i18n-params=JSON.stringify(childParams))
+            span.toybox-category-child-name= child.name
+            span.toybox-category-child-count= child.count
+        else
+          span.toybox-category-child(style=`--depth: ${child.depth}`)
+            span.toybox-category-child-name= child.name
+        if child.children.length
+          +toyboxCategoryChildren(child.children)
+
+- var toyboxCategories = toybox_category_tree()
+if toyboxCategories.length
+  ul.toybox-category-shelf(aria-label=toybox_text('collection.categories') data-toybox-i18n-aria='collection.categories')
+    each category in toyboxCategories
+      li.toybox-category-box(data-tone=category.tone)
+        if category.url
+          a.toybox-category-main(href=category.url)
+            +toyboxCategorySummary(category)
+        else
+          .toybox-category-main
+            +toyboxCategorySummary(category)
+        if category.children.length
+          +toyboxCategoryChildren(category.children)
+else
+  .toybox-collection-empty
+    i.far.fa-folder-open(aria-hidden='true')
+    p(data-toybox-i18n='collection.emptyCategories')= toybox_text('collection.emptyCategories')
+    a.toybox-collection-empty-link(href=url_for('/') data-toybox-i18n='collection.backToLibrary')= toybox_text('collection.backToLibrary')

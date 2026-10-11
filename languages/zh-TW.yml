@@ -13,6 +13,47 @@ page:
   category: 分類
   archives: 歸檔
 
+collection:
+  home: '主頁'
+  archives: '歸檔'
+  tags: '標籤'
+  categories: '分類'
+  breadcrumb: '目前位置'
+  sections: '收藏分區'
+  posts: '{{count}} 篇文章'
+  tagCount: '{{count}} 個標籤'
+  categoryCount: '{{count}} 個分類'
+  itemLabel: '{{name}}，{{count}} 篇文章'
+  filterTags: '篩選標籤'
+  filterPlaceholder: '輸入標籤名稱'
+  clearFilter: '清除篩選'
+  sort: '排序'
+  sortCount: '文章最多'
+  sortName: '名稱排序'
+  tagResults: '顯示 {{shown}} / {{total}} 個標籤'
+  tagAll: '顯示全部 {{total}} 個標籤'
+  noTags: '沒有符合篩選的標籤。'
+  resetFilter: '顯示全部標籤'
+  emptyTags: '還沒有標籤。'
+  emptyCategories: '還沒有分類。'
+  emptyPosts: '這個收藏裡還沒有文章。'
+  backToLibrary: '返回文章庫'
+  latest: '最新：{{title}}'
+  allPosts: '全部文章'
+  allPostsOption: '全部文章（{{count}}）'
+  allTags: '全部標籤'
+  allCategories: '全部分類'
+  archiveNav: '歸檔年份'
+  tagNav: '標籤列表'
+  categoryNav: '分類列表'
+  jump: '切換收藏'
+  pagination: '分頁'
+  range: '{{start}}-{{end}} / {{total}} 篇文章'
+  previousPage: '上一頁'
+  nextPage: '下一頁'
+  jumpPage: '跳轉到指定頁'
+  pageOption: '第 {{current}} 頁 / 共 {{total}} 頁'
+
 card_post_count: 條評論
 
 sticky: 置頂

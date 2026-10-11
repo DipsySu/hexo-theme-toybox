@@ -1,0 +1,36 @@
+-
+  var headingActive = toyboxIndexType || (toyboxCollection.kind === 'archive' ? 'archives' : toyboxCollection.kind === 'tag' ? 'tags' : 'categories')
+  var headingOnIndex = Boolean(toyboxIndexType) || (toyboxCollection.kind === 'archive' && !page.year && (Number(page.current) || 1) === 1)
+  var headingTitleKey = toyboxCollection && toyboxCollection.kind === 'archive' && !page.year ? 'collection.archives' : false
+  var indexTitles = { tags: ['tags', 'Tags', '标签', '標籤'], categories: ['categories', 'Categories', '分类', '分類'] }
+  if (toyboxIndexType && indexTitles[toyboxIndexType].includes(site_title)) headingTitleKey = 'collection.' + toyboxIndexType
+  var headingCrumbs = toyboxCollection ? toyboxCollection.breadcrumb : [{ key: 'collection.home', url: url_for('/') }, { key: headingTitleKey, label: site_title, current: true }]
+  var headingTitle = toyboxCollection && toyboxCollection.kind === 'archive' && page.year ? headingCrumbs[headingCrumbs.length - 1].label : site_title
+  var headingCountKey = 'collection.posts'
+  var headingCount = toyboxCollection ? toyboxCollection.total : 0
+  if (toyboxIndexType === 'tags') {
+    headingCountKey = 'collection.tagCount'
+    headingCount = toybox_tag_index().length
+  } else if (toyboxIndexType === 'categories') {
+    headingCountKey = 'collection.categoryCount'
+    headingCount = toybox_category_total()
+  }
+
+#page-site-info.toybox-collection-head
+  nav.toybox-breadcrumb(aria-label=toybox_text('collection.breadcrumb') data-toybox-i18n-aria='collection.breadcrumb')
+    ol
+      each crumb in headingCrumbs
+        li
+          if crumb.current || !crumb.url
+            span(aria-current=crumb.current ? 'page' : false data-toybox-i18n=crumb.key || false)= crumb.key ? toybox_text(crumb.key) : crumb.label
+          else
+            a(href=crumb.url data-toybox-i18n=crumb.key || false)= crumb.key ? toybox_text(crumb.key) : crumb.label
+  .toybox-collection-heading
+    h1#site-title(data-toybox-i18n=headingTitleKey)= headingTitleKey ? toybox_text(headingTitleKey) : headingTitle
+    span.toybox-collection-count(data-toybox-i18n=headingCountKey data-toybox-i18n-params=JSON.stringify({ count: headingCount }))= toybox_text(headingCountKey, { count: headingCount })
+  nav.toybox-collection-nav(aria-label=toybox_text('collection.sections') data-toybox-i18n-aria='collection.sections')
+    each link in toybox_collection_links()
+      - var linkCurrent = link.key === headingActive ? (headingOnIndex ? 'page' : 'true') : false
+      a.toybox-collection-nav-link(href=link.url aria-current=linkCurrent class=linkCurrent ? 'is-active' : '')
+        i(class=link.icon aria-hidden='true')
+        span(data-toybox-i18n=`collection.${link.key}`)= toybox_text(`collection.${link.key}`)

@@ -1,25 +1,46 @@
-mixin articleSort(posts)
-  .article-sort
-    - var year
-    - posts.each(function (article) {
-      - let tempYear = date(article.date, 'YYYY')
-      - let no_cover = article.cover === false || !theme.cover.archives_enable ? 'no-article-cover' : ''
-      - let title = article.title || _p('no_title')
-      - let primaryCategory = article.categories && article.categories.data.length > 0 ? article.categories.data[0].name : ''
-      - let primaryTag = article.tags && article.tags.data.length > 0 ? article.tags.data[0].name : ''
-      if tempYear !== year
-        - year = tempYear
-        .article-sort-item.year= year
-      .article-sort-item(class=no_cover)
-        if article.cover && theme.cover.archives_enable
-          a.article-sort-item-img(href=url_for(article.path) title=title)
-            if article.cover_type === 'img'
-              img(src=url_for(toybox_cover(article)) alt=title onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'`)
-            else
-              div.pixel-cover-fallback.is-compact.is-archive-thumb(style=`background: ${article.cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag aria-hidden="true")
-        .article-sort-item-info
-          .article-sort-item-time
-            i.far.fa-calendar-alt
-            time.post-meta-date-created(datetime=date_xml(article.date) title=_p('post.created') + ' ' + full_date(article.date))= date(article.date, config.date_format)
-          a.article-sort-item-title(href=url_for(article.path) title=title)= title
-    - })
+//- One chronological ledger row per post: a single title link, no nested links.
+mixin ledgerRow(article, options)
+  -
+    var title = article.title || _p('no_title')
+    var coversEnabled = !theme.cover || theme.cover.archives_enable !== false
+    var cover = coversEnabled && article.cover !== false && article.cover_type === 'img' ? toybox_cover(article) : ''
+    var categories = !article.categories ? [] : Array.isArray(article.categories) ? article.categories : article.categories.data || []
+    var primary = categories[0]
+    var excerpt = ''
+    if (options.excerpt) {
+      excerpt = article.description || strip_html(article.content || '')
+      if (excerpt.length > 160) excerpt = excerpt.substring(0, 160) + '…'
+    }
+  li.toybox-ledger-row(class=cover ? '' : 'is-coverless')
+    span.toybox-ledger-thumb(aria-hidden='true')
+      if cover
+        img(src=url_for(cover) alt='' width='72' height='72' loading='lazy' decoding='async' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'`)
+      else
+        i.far.fa-file-alt
+    .toybox-ledger-body
+      a.toybox-ledger-title(href=url_for(article.path))= title
+      .toybox-ledger-meta
+        time(datetime=date_xml(article.date))= date(article.date, config.date_format)
+        if primary
+          span.toybox-ledger-category= primary.name
+      if excerpt
+        p.toybox-ledger-excerpt= excerpt
+    i.fas.fa-chevron-right.toybox-ledger-arrow(aria-hidden='true')
+
+mixin articleSort(posts, options)
+  -
+    options = options || {}
+    var rows = Array.isArray(posts) ? posts : posts.toArray()
+    var groups = []
+    rows.forEach(function (article) {
+      var year = options.groupByYear ? date(article.date, 'YYYY') : ''
+      var last = groups[groups.length - 1]
+      if (!last || last.year !== year) groups.push(last = { year: year, posts: [] })
+      last.posts.push(article)
+    })
+  each group in groups
+    if group.year
+      h2.toybox-ledger-year= group.year
+    ol.toybox-ledger-list
+      each article in group.posts
+        +ledgerRow(article, options)

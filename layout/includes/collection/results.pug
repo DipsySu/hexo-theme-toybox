@@ -1,0 +1,12 @@
+include ../mixins/article-sort.pug
+div.toybox-ledger(id=toyboxCollection.kind data-collection-kind=toyboxCollection.kind)
+  include ./rail.pug
+  .toybox-ledger-main
+    if page.posts.length
+      +articleSort(page.posts, { groupByYear: toyboxCollection.groupByYear, excerpt: collectionExcerpt })
+    else
+      .toybox-collection-empty
+        i.far.fa-file-alt(aria-hidden='true')
+        p(data-toybox-i18n='collection.emptyPosts')= toybox_text('collection.emptyPosts')
+        a.toybox-collection-empty-link(href=url_for('/') data-toybox-i18n='collection.backToLibrary')= toybox_text('collection.backToLibrary')
+    include ./pager.pug
