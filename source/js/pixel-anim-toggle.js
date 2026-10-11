@@ -27,6 +27,7 @@
   var readingProgressTarget = null
   var readingProgressFrame = 0
   var readingProgressBound = false
+  var readingProgressObserver = null
   var CLEARED_POSTS_KEY = 'toyboxClearedPosts:v1'
   var CLEARED_POSTS_LIMIT = 200
   var clearedPostsCache = null
@@ -1098,8 +1099,6 @@
     var title = getText(document, '#post-info .post-title') || getText(article, 'h1')
     var category = getText(document, '#post-meta a.post-meta-categories')
     var tag = getText(document, '.post-meta__tags')
-    var date = getText(document, '#post-meta .post-meta-date-created')
-    var wordCount = getText(document, '#post-meta .word-count')
     var stage = category || tag || 'BLOG'
     var headingCount = article.querySelectorAll('h1, h2, h3').length
     var visualSeed = title.length + headingCount * 7
@@ -1126,74 +1125,23 @@
 
     }
 
-    var status = document.createElement('div')
-    status.className = 'pixel-article-status'
-    status.setAttribute('role', 'group')
-    bindToyboxText(status, 'post.info', null, 'aria-label', '文章信息')
-
-    var icon = document.createElement('span')
-    icon.className = 'pixel-article-status-icon'
-    status.appendChild(icon)
-
-    bindToyboxText(addHudChip(status, 'pixel-article-status-chip is-main', ''), 'post.info', null, null, '文章信息')
-    if (stage) addHudChip(status, 'pixel-article-status-chip', stage)
-    if (wordCount) bindToyboxText(addHudChip(status, 'pixel-article-status-chip', ''), 'post.words', { count: wordCount }, null, '字数 ' + wordCount)
-    if (date) addHudChip(status, 'pixel-article-status-chip is-date', date)
-
-    post.insertBefore(status, article)
-
-    var meter = document.createElement('div')
-    meter.className = 'pixel-reading-meter'
-    meter.setAttribute('role', 'progressbar')
-    bindToyboxText(meter, 'post.progress', null, 'aria-label', '文章阅读进度')
-    meter.setAttribute('aria-valuemin', '0')
-    meter.setAttribute('aria-valuemax', '100')
-    meter.setAttribute('aria-valuenow', '0')
-
-    var meterLabel = document.createElement('span')
-    meterLabel.className = 'pixel-reading-meter-label'
-    bindToyboxText(meterLabel, 'post.progress', null, null, '阅读进度')
-    meter.appendChild(meterLabel)
-
-    var meterTrack = document.createElement('span')
-    meterTrack.className = 'pixel-reading-meter-track'
-    meterTrack.setAttribute('aria-hidden', 'true')
-    var meterFill = document.createElement('span')
-    meterFill.className = 'pixel-reading-meter-fill'
-    meterTrack.appendChild(meterFill)
-    meter.appendChild(meterTrack)
-
-    var meterValue = document.createElement('span')
-    meterValue.className = 'pixel-reading-meter-value'
-    meterValue.textContent = '0%'
-    meter.appendChild(meterValue)
-
-    status.insertAdjacentElement('afterend', meter)
-
-    var manualBody = document.createElement('div')
-    manualBody.className = 'pixel-manual-body'
-    meter.insertAdjacentElement('afterend', manualBody)
-
-    var toc = document.getElementById('card-toc')
-    if (toc) {
-      toc.classList.add('pixel-manual-index')
-      bindToyboxText(toc, 'post.toc', null, 'aria-label', '文章章节书签')
-      var tocTitle = toc.querySelector('.item-headline span:not(.toc-percentage)')
-      bindToyboxText(tocTitle, 'post.toc', null, null, '章节书签')
-      manualBody.appendChild(toc)
-    } else {
-      manualBody.classList.add('is-single-page')
+    // The reading layout is rendered by Hexo; only progress is enhanced here.
+    var meter = post.querySelector('.pixel-reading-meter')
+    if (meter) {
+      readingProgressTarget = {
+        article: article,
+        meter: meter,
+        value: meter.querySelector('.pixel-reading-meter-value'),
+        path: normPath(location.pathname)
+      }
+      bindReadingProgress()
+      if (readingProgressObserver) readingProgressObserver.disconnect()
+      if (window.ResizeObserver) {
+        readingProgressObserver = new window.ResizeObserver(scheduleReadingProgress)
+        readingProgressObserver.observe(article)
+      }
+      scheduleReadingProgress()
     }
-    manualBody.appendChild(article)
-
-    readingProgressTarget = {
-      article: article,
-      meter: meter,
-      value: meterValue,
-      path: normPath(location.pathname)
-    }
-    bindReadingProgress()
-    scheduleReadingProgress()
 
     document.querySelectorAll('.post-copyright > div').forEach(function(row, i) {
       bindToyboxDataset(row, 'pixelSave', 'post.record', { index: String(i + 1).padStart(2, '0') })

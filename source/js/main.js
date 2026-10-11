@@ -77,14 +77,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const { highlightCopy, highlightLang, highlightHeightLimit, plugin } = highLight
     const isHighlightShrink = GLOBAL_CONFIG_SITE.isHighlightShrink
     const isShowTool = highlightCopy || highlightLang || isHighlightShrink !== undefined
-    const $figureHighlight = plugin === 'highlighjs' ? document.querySelectorAll('figure.highlight') : document.querySelectorAll('pre[class*="language-"]')
+    const $figureHighlight = plugin === 'highlightjs' ? document.querySelectorAll('figure.highlight') : document.querySelectorAll('pre[class*="language-"]')
 
     if (!((isShowTool || highlightHeightLimit) && $figureHighlight.length)) return
 
     const isPrismjs = plugin === 'prismjs'
     const highlightShrinkClass = isHighlightShrink === true ? 'closed' : ''
-    const highlightShrinkEle = isHighlightShrink !== undefined ? `<i class="fas fa-angle-down expand ${highlightShrinkClass}"></i>` : ''
-    const highlightCopyEle = highlightCopy ? '<div class="copy-notice"></div><i class="fas fa-paste copy-button"></i>' : ''
+    const highlightShrinkEle = isHighlightShrink !== undefined ? `<button type="button" class="fas fa-angle-down expand ${highlightShrinkClass}" aria-label="展开或收起代码" title="展开或收起代码" data-toybox-i18n-title="post.toggleCode" data-toybox-i18n-aria="post.toggleCode" aria-expanded="${isHighlightShrink !== true}"></button>` : ''
+    const highlightCopyEle = highlightCopy ? '<div class="copy-notice" role="status"></div><button type="button" class="fas fa-copy copy-button" aria-label="复制代码" title="复制代码" data-toybox-i18n-title="post.copyCode" data-toybox-i18n-aria="post.copyCode"></button>' : ''
 
     const copy = (text, ctx) => {
       if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const highlightShrinkFn = (ele) => {
       const $nextEle = [...ele.parentNode.children].slice(1)
       ele.firstChild.classList.toggle('closed')
+      ele.firstChild.setAttribute('aria-expanded', String(!ele.firstChild.classList.contains('closed')))
       if (btf.isHidden($nextEle[$nextEle.length - 1])) {
         $nextEle.forEach(e => { e.style.display = 'block' })
       } else {
@@ -382,29 +383,33 @@ document.addEventListener('DOMContentLoaded', function () {
       isExpand = $cardToc.classList.contains('is-expand')
 
       window.mobileToc = {
-        open: () => {
-          $cardTocLayout.style.cssText = 'animation: toc-open .3s; opacity: 1; right: 55px'
+        open: (trigger) => {
+          $cardTocLayout.classList.add('is-open')
+          window.mobileToc.trigger = trigger
+          document.querySelectorAll('[data-reader-action="toc"]').forEach(button => button.setAttribute('aria-expanded', 'true'))
+          const firstLink = $cardToc.querySelector('.toc-link')
+          firstLink && firstLink.focus({ preventScroll: true })
         },
-
-        close: () => {
-          $cardTocLayout.style.animation = 'toc-close .2s'
-          setTimeout(() => {
-            $cardTocLayout.style.cssText = "opacity:''; animation: ''; right: ''"
-          }, 100)
+        close: (restoreFocus = false) => {
+          $cardTocLayout.classList.remove('is-open')
+          document.querySelectorAll('[data-reader-action="toc"]').forEach(button => button.setAttribute('aria-expanded', 'false'))
+          if (restoreFocus && window.mobileToc.trigger) window.mobileToc.trigger.focus({ preventScroll: true })
         }
       }
 
       // toc元素點擊
       $cardToc.addEventListener('click', e => {
+        const $target = e.target.closest('.toc-link')
+        if (!$target) return
+        const heading = document.getElementById(decodeURIComponent($target.getAttribute('href').slice(1)))
+        if (!heading) return
         e.preventDefault()
-        const target = e.target.classList
-        if (target.contains('toc-content')) return
-        const $target = target.contains('toc-link')
-          ? e.target
-          : e.target.parentElement
-        btf.scrollToDest(btf.getEleTop(document.getElementById(decodeURI($target.getAttribute('href')).replace('#', ''))), 300)
-        if (window.innerWidth < 900) {
+        const offset = parseFloat(window.getComputedStyle(heading).scrollMarginTop) || 80
+        window.scrollTo({ top: Math.max(0, btf.getEleTop(heading) - offset), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+        if (window.innerWidth <= 900) {
           window.mobileToc.close()
+          heading.setAttribute('tabindex', '-1')
+          heading.focus({ preventScroll: true })
         }
       })
 
@@ -424,15 +429,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const list = $article.querySelectorAll('h1,h2,h3,h4,h5,h6')
     let detectItem = ''
     const findHeadPosition = function (top) {
-      if (top === 0) {
-        return false
-      }
-
       let currentId = ''
       let currentIndex = ''
 
       list.forEach(function (ele, index) {
-        if (top > btf.getEleTop(ele) - 80) {
+        if (top >= btf.getEleTop(ele) - (parseFloat(window.getComputedStyle(ele).scrollMarginTop) || 80) - 4) {
           const id = ele.id
           currentId = id ? '#' + encodeURI(id) : ''
           currentIndex = index
@@ -452,7 +453,8 @@ document.addEventListener('DOMContentLoaded', function () {
           return
         }
 
-        const currentActive = $tocLink[currentIndex]
+        const currentActive = Array.from($tocLink).find(link => link.getAttribute('href') === currentId)
+        if (!currentActive) return
         currentActive.classList.add('active')
 
         setTimeout(() => {
@@ -500,25 +502,40 @@ document.addEventListener('DOMContentLoaded', function () {
    * Rightside
    */
   const rightSideFn = {
-    switchReadMode: () => { // read-mode
+    switchReadMode: (trigger) => { // read-mode
       const $body = document.body
-      $body.classList.add('read-mode')
+      if ($body.classList.contains('read-mode')) return
+      const preservePosition = change => {
+        const article = document.getElementById('article-container')
+        const blocks = article ? Array.from(article.querySelectorAll('p, h1, h2, h3, h4, h5, h6, pre, img')) : []
+        const anchor = blocks.find(node => {
+          const rect = node.getBoundingClientRect()
+          return rect.top >= 180 && rect.top < window.innerHeight
+        }) || blocks.find(node => node.getBoundingClientRect().bottom > 180)
+        const top = anchor && anchor.getBoundingClientRect().top
+        change()
+        if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top - top)
+      }
+      window.mobileToc && window.mobileToc.close()
+      preservePosition(() => $body.classList.add('read-mode'))
       const newEle = document.createElement('button')
       newEle.type = 'button'
       newEle.className = 'fas fa-times exit-readmode'
-      newEle.title = '退出阅读模式'
-      newEle.setAttribute('aria-label', '退出阅读模式')
+      newEle.title = window.ToyboxSettings ? window.ToyboxSettings.t('rightside.exitReadMode') : '退出阅读模式'
+      newEle.setAttribute('aria-label', newEle.title)
       newEle.dataset.toyboxI18nTitle = 'rightside.exitReadMode'
       newEle.dataset.toyboxI18nAria = 'rightside.exitReadMode'
       $body.appendChild(newEle)
 
       const clickFn = () => {
-        $body.classList.remove('read-mode')
+        preservePosition(() => $body.classList.remove('read-mode'))
         newEle.remove()
         newEle.removeEventListener('click', clickFn)
+        if (trigger && trigger.getClientRects().length) trigger.focus({ preventScroll: true })
       }
 
       newEle.addEventListener('click', clickFn)
+      newEle.focus({ preventScroll: true })
     },
     switchDarkMode: () => { // Switch Between Light And Dark Mode
       const willChangeMode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
@@ -544,25 +561,35 @@ document.addEventListener('DOMContentLoaded', function () {
       button && button.setAttribute('aria-pressed', String(saveStatus === 'hide'))
     },
 
-    runMobileToc: () => {
-      if (window.getComputedStyle(document.getElementById('card-toc')).getPropertyValue('opacity') === '0') window.mobileToc.open()
-      else window.mobileToc.close()
+    runMobileToc: (trigger) => {
+      const toc = document.getElementById('card-toc')
+      if (!toc || !window.mobileToc) return
+      if (!toc.classList.contains('is-open')) window.mobileToc.open(trigger)
+      else window.mobileToc.close(true)
     }
   }
 
   document.addEventListener('click', function (e) {
     const $target = e.target.closest && e.target.closest('button, a')
+    const toc = document.getElementById('card-toc')
+    if (toc && toc.classList.contains('is-open') && !e.target.closest('#card-toc, [data-reader-action="toc"], #mobile-toc-button')) window.mobileToc.close()
+    if ($target && $target.dataset.readerAction) {
+      if ($target.dataset.readerAction === 'toc') rightSideFn.runMobileToc($target)
+      if ($target.dataset.readerAction === 'close-toc') window.mobileToc && window.mobileToc.close(true)
+      if ($target.dataset.readerAction === 'focus') rightSideFn.switchReadMode($target)
+      return
+    }
     if (!$target || !$target.closest('#rightside, #toybox-preferences-panel')) return
     switch ($target.id) {
       case 'go-up':
         rightSideFn.scrollToTop()
         break
       case 'mobile-toc-button':
-        rightSideFn.runMobileToc()
+        rightSideFn.runMobileToc($target)
         break
       case 'readmode':
         window.ToyboxSettings && window.ToyboxSettings.closePanel()
-        rightSideFn.switchReadMode()
+        rightSideFn.switchReadMode($target)
         break
       case 'darkmode':
         rightSideFn.switchDarkMode()
@@ -573,6 +600,13 @@ document.addEventListener('DOMContentLoaded', function () {
       default:
         break
     }
+  })
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return
+    const exit = document.querySelector('.exit-readmode')
+    if (exit) exit.click()
+    else if (window.mobileToc && document.querySelector('#card-toc.is-open')) window.mobileToc.close(true)
   })
 
   /**
@@ -788,6 +822,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initAdjust()
 
     if (GLOBAL_CONFIG_SITE.isPost) {
+      document.querySelectorAll('.toybox-reader-toolbar button[hidden]').forEach(button => { button.hidden = false })
       GLOBAL_CONFIG.noticeOutdate !== undefined && addPostOutdateNotice()
       GLOBAL_CONFIG.relativeDate.post && relativeDate(document.querySelectorAll('#post-meta time'))
     } else {

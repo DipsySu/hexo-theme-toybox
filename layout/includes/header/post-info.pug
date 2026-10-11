@@ -1,4 +1,7 @@
 #post-info
+  a.toybox-post-back(href=url_for('/'))
+    i.fas.fa-arrow-left(aria-hidden='true')
+    span(data-toybox-i18n='home.library') 文章库
   if page.cover && page.cover_type === 'img'
     img.pixel-article-sleeve-art(src=url_for(toybox_cover(page)) width='168' height='176' alt='')
   h1.post-title= page.title || _p('no_title')

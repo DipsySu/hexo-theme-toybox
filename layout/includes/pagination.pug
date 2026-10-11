@@ -19,7 +19,9 @@ if is_post()
           else
             .cover(style=`background: ${prev.cover || 'var(--default-bg-color)'}`)
           .pagination-info
-            .label(data-toybox-i18n="common.previousPage")=_p('pagination.prev')
+            .label
+              i.fas.fa-arrow-left(aria-hidden='true')
+              span(data-toybox-i18n="post.previous") 上一篇
             .prev_info=prev.title
           
     if(next)
@@ -31,7 +33,9 @@ if is_post()
           else
             .cover(style=`background: ${next.cover || 'var(--default-bg-color)'}`)
           .pagination-info
-            .label(data-toybox-i18n="common.nextPage")=_p('pagination.next')
+            .label
+              span(data-toybox-i18n="post.next") 下一篇
+              i.fas.fa-arrow-right(aria-hidden='true')
             .next_info=next.title
 else if is_home()
   - const currentPage = page.current || 1

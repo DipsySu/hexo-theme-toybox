@@ -1,0 +1,18 @@
+.toybox-reader-toolbar
+  .toybox-reader-actions
+    if showToc
+      button.toybox-reader-toc(type='button' data-reader-action='toc' hidden aria-controls='card-toc' aria-expanded='false' aria-label='文章目录' title='文章目录' data-toybox-i18n-aria='post.toc' data-toybox-i18n-title='post.toc')
+        i.fas.fa-list-ul(aria-hidden='true')
+    span.toybox-reader-label(data-toybox-i18n='post.progress') 阅读进度
+  .pixel-reading-meter(role='progressbar' aria-label='阅读进度' data-toybox-i18n-aria='post.progress' aria-valuemin='0' aria-valuemax='100' aria-valuenow='0')
+    span.pixel-reading-meter-track(aria-hidden='true')
+      span.pixel-reading-meter-fill
+    span.pixel-reading-meter-value 0%
+  .pixel-article-status
+  if theme.readmode
+    button.toybox-reader-focus(type='button' data-reader-action='focus' hidden aria-label='阅读模式' title='阅读模式' data-toybox-i18n-aria='rightside.readMode' data-toybox-i18n-title='rightside.readMode')
+      i.fas.fa-book-open(aria-hidden='true')
+.pixel-manual-body(class=!showToc ? 'is-single-page' : '')
+  if showToc
+    include ../widget/card_post_toc.pug
+  article#article-container.post-content!=page.content

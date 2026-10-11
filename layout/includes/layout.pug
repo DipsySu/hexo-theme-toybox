@@ -21,7 +21,7 @@ html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside
             div!= body
           else
             block content
-            if theme.aside.enable && page.aside !== false && !suppressToyboxAside
+            if theme.aside.enable && page.aside !== false && !suppressToyboxAside && !is_post()
               include widget/index.pug
 
         if toyboxViewClass !== 'toybox-home'

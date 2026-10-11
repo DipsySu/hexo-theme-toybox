@@ -5,17 +5,18 @@ block content
     if top_img === false
       include includes/header/post-info.pug
 
-    article#article-container.post-content!=page.content
-    include includes/post/post-copyright.pug
-    .tag_share
-      if (theme.post_meta.post.tags)
-        .post-meta__tag-list
-          each item, index in page.tags.data
-            a(href=url_for(item.path)).post-meta__tags #[=item.name]
-      if theme.sharejs.enable
-        include includes/third-party/share/share-js.pug
+    include includes/post/reader.pug
+    .toybox-article-footer
+      include includes/post/post-copyright.pug
+      .tag_share
+        if (theme.post_meta.post.tags)
+          .post-meta__tag-list
+            each item, index in page.tags.data
+              a(href=url_for(item.path)).post-meta__tags #[=item.name]
+        if theme.sharejs.enable
+          include includes/third-party/share/share-js.pug
 
-    if theme.post_pagination
-      include includes/pagination.pug
-    if theme.related_post && theme.related_post.enable
-      != related_posts(page,site.posts)
+      if theme.post_pagination
+        include includes/pagination.pug
+      if theme.related_post && theme.related_post.enable
+        != related_posts(page,site.posts)
