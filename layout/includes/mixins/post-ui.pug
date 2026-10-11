@@ -1,6 +1,6 @@
 mixin postUI(posts)
   each article , index in page.posts.data
-    .recent-post-item
+    .recent-post-item(class=index === 0 ? 'toybox-featured' : 'toybox-cartridge-card' data-toybox-slot=index data-toybox-number=index + 1 data-toybox-tone=['coral', 'aqua', 'yellow', 'green', 'aqua'][index % 5] role='listitem')
       -
         let link = article.link || article.path
         let title = article.title || _p('no_title')
@@ -8,7 +8,7 @@ mixin postUI(posts)
         let leftOrRight = position === 'both'
           ? index%2 == 0 ? 'left' : 'right'
           : position === 'left' ? 'left' : 'right'
-        let post_cover = article.cover
+        let post_cover = toybox_cover(article)
         let no_cover = article.cover === false || !theme.cover.index_enable ? 'no-cover' : ''
         let coverSource = article.toybox_cover_source || (post_cover ? 'explicit' : 'none')
         let primaryCategory = article.categories && article.categories.data.length > 0 ? article.categories.data[0].name : ''
@@ -16,9 +16,9 @@ mixin postUI(posts)
       -
       if post_cover && theme.cover.index_enable
         .post_cover(class=leftOrRight)
-          a(href=url_for(link) title=title)
+          a(href=url_for(link) title=title tabindex='-1' aria-hidden='true')
             if article.cover_type === 'img'
-              img.post-bg(src=url_for(post_cover) onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt=title data-toybox-cover-source=coverSource)
+              img.post-bg(src=url_for(post_cover) width='480' height='480' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt='' data-toybox-cover-source=coverSource)
             else
               div.post-bg.pixel-cover-fallback(style=`background: ${post_cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag data-toybox-cover-source=coverSource aria-hidden="true")
       .recent-post-info(class=no_cover)
@@ -83,3 +83,9 @@ mixin postUI(posts)
             - let expert = content.substring(0, theme.index_post_content.length) 
             - content.length > theme.index_post_content.length ? expert += ' ...' : ''
             .content!= expert
+        if is_home()
+          a.toybox-open-button(href=url_for(link) aria-label=title)
+            span.toybox-open-label(data-toybox-i18n='home.read') 阅读文章
+            i.fas.fa-arrow-right(aria-hidden='true')
+          a.toybox-card-arrow(href=url_for(link) aria-label=title)
+            i.fas.fa-arrow-right(aria-hidden='true')

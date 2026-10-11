@@ -3,7 +3,42 @@ extends includes/layout.pug
 block content
   include ./includes/mixins/post-ui.pug
   #recent-posts.recent-posts
-    +postUI
-    include includes/pagination.pug
-    footer#footer
-      !=partial('includes/footer', {}, {cache: true})
+    section.toybox-stage
+      section.toybox-recent-deck(aria-labelledby='toybox-recent-title' tabindex='0')
+        .toybox-deck-header
+          h2#toybox-recent-title.toybox-recent-title
+            i.far.fa-clock(aria-hidden='true')
+            span(data-toybox-i18n='home.recent') 近期文章
+          .toybox-deck-controls
+            span.toybox-selection-label(data-toybox-i18n='home.onThisPage') 本页文章
+            button(type='button' data-toybox-direction='previous' data-toybox-i18n-aria='home.previous' aria-label='选择上一篇')
+              i.fas.fa-chevron-left(aria-hidden='true')
+            .toybox-selector-lights(role='group' data-toybox-i18n-aria='home.select' aria-label='选择文章')
+              each article, index in page.posts.data
+                button.toybox-slot(type='button' data-toybox-index=index title=article.title aria-label=`选择第 ${index + 1} 篇` aria-pressed=index === 0 ? 'true' : 'false' class=index === 0 ? 'is-current' : '')
+                  span.toybox-slot-light(aria-hidden='true')
+            button(type='button' data-toybox-direction='next' data-toybox-i18n-aria='home.next' aria-label='选择下一篇')
+              i.fas.fa-chevron-right(aria-hidden='true')
+            span.toybox-deck-counter(aria-live='polite')
+        .toybox-card-row
+          .toybox-card-track(role='list')
+            +postUI
+        if !page.posts.length
+          p.toybox-empty-slot(data-toybox-i18n='home.selectionEmpty') 没有可选择的文章
+    section.toybox-bottom-console
+      nav.toybox-collection-dock(aria-label='内容收藏架' data-toybox-i18n-aria='home.contentShelf')
+        a(href=url_for('/archives/'))
+          i.far.fa-file-alt(aria-hidden='true')
+          span=site.posts.length
+          small(data-toybox-i18n='home.articles') 文章
+        a(href=url_for('/tags/'))
+          i.fas.fa-tag(aria-hidden='true')
+          span=site.tags.length
+          small(data-toybox-i18n='home.tags') 标签
+        a(href=url_for('/categories/'))
+          i.far.fa-folder(aria-hidden='true')
+          span=site.categories.length
+          small(data-toybox-i18n='home.categories') 分类
+      footer#footer
+        !=partial('includes/footer', {}, {cache: true})
+      include includes/pagination.pug

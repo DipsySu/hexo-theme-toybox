@@ -38,7 +38,7 @@ if toyboxSettings
             i.fas.fa-gamepad(aria-hidden="true")
             span.toybox-action-label(data-toybox-i18n="rightside.motionOn") 动效开启
           if is_home()
-            button#pixel-sprite-test-btn(type="button" title="Sprite 测试台" aria-label="打开 Sprite 测试台" aria-expanded="false")
+            button#pixel-sprite-test-btn(type="button" title="Sprite 测试台" aria-label="打开 Sprite 测试台" aria-expanded="false" data-toybox-i18n-aria="rightside.spriteLab" data-toybox-i18n-title="rightside.spriteLab")
               i.fas.fa-th(aria-hidden="true")
               span.toybox-action-label(data-toybox-i18n="rightside.spriteLab") Sprite 测试台
           if is_post() && readmode

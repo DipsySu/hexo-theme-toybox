@@ -428,53 +428,26 @@
   }
 
   function setCartridgeCardMode(card, featured, currentPage, totalCards) {
-    var title = card.querySelector('.article-title')
-    var info = card.querySelector('.recent-post-info')
-    var oldBadge = card.querySelector('.toybox-featured-badge')
-    var oldOpen = card.querySelector('.toybox-open-button')
-    var oldArrow = card.querySelector('.toybox-card-arrow')
-    if (oldBadge) oldBadge.remove()
-    if (oldOpen) oldOpen.remove()
-    if (oldArrow) oldArrow.remove()
+    card.classList.toggle('toybox-featured', featured)
+    card.classList.toggle('toybox-cartridge-card', !featured)
+    if (featured) card.setAttribute('aria-current', 'true')
+    else card.removeAttribute('aria-current')
+    bindToyboxText(card, 'home.articlePosition', { current: card.dataset.toyboxNumber, total: totalCards }, 'aria-label')
+    var title = getText(card, '.article-title')
+    card.querySelectorAll('.toybox-open-button, .toybox-card-arrow').forEach(function(link) {
+      bindToyboxText(link, 'home.readTitle', { title: title }, 'aria-label')
+    })
+  }
 
-    card.classList.remove('toybox-featured', 'toybox-cartridge-card', 'toybox-tone-featured', 'toybox-tone-aqua', 'toybox-tone-yellow', 'toybox-tone-coral')
-    card.classList.add(featured ? 'toybox-featured' : 'toybox-cartridge-card')
-    card.setAttribute('role', 'listitem')
-    bindToyboxText(card, 'home.articlePosition', { current: card.dataset.toyboxNumber, total: totalCards }, 'aria-label', '文章 ' + card.dataset.toyboxNumber + ' / ' + totalCards)
-
-    if (featured) {
-      card.classList.add('toybox-tone-featured')
-      card.setAttribute('aria-current', 'true')
-      card.removeAttribute('aria-hidden')
-      card.removeAttribute('inert')
-
-      var badge = document.createElement('span')
-      badge.className = 'toybox-featured-badge'
-      bindToyboxText(badge, currentPage === 1 ? 'home.current' : 'home.pageCurrent', null, null, currentPage === 1 ? '当前选择' : '本页选择')
-      card.insertBefore(badge, card.firstChild)
-
-      if (title && info) {
-        var open = document.createElement('a')
-        open.className = 'toybox-open-button'
-        open.href = title.href
-        bindToyboxText(open, 'home.readTitle', { title: (title.textContent || '').trim() }, 'aria-label')
-        open.innerHTML = '<span aria-hidden="true">A</span><span class="toybox-open-label"></span>'
-        bindToyboxText(open.querySelector('.toybox-open-label'), 'home.read', null, null, '阅读文章')
-        info.appendChild(open)
-      }
-      return
-    }
-
-    card.classList.add('toybox-tone-' + card.dataset.toyboxTone)
-    card.removeAttribute('aria-current')
-    if (title && info) {
-      var arrow = document.createElement('a')
-      arrow.className = 'toybox-card-arrow'
-      arrow.href = title.href
-      bindToyboxText(arrow, 'home.readTitle', { title: (title.textContent || '').trim() }, 'aria-label')
-      arrow.innerHTML = '<i class="fas fa-arrow-right" aria-hidden="true"></i>'
-      info.appendChild(arrow)
-    }
+  // Arrow keys also work while a rack selector is focused; A never activates a form control.
+  function toyboxShortcutsBlocked(event) {
+    if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return true
+    var target = event.target
+    var rackArrow = (event.key === 'ArrowLeft' || event.key === 'ArrowRight') && target && target.closest && target.closest('.toybox-deck-controls button')
+    if (target && (target.isContentEditable || (!rackArrow && target.closest && target.closest('input, textarea, select, button, a, [role="dialog"], [contenteditable="true"]')))) return true
+    return Array.prototype.some.call(document.querySelectorAll('[role="dialog"], #sidebar-menus.open'), function(panel) {
+      return !panel.hidden && panel.getAttribute('aria-hidden') !== 'true' && panel.getClientRects().length > 0 && getComputedStyle(panel).visibility !== 'hidden'
+    })
   }
 
   function setupToyboxCarousel(stage, deck, viewport, track, cards, currentPage) {
@@ -562,9 +535,7 @@
     }
 
     function onKeydown(event) {
-      if (!deck.isConnected || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
-      var target = event.target
-      if (target && ((target.matches && target.matches('input, textarea, select')) || target.isContentEditable)) return
+      if (!deck.isConnected || toyboxShortcutsBlocked(event)) return
       if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         event.preventDefault()
         select(event.key === 'ArrowLeft' ? -1 : 1)
@@ -638,7 +609,7 @@
   // previous same-origin page (falling back to the homepage); on the homepage
   // it stays quiet so visitors are never yanked off the site.
   function onToyboxGamepadBack(event) {
-    if (event.defaultPrevented || event.repeat || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    if (event.repeat || toyboxShortcutsBlocked(event)) return
     if (event.key !== 'b' && event.key !== 'B') return
     var target = event.target
     if (target && ((target.matches && target.matches('input, textarea, select')) || target.isContentEditable)) return
@@ -700,220 +671,118 @@
       })
     }
 
-    pagination.querySelectorAll('a[href]').forEach(function(link) {
+    function navigateToPage(href, targetPage, trigger) {
+      if (body.classList.contains('toybox-page-leaving') || targetPage === currentPage) return
+      var targetUrl
+      try {
+        targetUrl = new URL(href, location.href)
+      } catch (error) {
+        return
+      }
+      if (targetUrl.origin !== location.origin) return
+      targetUrl.hash = ''
+
+      var direction = targetPage < currentPage ? 'previous' : 'next'
+      var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      body.dataset.toyboxPageDirection = direction
+      body.classList.remove('toybox-page-entering')
+      body.classList.add('toybox-page-leaving')
+      trigger.classList.add('is-toybox-activating')
+      var pageSelect = pagination.querySelector('#toybox-page-select')
+      if (pageSelect) pageSelect.disabled = true
+      pagination.dataset.toyboxMotionDirection = direction
+      pagination.setAttribute('aria-busy', 'true')
+      if (recentPosts) recentPosts.setAttribute('aria-busy', 'true')
+      try {
+        sessionStorage.setItem(TOYBOX_PAGE_MOTION_KEY, direction)
+      } catch (error) {}
+
+      var previousScrollTop = window.scrollY
+      if (!window.fetch) {
+        window.setTimeout(function() { location.assign(targetUrl.href) }, reducedMotion ? 0 : 360)
+        return
+      }
+      var transitionDelay = new Promise(function(resolve) {
+        window.setTimeout(resolve, reducedMotion ? 0 : 360)
+      })
+      var pageRequest = window.fetch(targetUrl.pathname + targetUrl.search, {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'toybox-pagination' }
+      }).then(function(response) {
+        if (!response.ok) throw new Error('分页加载失败：' + response.status)
+        return response.text()
+      })
+
+      Promise.all([transitionDelay, pageRequest]).then(function(results) {
+        var parsed = new DOMParser().parseFromString(results[1], 'text/html')
+        var nextPosts = parsed.querySelector('#recent-posts')
+        if (!nextPosts || !recentPosts || !recentPosts.isConnected) throw new Error('分页内容缺失')
+
+        var importedPosts = document.importNode(nextPosts, true)
+        if (toyboxCarouselCleanup) toyboxCarouselCleanup()
+        recentPosts.replaceWith(importedPosts)
+        history.pushState({ toyboxPage: targetPage }, '', targetUrl.pathname + targetUrl.search)
+        if (parsed.title) document.title = parsed.title
+        window.scrollTo({ top: previousScrollTop, left: 0, behavior: 'auto' })
+        enhancePixelUi()
+        if (window.lazyLoadInstance) window.lazyLoadInstance.update()
+        var focusSelector = trigger.tagName === 'SELECT' ? '#toybox-page-select' : trigger.classList.contains('prev') ? '.toybox-page-step.prev' : '.toybox-page-step.next'
+        var focusTarget = importedPosts.querySelector(focusSelector) || importedPosts.querySelector('#toybox-page-select')
+        if (focusTarget && focusTarget.disabled) focusTarget = importedPosts.querySelector('#toybox-page-select')
+        if (focusTarget) focusTarget.focus({ preventScroll: true })
+        window.requestAnimationFrame(function() {
+          window.scrollTo({ top: previousScrollTop, left: 0, behavior: 'auto' })
+        })
+      }).catch(function() {
+        location.assign(targetUrl.href)
+      })
+    }
+
+    pagination.querySelectorAll('a[data-toybox-page]').forEach(function(link) {
       link.addEventListener('click', function(event) {
         if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || link.target === '_blank') return
-        if (body.classList.contains('toybox-page-leaving')) {
-          event.preventDefault()
-          return
-        }
-
-        var targetUrl
-        try {
-          targetUrl = new URL(link.href, location.href)
-        } catch (error) {
-          return
-        }
-        if (targetUrl.origin !== location.origin) return
-        targetUrl.hash = ''
-
-        var pageMatch = targetUrl.pathname.match(/\/page\/(\d+)/)
-        var targetPage = pageMatch ? parseInt(pageMatch[1], 10) : 1
-        var direction = targetPage < currentPage ? 'previous' : 'next'
-        var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
         event.preventDefault()
         event.stopPropagation()
-        body.dataset.toyboxPageDirection = direction
-        body.classList.remove('toybox-page-entering')
-        body.classList.add('toybox-page-leaving')
-        link.classList.add('is-toybox-activating')
-        pagination.dataset.toyboxMotionDirection = direction
-        pagination.setAttribute('aria-busy', 'true')
-        if (recentPosts) recentPosts.setAttribute('aria-busy', 'true')
-        try {
-          sessionStorage.setItem(TOYBOX_PAGE_MOTION_KEY, direction)
-        } catch (error) {}
-
-        var previousScrollTop = window.scrollY
-        if (!window.fetch) {
-          window.setTimeout(function() { location.assign(targetUrl.href) }, reducedMotion ? 0 : 360)
-          return
-        }
-        var transitionDelay = new Promise(function(resolve) {
-          window.setTimeout(resolve, reducedMotion ? 0 : 360)
-        })
-        var pageRequest = window.fetch(targetUrl.pathname + targetUrl.search, {
-          credentials: 'same-origin',
-          headers: { 'X-Requested-With': 'toybox-pagination' }
-        }).then(function(response) {
-          if (!response.ok) throw new Error('分页加载失败：' + response.status)
-          return response.text()
-        })
-
-        Promise.all([transitionDelay, pageRequest]).then(function(results) {
-          var parsed = new DOMParser().parseFromString(results[1], 'text/html')
-          var nextPosts = parsed.querySelector('#recent-posts')
-          if (!nextPosts || !recentPosts || !recentPosts.isConnected) throw new Error('分页内容缺失')
-
-          var importedPosts = document.importNode(nextPosts, true)
-          if (toyboxCarouselCleanup) toyboxCarouselCleanup()
-          recentPosts.replaceWith(importedPosts)
-          history.pushState({ toyboxPage: targetPage }, '', targetUrl.pathname + targetUrl.search)
-          if (parsed.title) document.title = parsed.title
-          window.scrollTo({ top: previousScrollTop, left: 0, behavior: 'auto' })
-          enhancePixelUi()
-          window.requestAnimationFrame(function() {
-            window.scrollTo({ top: previousScrollTop, left: 0, behavior: 'auto' })
-          })
-        }).catch(function() {
-          location.assign(targetUrl.href)
-        })
+        navigateToPage(link.href, parseInt(link.dataset.toyboxPage, 10), link)
       })
+    })
+    var picker = pagination.querySelector('#toybox-page-select')
+    if (picker) picker.addEventListener('change', function() {
+      var selected = picker.options[picker.selectedIndex]
+      navigateToPage(selected.value, parseInt(selected.dataset.page, 10), picker)
     })
   }
 
   function enhanceToyboxHome() {
     var body = document.body
-    var wrap = document.getElementById('body-wrap')
     var posts = document.getElementById('recent-posts')
-    var path = relativePath(location.pathname).replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
-    var isHomePath = path === '/' || /^\/page\/\d+$/.test(path)
-    var isToyboxHome = Boolean(body && wrap && posts && isHomePath && wrap.querySelector('#page-header.full_page'))
-
-    if (body) body.classList.toggle('toybox-home', isToyboxHome)
-    if (!isToyboxHome && toyboxCarouselCleanup) toyboxCarouselCleanup()
-    if (!isToyboxHome || posts.dataset.toyboxReady) return
-
-    var articleAssets = homeFallbackCovers()
-    var tones = ['aqua', 'yellow', 'coral']
-    var cards = Array.prototype.slice.call(posts.querySelectorAll('.recent-post-item:not(.ads-wrap)'))
-    var featuredCard = cards[0]
+    var stage = posts && posts.querySelector('.toybox-stage')
+    if (!stage || posts.dataset.toyboxReady) return
+    var deck = stage.querySelector('.toybox-recent-deck')
+    var viewport = deck.querySelector('.toybox-card-row')
+    var track = deck.querySelector('.toybox-card-track')
+    var cards = Array.prototype.slice.call(track.querySelectorAll('.recent-post-item'))
     var pagination = posts.querySelector('#pagination')
-    var footer = posts.querySelector(':scope > #footer')
-    var currentPageEl = pagination && pagination.querySelector('.page-number.current')
-    var currentPage = parseInt(currentPageEl && currentPageEl.textContent, 10) || 1
-    var pageNumbers = pagination ? Array.prototype.slice.call(pagination.querySelectorAll('.page-number')) : []
-    var totalPage = pageNumbers.reduce(function(max, el) {
-      var value = parseInt(el.textContent, 10)
-      return Number.isFinite(value) ? Math.max(max, value) : max
-    }, currentPage)
-
-    cards.forEach(function(card, i) {
-      card.classList.remove('toybox-standby')
-      card.dataset.toyboxSlot = String(i)
-      card.dataset.toyboxNumber = String(i + 1)
-      card.dataset.toyboxTone = tones[i % tones.length]
-
-      var cover = card.querySelector('.post-bg, .post_cover img')
-      if (cover && cover.dataset.toyboxCoverSource === 'fallback' && articleAssets[i]) {
-        setToyboxCover(cover, articleAssets[i])
-      }
-
-      var oldHud = card.querySelector('.pixel-post-hud')
-      if (oldHud) oldHud.remove()
-      setCartridgeCardMode(card, i === 0, currentPage, cards.length)
+    var currentPage = parseInt(pagination.dataset.currentPage, 10) || 1
+    var totalPage = parseInt(pagination.dataset.totalPages, 10) || 1
+    cards.forEach(function(card, index) {
+      setCartridgeCardMode(card, index === 0, currentPage, cards.length)
     })
-
-    var stage = document.createElement('section')
-    stage.className = 'toybox-stage'
-    bindToyboxText(stage, 'home.latest', null, 'aria-label', '最新文章')
-
-    var recentDeck = document.createElement('section')
-    recentDeck.className = 'toybox-recent-deck'
-    recentDeck.setAttribute('aria-labelledby', 'toybox-recent-title')
-    recentDeck.setAttribute('aria-roledescription', toyboxText('home.carousel', null, '循环文章列表'))
-    recentDeck.setAttribute('tabindex', '0')
-
-    var deckHeader = document.createElement('div')
-    deckHeader.className = 'toybox-deck-header'
-
-    var recentTitle = document.createElement('h2')
-    recentTitle.id = 'toybox-recent-title'
-    recentTitle.className = 'toybox-recent-title'
-    recentTitle.innerHTML = '<i class="far fa-clock" aria-hidden="true"></i><span>近期文章</span>'
-    bindToyboxText(recentTitle.querySelector('span'), 'home.recent', null, null, '近期文章')
-
-    var cardRow = document.createElement('div')
-    cardRow.className = 'toybox-card-row'
-
-    var cardTrack = document.createElement('div')
-    cardTrack.className = 'toybox-card-track'
-    cardTrack.setAttribute('role', 'list')
-    bindToyboxText(cardTrack, 'home.recent', null, 'aria-label', '近期文章')
-
-    var controls = document.createElement('div')
-    controls.className = 'toybox-deck-controls'
-    controls.innerHTML = [
-      '<button type="button" data-toybox-direction="previous"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>',
-      '<div class="toybox-selector-numbers" role="group">' + cards.map(function(card, index) {
-        return '<button type="button" data-toybox-index="' + index + '">' + (index + 1) + '</button>'
-      }).join('') + '</div>',
-      '<button type="button" data-toybox-direction="next"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>',
-      '<span class="toybox-deck-counter" aria-live="polite"></span>'
-    ].join('')
-    var previousControl = controls.querySelector('[data-toybox-direction="previous"]')
-    var nextControl = controls.querySelector('[data-toybox-direction="next"]')
-    bindToyboxText(previousControl, 'home.previous', null, 'aria-label', '选择上一篇')
-    bindToyboxText(previousControl, 'home.previous', null, 'title', '选择上一篇')
-    bindToyboxText(nextControl, 'home.next', null, 'aria-label', '选择下一篇')
-    bindToyboxText(nextControl, 'home.next', null, 'title', '选择下一篇')
-    bindToyboxText(controls.querySelector('.toybox-selector-numbers'), 'home.select', null, 'aria-label', '选择文章')
-    controls.querySelectorAll('[data-toybox-index]').forEach(function(button, index) {
-      bindToyboxText(button, 'home.selectIndex', { index: index + 1 }, 'aria-label', '选择第 ' + (index + 1) + ' 篇')
+    deck.querySelectorAll('[data-toybox-index]').forEach(function(button, index) {
+      bindToyboxText(button, 'home.selectIndex', { index: index + 1 }, 'aria-label')
     })
-
-    posts.insertBefore(stage, featuredCard || pagination)
-    stage.appendChild(recentDeck)
-    recentDeck.appendChild(deckHeader)
-    deckHeader.appendChild(recentTitle)
-    deckHeader.appendChild(controls)
-    recentDeck.appendChild(cardRow)
-    cardRow.appendChild(cardTrack)
-    cards.forEach(function(card) {
-      cardTrack.appendChild(card)
+    setupToyboxCarousel(stage, deck, viewport, track, cards, currentPage)
+    bindToyboxText(pagination, 'home.cartridgePagination', { current: currentPage, total: totalPage }, 'aria-label')
+    pagination.querySelectorAll('.toybox-page-step').forEach(function(link) {
+      var key = link.classList.contains('prev') ? 'common.previousPage' : 'common.nextPage'
+      bindToyboxText(link, key, null, 'aria-label')
+      bindToyboxText(link, key, null, 'title')
     })
-    setupToyboxCarousel(stage, recentDeck, cardRow, cardTrack, cards, currentPage)
-
-    var dock = document.createElement('nav')
-    var statNodes = document.querySelectorAll('#sidebar .site-data .length-num')
-    var statValues = Array.prototype.slice.call(statNodes).map(function(el) {
-      return (el.textContent || '').trim()
+    deck.querySelectorAll('[data-toybox-direction]').forEach(function(button) {
+      bindToyboxText(button, button.dataset.toyboxDirection === 'previous' ? 'home.previous' : 'home.next', null, 'title')
     })
-    dock.className = 'toybox-collection-dock'
-    bindToyboxText(dock, 'home.contentShelf', null, 'aria-label', '内容收藏架')
-    dock.innerHTML = [
-      '<a href="' + rootPath('archives/') + '"><i class="fas fa-book-open" aria-hidden="true"></i><span>' + (statValues[0] || '0') + '</span><small></small></a>',
-      '<a href="' + rootPath('tags/') + '"><i class="fas fa-tag" aria-hidden="true"></i><span>' + (statValues[1] || '0') + '</span><small></small></a>',
-      '<a href="' + rootPath('categories/') + '"><i class="fas fa-folder-open" aria-hidden="true"></i><span>' + (statValues[2] || '0') + '</span><small></small></a>',
-      '<a class="toybox-save-progress" href="' + rootPath('archives/') + '"><i class="fas fa-save" aria-hidden="true"></i><span>' + clearedPostCount() + '</span><small></small></a>'
-    ].join('')
-    var dockItems = dock.querySelectorAll('a')
-    bindToyboxText(dockItems[0].querySelector('small'), 'home.articles', null, null, '文章')
-    bindToyboxText(dockItems[1].querySelector('small'), 'home.tags', null, null, '标签')
-    bindToyboxText(dockItems[2].querySelector('small'), 'home.categories', null, null, '分类')
-    bindToyboxText(dockItems[3].querySelector('small'), 'home.localSave', null, null, '本机存档')
-    bindToyboxText(dockItems[3], 'status.localSave', { count: clearedPostCount() }, 'aria-label')
-
-    if (pagination) {
-      bindToyboxDataset(pagination, 'toyboxPage', 'home.cartridgePage', { current: String(currentPage).padStart(2, '0'), total: String(totalPage).padStart(2, '0') })
-      bindToyboxText(pagination, 'home.cartridgePagination', { current: currentPage, total: totalPage }, 'aria-label')
-      pagination.querySelectorAll('.extend').forEach(function(link) {
-        var key = link.classList.contains('prev') ? 'home.previousBox' : 'home.nextBox'
-        bindToyboxDataset(link, 'toyboxNav', key, null)
-        bindToyboxText(link, key, null, 'aria-label')
-      })
-    }
-
     setupToyboxPageMotion(body, pagination, currentPage)
-
-    var bottomConsole = document.createElement('section')
-    bottomConsole.className = 'toybox-bottom-console'
-    bindToyboxText(bottomConsole, 'home.console', null, 'aria-label', '站点控制台')
-    posts.insertBefore(bottomConsole, pagination || footer || null)
-    bottomConsole.appendChild(dock)
-    if (pagination) bottomConsole.appendChild(pagination)
-    if (footer) bottomConsole.appendChild(footer)
     posts.dataset.toyboxReady = '1'
   }
 
@@ -1231,7 +1100,6 @@
     var tag = getText(document, '.post-meta__tags')
     var date = getText(document, '#post-meta .post-meta-date-created')
     var wordCount = getText(document, '#post-meta .word-count')
-    var readTime = getText(document, '#post-meta .post-meta-wordcount > span:last-child')
     var stage = category || tag || 'BLOG'
     var headingCount = article.querySelectorAll('h1, h2, h3').length
     var visualSeed = title.length + headingCount * 7
@@ -1256,10 +1124,6 @@
       postInfo.dataset.pixelQuestLevel = stage
       postInfo.dataset.pixelQuestStage = stage
 
-      var sleeveArt = document.createElement('span')
-      sleeveArt.className = 'pixel-article-sleeve-art'
-      sleeveArt.setAttribute('aria-hidden', 'true')
-      postInfo.insertBefore(sleeveArt, postInfo.firstChild)
     }
 
     var status = document.createElement('div')
@@ -1274,7 +1138,6 @@
     bindToyboxText(addHudChip(status, 'pixel-article-status-chip is-main', ''), 'post.info', null, null, '文章信息')
     if (stage) addHudChip(status, 'pixel-article-status-chip', stage)
     if (wordCount) bindToyboxText(addHudChip(status, 'pixel-article-status-chip', ''), 'post.words', { count: wordCount }, null, '字数 ' + wordCount)
-    if (readTime) addHudChip(status, 'pixel-article-status-chip', readTime)
     if (date) addHudChip(status, 'pixel-article-status-chip is-date', date)
 
     post.insertBefore(status, article)

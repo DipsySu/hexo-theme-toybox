@@ -4,13 +4,12 @@
 - var hideAside = !theme.aside.enable || page.aside === false || suppressToyboxAside ? 'hide-aside' : ''
 - var pageType = is_post() ? 'post' : 'page'
 - var toyboxViewClass = is_home() ? 'toybox-home' : is_post() ? 'toybox-post' : (is_archive() || is_tag() || is_category()) ? 'toybox-collection' : 'toybox-page'
-- var toyboxBootClass = is_home() ? 'toybox-ui-pending' : ''
 
 doctype html
 html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside)
   head
     include ./head.pug
-  body(class=`toybox-theme ${toyboxViewClass} ${toyboxBootClass}`)
+  body(class=`toybox-theme ${toyboxViewClass}`)
     !=partial('includes/sidebar', {}, {cache: true})
 
     if page.type !== '404'

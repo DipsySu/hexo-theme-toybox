@@ -8,11 +8,11 @@ const vm = require('node:vm')
 
 const filterSource = fs.readFileSync(path.join(__dirname, '../scripts/filters/random_cover.js'), 'utf8')
 
-function loadFilter(defaultCover, postAssetFolder = false) {
+function loadFilter(defaultCover, postAssetFolder = false, homeCovers = []) {
   let registeredFilter
   const hexo = {
     config: { post_asset_folder: postAssetFolder },
-    theme: { config: { cover: { default_cover: defaultCover } } },
+    theme: { config: { cover: { default_cover: defaultCover }, toybox: { home: { fallback_covers: homeCovers } } } },
     extend: {
       filter: {
         register(name, callback) {
@@ -55,4 +55,12 @@ test('preserves explicit and disabled post covers', () => {
   assert.equal(explicit.toybox_cover_source, 'explicit')
   assert.equal(disabled.cover, false)
   assert.equal(disabled.toybox_cover_source, 'disabled')
+})
+
+test('renders bundled fallback images with an otherwise default configuration', () => {
+  const applyCover = loadFilter([], false, [{ src: '/img/home-toybox/card-aqua-scene.jpg' }])
+  const article = applyCover({ path: 'hello-world/' })
+  assert.equal(article.cover, '/img/home-toybox/card-aqua-scene.jpg')
+  assert.equal(article.cover_type, 'img')
+  assert.equal(article.toybox_cover_source, 'fallback')
 })

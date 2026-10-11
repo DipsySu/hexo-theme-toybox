@@ -148,18 +148,19 @@ class LocalSearch {
 
       url = new URL(url, location.origin)
       url.searchParams.append('highlight', keywords.join(' '))
+      const href = url.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 
       if (slicesOfTitle.length !== 0) {
-        resultItem += `<div class="local-search-hit-item"><a href="${url.href}"><span class="search-result-title">${this.highlightKeyword(title, slicesOfTitle[0])}</span>`
+        resultItem += `<div class="local-search-hit-item"><a href="${href}"><span class="search-result-title">${this.highlightKeyword(title, slicesOfTitle[0])}</span>`
       } else {
-        resultItem += `<div class="local-search-hit-item"><a href="${url.href}"><span class="search-result-title">${title}</span>`
+        resultItem += `<div class="local-search-hit-item"><a href="${href}"><span class="search-result-title">${title}</span>`
       }
 
       slicesOfContent.forEach(slice => {
-        resultItem += `<p class="search-result">${this.highlightKeyword(content, slice)}...</p></a>`
+        resultItem += `<p class="search-result">${this.highlightKeyword(content, slice)}...</p>`
       })
 
-      resultItem += '</div>'
+      resultItem += '</a></div>'
       resultItems.push({
         item: resultItem,
         id: resultItems.length,
@@ -171,29 +172,56 @@ class LocalSearch {
   }
 
   fetchData () {
-    const isXml = !this.path.endsWith('json')
-    fetch(this.path)
-      .then(response => response.text())
-      .then(res => {
-        // Get the contents from search data
-        this.isfetched = true
-        this.datas = isXml
-          ? [...new DOMParser().parseFromString(res, 'text/xml').querySelectorAll('entry')].map(element => ({
-              title: element.querySelector('title').textContent,
-              content: element.querySelector('content').textContent,
-              url: element.querySelector('url').textContent
-            }))
-          : JSON.parse(res)
-        // Only match articles with non-empty titles
-        this.datas = this.datas.filter(data => data.title).map(data => {
-          data.title = data.title.trim()
-          data.content = data.content ? data.content.trim().replace(/<[^>]+>/g, '') : ''
-          data.url = decodeURIComponent(data.url).replace(/\/{2,}/g, '/')
-          return data
-        })
-        // Remove loading animation
-        window.dispatchEvent(new Event('search:loaded'))
+    if (this.isfetched) return Promise.resolve(true)
+    if (this.request) return this.request
+    this.state = 'loading'
+    window.dispatchEvent(new Event('search:loading'))
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 12000)
+    const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+    this.request = fetch(this.path, { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error('Search index unavailable')
+        return response.text()
       })
+      .then(res => {
+        let entries
+        if (this.path.endsWith('json')) entries = JSON.parse(res)
+        else {
+          const xml = new DOMParser().parseFromString(res, 'text/xml')
+          if (xml.querySelector('parsererror')) throw new Error('Invalid search index')
+          entries = [...xml.querySelectorAll('entry')].map(element => ({
+            title: element.querySelector('title')?.textContent,
+            content: element.querySelector('content')?.textContent,
+            url: element.querySelector('url')?.textContent
+          }))
+        }
+        if (!Array.isArray(entries)) throw new Error('Invalid search index')
+        this.datas = entries.filter(data => data && data.title && data.url).map(data => {
+          const url = new URL(data.url, location.origin)
+          if (!/^https?:$/.test(url.protocol)) return null
+          return {
+            title: escape(String(data.title).trim()),
+            content: escape(String(data.content || '').trim().replace(/<[^>]+>/g, '')),
+            url: url.href
+          }
+        }).filter(Boolean)
+        this.isfetched = true
+        this.state = 'loaded'
+        window.dispatchEvent(new Event('search:loaded'))
+        return true
+      })
+      .catch(() => {
+        this.state = 'error'
+        this.isfetched = false
+        window.dispatchEvent(new Event('search:error'))
+        return false
+      })
+      .finally(() => {
+        clearTimeout(timeout)
+        this.request = null
+      })
+    return this.request
   }
 
   // Highlight by wrapping node in mark elements with the given class name
@@ -261,9 +289,11 @@ class LocalSearch {
     if (keywords.length === 1 && keywords[0] === '') {
       container.classList.add('no-result')
       container.textContent = ''
+      statsItem.textContent = ''
     } else if (resultItems.length === 0) {
       container.textContent = ''
-      statsItem.innerHTML = `<div class="search-result-stats">${languages.hits_empty.replace(/\$\{query}/, searchText)}</div>`
+      container.classList.remove('no-result')
+      statsItem.textContent = languages.hits_empty.replace('${query}', searchText)
     } else {
       resultItems.sort((left, right) => {
         if (left.includedCount !== right.includedCount) {
@@ -285,71 +315,86 @@ class LocalSearch {
     $loadingStatus.textContent = ''
   }
 
-  let loadFlag = false
   const $searchMask = document.getElementById('search-mask')
   const $searchDialog = document.querySelector('#local-search .search-dialog')
+  const $loadDataItem = document.getElementById('loading-database')
+  const $error = document.getElementById('search-error')
+  let previousFocus
+  let previousOverflow = ''
 
-  // fix safari
-  const fixSafariHeight = () => {
-    if (window.innerWidth < 768) {
-      $searchDialog.style.setProperty('--search-height', window.innerHeight + 'px')
+  const onDialogKeydown = event => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeSearch()
+    } else if (event.key === 'Tab') {
+      const controls = [...$searchDialog.querySelectorAll('button, input, a[href]')].filter(el => el.getClientRects().length && !el.disabled)
+      const first = controls[0]
+      const last = controls[controls.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
   }
 
   const openSearch = () => {
-    const bodyStyle = document.body.style
-    bodyStyle.width = '100%'
-    bodyStyle.overflow = 'hidden'
-    btf.animateIn($searchMask, 'to_show 0.5s')
-    btf.animateIn($searchDialog, 'toybox-search-open 0.24s cubic-bezier(0.2, 0.82, 0.28, 1) both')
-    setTimeout(() => { input.focus() }, 300)
-    if (!loadFlag) {
-      !localSearch.isfetched && localSearch.fetchData()
-      input.addEventListener('input', inputEventFunction)
-      loadFlag = true
-    }
-    // shortcut: ESC
-    document.addEventListener('keydown', function f (event) {
-      if (event.code === 'Escape') {
-        closeSearch()
-        document.removeEventListener('keydown', f)
-      }
-    })
-
-    fixSafariHeight()
-    window.addEventListener('resize', fixSafariHeight)
+    if ($searchDialog.classList.contains('is-open')) return
+    if (window.ToyboxSettings) window.ToyboxSettings.closePanel()
+    previousFocus = document.activeElement
+    previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    $searchMask.style.display = 'block'
+    $searchDialog.classList.add('is-open')
+    $searchDialog.setAttribute('aria-hidden', 'false')
+    document.addEventListener('keydown', onDialogKeydown)
+    input.focus()
+    localSearch.fetchData()
   }
 
   const closeSearch = () => {
-    const bodyStyle = document.body.style
-    bodyStyle.width = ''
-    bodyStyle.overflow = ''
-    btf.animateOut($searchDialog, 'toybox-search-close 0.18s ease-in both')
-    btf.animateOut($searchMask, 'to_hide 0.5s')
-    window.removeEventListener('resize', fixSafariHeight)
+    if (!$searchDialog.classList.contains('is-open')) return
+    document.body.style.overflow = previousOverflow
+    $searchDialog.classList.remove('is-open')
+    $searchDialog.setAttribute('aria-hidden', 'true')
+    $searchMask.style.display = 'none'
+    document.removeEventListener('keydown', onDialogKeydown)
+    if (previousFocus && previousFocus.isConnected) previousFocus.focus()
   }
 
   const searchClickFn = () => {
-    document.querySelector('#search-button > .search').addEventListener('click', openSearch)
-  }
-
-  const searchFnOnce = () => {
-    document.querySelector('#local-search .search-close-button').addEventListener('click', closeSearch)
-    $searchMask.addEventListener('click', closeSearch)
-    if (GLOBAL_CONFIG.localSearch.preload) {
-      localSearch.fetchData()
+    const trigger = document.querySelector('#search-button > .search')
+    if (trigger && !trigger.dataset.searchBound) {
+      trigger.dataset.searchBound = 'true'
+      trigger.addEventListener('click', openSearch)
     }
-    localSearch.highlightSearchWords(document.getElementById('article-container'))
   }
 
-  window.addEventListener('search:loaded', () => {
-    const $loadDataItem = document.getElementById('loading-database')
-    $loadDataItem.nextElementSibling.style.display = 'block'
-    $loadDataItem.remove()
+  input.addEventListener('input', inputEventFunction)
+  document.querySelector('#local-search .search-close-button').addEventListener('click', closeSearch)
+  document.getElementById('search-retry').addEventListener('click', () => localSearch.fetchData())
+  $searchMask.addEventListener('click', closeSearch)
+  window.addEventListener('search:loading', () => {
+    $loadDataItem.hidden = false
+    $error.hidden = true
+    $searchDialog.setAttribute('aria-busy', 'true')
   })
-
+  window.addEventListener('search:error', () => {
+    $loadDataItem.hidden = true
+    $error.hidden = false
+    $searchDialog.setAttribute('aria-busy', 'false')
+  })
+  window.addEventListener('search:loaded', () => {
+    $loadDataItem.hidden = true
+    $error.hidden = true
+    $searchDialog.setAttribute('aria-busy', 'false')
+    inputEventFunction()
+  })
   searchClickFn()
-  searchFnOnce()
+  if (GLOBAL_CONFIG.localSearch.preload) localSearch.fetchData()
+  localSearch.highlightSearchWords(document.getElementById('article-container'))
 
   // pjax
   window.addEventListener('pjax:complete', () => {

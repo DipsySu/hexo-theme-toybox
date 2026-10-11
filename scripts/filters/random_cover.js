@@ -29,9 +29,13 @@ hexo.extend.filter.register('before_post_render', function (data) {
 
   const fallbackCoverFn = () => {
     const theme = hexo.theme.config
-    if (!(theme.cover && theme.cover.default_cover)) return false
-    if (!Array.isArray(theme.cover.default_cover)) return theme.cover.default_cover
-    if (theme.cover.default_cover.length === 0) return false
+    const configured = theme.cover && theme.cover.default_cover
+    const homeCovers = theme.toybox && theme.toybox.home && theme.toybox.home.fallback_covers
+    const covers = (Array.isArray(configured) && configured.length ? configured :
+      typeof configured === 'string' && configured ? [configured] : homeCovers || [])
+      .map(cover => typeof cover === 'string' ? cover : cover && (cover.src || cover.primary || cover.fallback))
+      .filter(Boolean)
+    if (!covers.length) return false
 
     const identity = String(data.path || data.slug || data.source || data.title || '')
     let hash = 2166136261
@@ -39,7 +43,7 @@ hexo.extend.filter.register('before_post_render', function (data) {
       hash ^= identity.charCodeAt(index)
       hash = Math.imul(hash, 16777619)
     }
-    return theme.cover.default_cover[(hash >>> 0) % theme.cover.default_cover.length]
+    return covers[(hash >>> 0) % covers.length]
   }
 
   if (coverVal === false) return data

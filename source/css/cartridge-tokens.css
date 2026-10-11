@@ -1,30 +1,21 @@
-/*
- * Toybox cartridge design tokens.
- *
- * Keep shared colour, spacing, depth, and sizing decisions here so the
- * homepage, article manual, archive, category, and tag views feel like one
- * product. Component-specific layout stays in toybox-theme.css and
- * home-toybox.css.
- */
+/* Shared materials for the cartridge library and its reading views. */
 body.toybox-theme {
-  --color-desk: #f3eee5;
-  --color-surface: #fffdf8;
-  --color-surface-soft: #f7f3ec;
-  --color-surface-muted: #eee8df;
-  --color-ink: #292a28;
-  --color-muted: #6d6862;
-  --color-border: #d6cec3;
-  --color-border-strong: #aaa39a;
-
-  --accent-primary: #ef4b3e;
-  --accent-primary-depth: #a9342a;
-  --accent-secondary: #1ba5c5;
-  --accent-secondary-depth: #0b687e;
-  --accent-warning: #efb51e;
-  --accent-warning-depth: #a56f06;
-  --accent-success: #65ae68;
-  --accent-success-depth: #347344;
-
+  --color-desk: #f4f7fa;
+  --color-surface: #ffffff;
+  --color-surface-soft: #edf2f6;
+  --color-surface-muted: #e5ebf0;
+  --color-ink: #202633;
+  --color-muted: #697586;
+  --color-border: #d9e0e7;
+  --color-border-strong: #aab7c4;
+  --accent-primary: #ef4b43;
+  --accent-primary-depth: #b93130;
+  --accent-secondary: #16a6c8;
+  --accent-secondary-depth: #08768f;
+  --accent-warning: #ffc643;
+  --accent-warning-depth: #b48416;
+  --accent-success: #51bd71;
+  --accent-success-depth: #2d8048;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -33,69 +24,58 @@ body.toybox-theme {
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
-
-  --radius-chip: 5px;
+  --radius-chip: 4px;
   --radius-control: 8px;
-  --radius-card: 11px;
-  --radius-panel: 16px;
-
-  --shadow-pressed: 0 1px 0 rgba(56, 51, 45, 0.34);
-  --shadow-control: 0 4px 0 #c6beb3, 0 8px 16px rgba(61, 52, 43, 0.08);
-  --shadow-card: 0 7px 0 rgba(78, 61, 48, 0.2), 0 16px 28px rgba(67, 52, 40, 0.12);
-  --shadow-panel: 0 8px 0 rgba(89, 73, 59, 0.16), 0 18px 36px rgba(70, 55, 43, 0.12);
-
+  --radius-card: 8px;
+  --radius-panel: 8px;
+  --shadow-pressed: 0 1px 0 #b9c3ce;
+  --shadow-control: 0 2px 0 #c9d2db, inset 0 1px 0 #fff;
+  --shadow-card: 0 3px 0 #d9dfe4, 0 10px 24px #293b5114;
+  --shadow-panel: 0 16px 48px #20344824;
   --control-min-size: 44px;
-  --content-max: 1360px;
+  --content-max: 1440px;
   --reading-max: 780px;
-
-  /* Compatibility aliases used by the original component styles. */
   --toy-ink: var(--color-ink);
   --toy-muted: var(--color-muted);
   --toy-paper: var(--color-surface);
   --toy-paper-soft: var(--color-surface-soft);
   --toy-paper-line: var(--color-border);
   --toy-desk: var(--color-desk);
-  --toy-desk-line: #e6ddd1;
-  --toy-wood: #c69869;
-  --toy-wood-dark: #9b6c42;
   --toy-red: var(--accent-primary);
   --toy-red-dark: var(--accent-primary-depth);
   --toy-aqua: var(--accent-secondary);
-  --toy-aqua-soft: #e2f4f2;
+  --toy-aqua-soft: #e5f5f9;
   --toy-yellow: var(--accent-warning);
-  --toy-yellow-soft: #fff2c9;
+  --toy-yellow-soft: #fff3d4;
   --toy-green: var(--accent-success);
-  --toy-shadow: rgba(78, 55, 34, 0.16);
+  --toy-shadow: #20344824;
   --global-bg: var(--color-desk);
   --card-bg: var(--color-surface);
-  --sidebar-bg: var(--color-surface-soft);
+  --sidebar-bg: var(--color-surface);
+  --font-color: var(--color-ink);
+  --text-highlight-color: var(--color-ink);
+  --search-bg: var(--color-surface);
+  --search-input-color: var(--color-ink);
+  --search-a-color: var(--color-ink);
 }
-
-[data-theme='dark'] body.toybox-theme,
-body.toybox-theme.dark {
-  --color-desk: #1f211f;
-  --color-surface: #2e2d2a;
-  --color-surface-soft: #383632;
-  --color-surface-muted: #262724;
-  --color-ink: #f2eee7;
-  --color-muted: #bdb5ab;
-  --color-border: #5c5751;
-  --color-border-strong: #817970;
-  --accent-primary: #ff6558;
-  --accent-primary-depth: #8d2d27;
-  --accent-secondary: #49c3da;
-  --accent-secondary-depth: #176b79;
-  --accent-warning: #f2c34d;
-  --accent-warning-depth: #8f6811;
-  --accent-success: #79bd7d;
-  --accent-success-depth: #376b43;
-  --toy-desk-line: #383a36;
-  --toy-wood: #594a3d;
-  --toy-wood-dark: #342d27;
-  --toy-aqua-soft: #244044;
-  --toy-yellow-soft: #4b4226;
-  --toy-shadow: rgba(0, 0, 0, 0.28);
-  --shadow-control: 0 4px 0 #171816, 0 8px 18px rgba(0, 0, 0, 0.18);
-  --shadow-card: 0 7px 0 rgba(0, 0, 0, 0.34), 0 18px 30px rgba(0, 0, 0, 0.24);
-  --shadow-panel: 0 8px 0 rgba(0, 0, 0, 0.34), 0 20px 38px rgba(0, 0, 0, 0.26);
+[data-theme='dark'] body.toybox-theme {
+  --color-desk: #181c21;
+  --color-surface: #242a31;
+  --color-surface-soft: #2c333c;
+  --color-surface-muted: #323b46;
+  --color-ink: #eef2f7;
+  --color-muted: #a8b5c5;
+  --color-border: #404b58;
+  --color-border-strong: #697b8c;
+  --accent-primary: #ff7069;
+  --accent-primary-depth: #b33632;
+  --accent-secondary: #45c1dd;
+  --accent-secondary-depth: #146f86;
+  --accent-warning: #ffcf62;
+  --accent-success: #6ed08b;
+  --toy-aqua-soft: #233f49;
+  --toy-yellow-soft: #403923;
+  --shadow-control: 0 2px 0 #101419, inset 0 1px 0 #ffffff0c;
+  --shadow-card: 0 3px 0 #101419, 0 10px 24px #0003;
+  --shadow-panel: 0 16px 48px #0007;
 }

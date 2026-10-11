@@ -14,7 +14,7 @@ mixin articleSort(posts)
         if article.cover && theme.cover.archives_enable
           a.article-sort-item-img(href=url_for(article.path) title=title)
             if article.cover_type === 'img'
-              img(src=url_for(article.cover) alt=title onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'`)
+              img(src=url_for(toybox_cover(article)) alt=title onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'`)
             else
               div.pixel-cover-fallback.is-compact.is-archive-thumb(style=`background: ${article.cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag aria-hidden="true")
         .article-sort-item-info

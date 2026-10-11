@@ -4,13 +4,13 @@
 
 hexo.extend.helper.register('related_posts', function (currentPost, allPosts) {
   let relatedPosts = []
-  currentPost.tags.forEach(function (tag) {
-    allPosts.forEach(function (post) {
+  currentPost.tags.forEach(tag => {
+    allPosts.forEach(post => {
       if (isTagRelated(tag.name, post.tags)) {
         const relatedPost = {
           title: post.title,
           path: post.path,
-          cover: post.cover,
+          cover: this.toybox_cover(post),
           cover_type: post.cover_type,
           weight: 1,
           updated: post.updated,

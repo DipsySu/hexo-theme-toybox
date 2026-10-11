@@ -6,9 +6,9 @@
 [![Hexo](https://img.shields.io/badge/Hexo-%3E%3D5.3-0e83cd?logo=hexo)](https://hexo.io/)
 
 Toybox 是一个独立维护的 Hexo 像素卡带主题。它把首页做成桌面卡带陈列架，
-并让文章、分类、标签与归档沿用同一套纸张、卡带和文章手册视觉语言。
+并让文章、分类、标签与归档沿用同一套彩色塑料卡带、轻量导航和阅读排版。
 
-![Toybox 首页预览](docs/toybox-home.jpg)
+![Toybox 首页预览](docs/cartridge-library-home.jpg)
 
 [打开在线 Demo](https://dipsysu.github.io/hexo-theme-toybox/)
 
@@ -17,13 +17,13 @@ Toybox 是一个独立维护的 Hexo 像素卡带主题。它把首页做成桌�
 
 ## 功能
 
-- 一张主卡带 + 四张紧凑卡带的响应式首页
-- 可配置且稳定的文章封面 fallback，不覆盖文章显式封面
+- 服务端输出卡带架，选中的卡带原位展开，手机端横向浏览
+- 同一次构建中跨页面一致的文章封面 fallback，不覆盖文章显式封面
 - 键盘切换、触控滚动与分页过渡
 - 随机像素 Sprite 彩蛋
 - 文章目录、阅读模式、上一篇/下一篇与相关推荐
 - 归档、标签、分类、友情链接和 404 页面
-- 本地搜索、图片懒加载、Fancybox 和 Share.js
+- 即开搜索弹窗、失败重试、图片懒加载、Fancybox 和 Share.js
 - Light / Dark / Auto 配色
 - English / 简体中文 / 繁体中文界面
 
@@ -73,13 +73,24 @@ toybox:
 
 头像、站点图标和菜单可以通过 `avatar`、`favicon`、`nav` 与 `menu` 配置覆盖。
 
+首页推荐在站点 `_config.yml` 中设置 `per_page: 5`。默认封面优先使用
+`cover.default_cover`，未设置时使用主题自带的 `toybox.home.fallback_covers`。
+后备图片按文章时间排序循环分配；新增文章可能改变分配。需要永久固定图片的文章
+请在 front matter 中显式设置 `cover`。设置 `cover: false` 仍可关闭该文章封面。
+
+页面与组件规范见 [Cartridge Library 设计规范](docs/cartridge-library.md)。
+
 ## 更新
 
 ```bash
 git -C themes/toybox pull --ff-only
+npx hexo clean
+npx hexo generate
 ```
 
 更新前请确认个性化配置都保存在站点根目录 `_config.toybox.yml`。
+升级后清理 Hexo 缓存，以移除旧布局记录。主题会忽略仓库内 `demo` 的生成目录，
+避免本地开发示例站覆盖实际站点的模板。
 
 ## 功能边界
 

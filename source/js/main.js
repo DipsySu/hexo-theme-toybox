@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
   let headerContentWidth, $nav
   let mobileSidebarOpen = false
+  try {
+    const savedAside = window.localStorage.getItem('toybox-aside')
+    if (savedAside) document.documentElement.classList.toggle('hide-aside', savedAside === 'hide')
+  } catch (error) {}
 
   const adjustMenu = init => {
     const getAllWidth = ele => {
@@ -535,8 +539,8 @@ document.addEventListener('DOMContentLoaded', function () {
     hideAsideBtn: button => { // Hide aside
       const $htmlDom = document.documentElement.classList
       const saveStatus = $htmlDom.contains('hide-aside') ? 'show' : 'hide'
-      saveToLocal.set('aside-status', saveStatus, 2)
       $htmlDom.toggle('hide-aside')
+      try { window.localStorage.setItem('toybox-aside', saveStatus) } catch (error) {}
       button && button.setAttribute('aria-pressed', String(saveStatus === 'hide'))
     },
 

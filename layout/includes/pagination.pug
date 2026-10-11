@@ -15,7 +15,7 @@ if is_post()
       .prev-post(class=hasPageNext)
         a(href=url_for(prev.path) title=prev.title)
           if prev.cover_type === 'img'
-            img.cover(src=url_for(prev.cover) onerror=`onerror=null;src='${url_for(theme.error_img.post_page)}'` alt='cover of previous post')
+            img.cover(src=url_for(toybox_cover(prev)) onerror=`onerror=null;src='${url_for(theme.error_img.post_page)}'` alt='cover of previous post')
           else
             .cover(style=`background: ${prev.cover || 'var(--default-bg-color)'}`)
           .pagination-info
@@ -27,15 +27,44 @@ if is_post()
       .next-post(class=hasPagePrev)
         a(href=url_for(next.path) title=next.title)
           if next.cover_type === 'img'
-            img.cover(src=url_for(next.cover) onerror=`onerror=null;src='${url_for(theme.error_img.post_page)}'` alt='cover of next post')
+            img.cover(src=url_for(toybox_cover(next)) onerror=`onerror=null;src='${url_for(theme.error_img.post_page)}'` alt='cover of next post')
           else
             .cover(style=`background: ${next.cover || 'var(--default-bg-color)'}`)
           .pagination-info
             .label(data-toybox-i18n="common.nextPage")=_p('pagination.next')
             .next_info=next.title
+else if is_home()
+  - const currentPage = page.current || 1
+  - const totalPages = Math.max(1, page.total || 1)
+  - const pageSize = config.index_generator.per_page || site.posts.length
+  - const firstPost = page.posts.length ? (currentPage - 1) * pageSize + 1 : 0
+  - const lastPost = page.posts.length ? firstPost + page.posts.length - 1 : 0
+  nav#pagination.toybox-library-pagination(data-current-page=currentPage data-total-pages=totalPages)
+    .toybox-library-summary
+      span.toybox-library-label(data-toybox-i18n='home.library') 文章库
+      span.toybox-library-range(data-toybox-i18n='home.visibleRange' data-toybox-i18n-params=JSON.stringify({start:firstPost,end:lastPost,total:site.posts.length}))= `${firstPost}-${lastPost} / ${site.posts.length} 篇文章`
+    .toybox-page-controls
+      if page.prev
+        a.toybox-page-step.prev(href=url_for(page.prev_link) data-toybox-page=page.prev aria-label='上一页' title='上一页' data-toybox-i18n-aria='common.previousPage' data-toybox-i18n-title='common.previousPage')
+          i.fas.fa-chevron-left(aria-hidden='true')
+      else
+        button.toybox-page-step.prev(type='button' disabled aria-label='上一页' data-toybox-i18n-aria='common.previousPage')
+          i.fas.fa-chevron-left(aria-hidden='true')
+      .toybox-page-picker
+        select#toybox-page-select(aria-label='跳转到指定页' data-toybox-i18n-aria='home.jumpPage')
+          - let pageNumber = 1
+          while pageNumber <= totalPages
+            - const destination = pageNumber === 1 ? page.base : page.base + (config.pagination_dir || 'page') + '/' + pageNumber + '/'
+            option(value=url_for(destination) data-page=pageNumber selected=pageNumber === currentPage data-toybox-i18n='home.pageOption' data-toybox-i18n-params=JSON.stringify({current:pageNumber,total:totalPages}))= `第 ${pageNumber} 页 / 共 ${totalPages} 页`
+            - pageNumber++
+        i.fas.fa-chevron-down(aria-hidden='true')
+      if page.next
+        a.toybox-page-step.next(href=url_for(page.next_link) data-toybox-page=page.next aria-label='下一页' title='下一页' data-toybox-i18n-aria='common.nextPage' data-toybox-i18n-title='common.nextPage')
+          i.fas.fa-chevron-right(aria-hidden='true')
+      else
+        button.toybox-page-step.next(type='button' disabled aria-label='下一页' data-toybox-i18n-aria='common.nextPage')
+          i.fas.fa-chevron-right(aria-hidden='true')
 else
   nav#pagination
     .pagination
-      if is_home()
-        - options.format = 'page/%d/#content-inner'
       !=paginator(options)

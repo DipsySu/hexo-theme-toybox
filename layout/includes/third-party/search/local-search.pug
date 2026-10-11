@@ -1,19 +1,21 @@
 #local-search
-  .search-dialog
+  .search-dialog(role='dialog' aria-modal='true' aria-labelledby='toybox-search-title' aria-hidden='true')
     nav.search-nav
-      span.search-dialog-title(data-toybox-i18n="search.title")= _p('search.title')
+      span#toybox-search-title.search-dialog-title(data-toybox-i18n="search.title")= _p('search.title')
       span#loading-status
       button.search-close-button
         i.fas.fa-times
 
-    #loading-database.is-center
-      i.fas.fa-spinner.fa-pulse
-      span(data-toybox-i18n="search.loading")= '  ' + _p("search.load_data")
-
     .search-wrap
       #local-search-input
         .local-search-box
-          input(placeholder=_p("search.local_search.input_placeholder") type="text" data-toybox-i18n-placeholder="search.placeholder").local-search-box--input
+          input(placeholder=_p("search.local_search.input_placeholder") aria-label=_p("search.title") type="search" maxlength='80' data-toybox-i18n-aria="search.title" data-toybox-i18n-placeholder="search.placeholder").local-search-box--input
+      #loading-database.is-center(hidden role='status')
+        i.fas.fa-spinner.fa-pulse
+        span(data-toybox-i18n="search.loading")= '  ' + _p("search.load_data")
+      #search-error(hidden role='status')
+        span(data-toybox-i18n='search.error') 搜索暂时无法加载，请重试。
+        button#search-retry(type='button' data-toybox-i18n='search.retry') 重试
       hr
       #local-search-results.no-result
       #local-search-stats-wrap
