@@ -16,6 +16,9 @@
   var ATLAS_COLUMNS = 8
   var CELL_SIZE = 32
   var FRAME_INTERVAL = 1000 / 30
+  var ENCOUNTER_DURATION = 1800
+  var IDLE_MIN_DELAY = 15000
+  var IDLE_DELAY_RANGE = 10000
   var PLATFORM_SPRITES = range(80, 122)
   var FEATURED_SPRITES = range(80, 95)
   var CUTE_SPRITES = range(30, 79)
@@ -31,6 +34,14 @@
   var lastFrame = 0
   var viewportWidth = 0
   var viewportHeight = 0
+  var currentKind = ''
+  var homeSlots = []
+  var encounter = null
+  var encounterCount = 0
+  var pendingEncounter = null
+  var idleTimer = 0
+  var encounterPath = ''
+  var encounterRandom = Math.random
 
   function range(start, end) {
     var values = []
@@ -72,6 +83,10 @@
     } catch (error) {
       return false
     }
+  }
+
+  function motionAllowed() {
+    return !document.hidden && !animationOff() && (!reducedMotion || animationExplicitlyOn())
   }
 
   function pageKind() {
@@ -125,10 +140,11 @@
     // narrow edge lane available there instead of treating the full-width
     // content rectangle as a reason to disable every sprite.
     if (kind === 'home' && !sides.length) {
-      var edgeLane = Math.max(52, Math.min(96, viewportWidth * 0.075))
+      var leftEdge = Math.max(18, rect.left / 2)
+      var rightEdge = Math.min(viewportWidth - 18, rect.right + (viewportWidth - rect.right) / 2)
       sides.push(
-        { name: 'left', min: 18, max: edgeLane },
-        { name: 'right', min: viewportWidth - edgeLane, max: viewportWidth - 18 }
+        { name: 'left', min: leftEdge, max: leftEdge },
+        { name: 'right', min: rightEdge, max: rightEdge }
       )
     }
     return sides
@@ -151,17 +167,24 @@
     var rect = contentRect()
     var sides = availableSides(rect, kind)
     var compactHome = kind === 'home' && viewportWidth < 760
+    currentKind = kind
+    if (kind !== 'home') resetEncounters()
     canvas.dataset.pageKind = kind
     if ((viewportWidth < 760 && !compactHome) || !sides.length) {
       items = []
-      canvas.dataset.spriteCount = '0'
+      homeSlots = []
       canvas.dataset.spriteIndices = ''
+      syncEncounterData()
       draw(0, false)
       return
     }
 
     var seed = hashString(window.location.pathname + '|' + kind)
     var random = seededRandom(seed)
+    if (kind === 'home' && encounterPath !== window.location.pathname) {
+      encounterPath = window.location.pathname
+      encounterRandom = seededRandom(seed ^ 0x5bd1e995)
+    }
     var count = compactHome ? 1 : spriteCount(kind)
     var sprites = pickSprites(count, random)
     var startSide = Math.floor(random() * sides.length)
@@ -169,7 +192,7 @@
       ? (Number.isFinite(rect.top) ? Math.max(76, rect.top - 20) : Math.min(210, viewportHeight * 0.27))
       : 0
 
-    items = sprites.map(function (spriteIndex, index) {
+    var placed = sprites.map(function (spriteIndex, index) {
       var side = sides[(startSide + index) % sides.length]
       var yStep = (index + 1) / (count + 1)
       var yJitter = (random() - 0.5) * Math.min(72, viewportHeight * 0.08)
@@ -184,9 +207,48 @@
         speed: 0.45 + random() * 0.2
       }
     })
-    canvas.dataset.spriteCount = String(items.length)
+    // Home sprites are brief encounters: the seeded layout only reserves edge
+    // slots beside the rack instead of drawing a permanent crowd.
+    homeSlots = kind === 'home'
+      ? placed.map(function (item) {
+        return { x: item.x, y: compactHome ? item.y : Math.max(96, Math.min(viewportHeight - 120, item.y)) }
+      })
+      : []
+    var title = compactHome && document.getElementById('toybox-recent-title')
+    if (title) {
+      var titleRect = title.getBoundingClientRect()
+      if (titleRect.right + 48 < viewportWidth - 16 && titleRect.top >= 76 && titleRect.bottom <= viewportHeight - 48) {
+        homeSlots = [{ x: viewportWidth - 36, y: titleRect.top + titleRect.height / 2 }]
+      }
+    }
+    items = kind === 'home' ? [] : placed
     canvas.dataset.spriteIndices = items.map(function (item) { return item.spriteIndex }).join(',')
+    syncEncounterData()
     draw(0, false)
+  }
+
+  function drawSprite(spriteIndex, x, y, size, alpha) {
+    var sourceX = (spriteIndex % ATLAS_COLUMNS) * CELL_SIZE
+    var sourceY = Math.floor(spriteIndex / ATLAS_COLUMNS) * CELL_SIZE
+    ctx.globalAlpha = alpha
+    ctx.drawImage(
+      atlas,
+      sourceX,
+      sourceY,
+      CELL_SIZE,
+      CELL_SIZE,
+      Math.round(x - size / 2),
+      Math.round(y - size / 2),
+      size,
+      size
+    )
+  }
+
+  function drawEncounter(time) {
+    var progress = Math.min(1, Math.max(0, time - encounter.start) / encounter.duration)
+    var fade = Math.max(0, Math.min(1, progress / 0.15, (1 - progress) / 0.2))
+    var hop = Math.abs(Math.sin(progress * Math.PI * 2)) * 10
+    drawSprite(encounter.spriteIndex, encounter.x, encounter.y - hop, encounter.size, encounter.alpha * fade)
   }
 
   function draw(time, animated) {
@@ -202,23 +264,73 @@
         x += Math.sin(seconds * item.speed + item.phase) * item.drift
         y += Math.sin(seconds * item.speed * 1.35 + item.phase) * 5
       }
-
-      var sourceX = (item.spriteIndex % ATLAS_COLUMNS) * CELL_SIZE
-      var sourceY = Math.floor(item.spriteIndex / ATLAS_COLUMNS) * CELL_SIZE
-      ctx.globalAlpha = item.alpha
-      ctx.drawImage(
-        atlas,
-        sourceX,
-        sourceY,
-        CELL_SIZE,
-        CELL_SIZE,
-        Math.round(x - item.size / 2),
-        Math.round(y - item.size / 2),
-        item.size,
-        item.size
-      )
+      drawSprite(item.spriteIndex, x, y, item.size, item.alpha)
     })
+    if (encounter && encounter.start !== null) drawEncounter(time)
     ctx.globalAlpha = 1
+  }
+
+  function syncEncounterData() {
+    if (!canvas) return
+    canvas.dataset.spriteCount = String(items.length + (encounter ? 1 : 0))
+    canvas.dataset.encounter = encounter ? encounter.kind : ''
+    canvas.dataset.encounterSprite = encounter ? String(encounter.spriteIndex) : ''
+    canvas.dataset.encounterCount = String(encounterCount)
+    canvas.dataset.encounterSlots = String(homeSlots.length)
+  }
+
+  function clearIdle() {
+    if (idleTimer) window.clearTimeout(idleTimer)
+    idleTimer = 0
+  }
+
+  function resetEncounters() {
+    clearIdle()
+    pendingEncounter = null
+    if (!encounter) return
+    encounter = null
+    syncEncounterData()
+  }
+
+  function scheduleIdle() {
+    if (idleTimer || currentKind !== 'home' || !atlasReady || !homeSlots.length || !motionAllowed()) return
+    idleTimer = window.setTimeout(function () {
+      idleTimer = 0
+      startEncounter('idle')
+    }, IDLE_MIN_DELAY + Math.floor(encounterRandom() * IDLE_DELAY_RANGE))
+  }
+
+  // At most one small homepage sprite: a new event replaces the current
+  // encounter instead of stacking, and nothing starts against the motion
+  // preference or in a hidden tab.
+  function startEncounter(kind, spriteIndex) {
+    if (!canvas || currentKind !== 'home' || !homeSlots.length || !motionAllowed()) return false
+    if (kind === 'preview' && (!Number.isInteger(spriteIndex) || spriteIndex < 0 || spriteIndex > 122)) return false
+    if (!atlasReady) {
+      pendingEncounter = { kind: kind, spriteIndex: spriteIndex }
+      return false
+    }
+
+    pendingEncounter = null
+    var pool = kind === 'complete'
+      ? FEATURED_SPRITES
+      : kind === 'page' && encounterRandom() < 0.5 ? PLATFORM_SPRITES : CUTE_SPRITES
+    var slot = homeSlots[Math.floor(encounterRandom() * homeSlots.length)]
+    encounter = {
+      kind: kind,
+      spriteIndex: kind === 'preview' ? spriteIndex : pool[Math.floor(encounterRandom() * pool.length)],
+      x: slot.x,
+      y: slot.y,
+      size: 32,
+      alpha: 0.9,
+      duration: ENCOUNTER_DURATION,
+      start: null
+    }
+    encounterCount += 1
+    clearIdle()
+    syncEncounterData()
+    syncMotion()
+    return true
   }
 
   function stop(clearCanvas) {
@@ -232,11 +344,22 @@
     frameId = window.requestAnimationFrame(tick)
     if (time - lastFrame < FRAME_INTERVAL) return
     lastFrame = time
+    if (encounter && encounter.start === null) {
+      encounter.start = time
+    } else if (encounter && time - encounter.start >= encounter.duration) {
+      encounter = null
+      syncEncounterData()
+    }
+    if (currentKind === 'home' && !encounter) {
+      stop(true)
+      return
+    }
     draw(time, true)
   }
 
   function syncMotion() {
     stop(false)
+    if (!motionAllowed()) resetEncounters()
     if (!canvas || document.hidden || animationOff()) {
       if (animationOff()) draw(0, false)
       return
@@ -244,6 +367,13 @@
     if (reducedMotion && !animationExplicitlyOn()) {
       draw(0, false)
       return
+    }
+    if (currentKind === 'home') {
+      scheduleIdle()
+      if (!encounter) {
+        draw(0, false)
+        return
+      }
     }
     frameId = window.requestAnimationFrame(tick)
   }
@@ -296,15 +426,33 @@
     atlasReady = true
     if (canvas) {
       draw(0, false)
-      syncMotion()
+      var queued = pendingEncounter
+      if (!queued || !startEncounter(queued.kind, queued.spriteIndex)) syncMotion()
     }
   }
   atlas.src = ATLAS_URL
 
+  function handlePageArrived() {
+    if (!canvas || pageKind() !== 'home') return
+    layoutItems()
+    startEncounter('page')
+  }
+
+  function handleReadingComplete() {
+    if (canvas && currentKind === 'home') startEncounter('complete')
+  }
+
   window.addEventListener('resize', scheduleResize, { passive: true })
   window.addEventListener('pixel-animation-toggle', syncMotion)
+  window.addEventListener('pixel-sprite-preview', function (event) {
+    if (pageKind() !== 'home') return
+    layoutItems()
+    startEncounter('preview', event.detail && event.detail.index)
+  })
   document.addEventListener('visibilitychange', syncMotion)
   document.addEventListener('toybox:color-mode-change', syncMotion)
+  document.addEventListener('toybox:page-arrived', handlePageArrived)
+  document.addEventListener('toybox:reading-complete', handleReadingComplete)
   document.addEventListener('pjax:complete', setup)
   if (motionQuery) {
     if (motionQuery.addEventListener) motionQuery.addEventListener('change', handleReducedMotionChange)

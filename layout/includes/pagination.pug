@@ -55,6 +55,12 @@ else if is_home()
         button.toybox-page-step.prev(type='button' disabled aria-label='上一页' data-toybox-i18n-aria='common.previousPage')
           i.fas.fa-chevron-left(aria-hidden='true')
       .toybox-page-picker
+        .toybox-page-display(aria-hidden='true')
+          span.toybox-page-display-label(data-toybox-i18n='home.pageNumber') 页码
+          strong.toybox-page-digits
+            span.toybox-page-current= String(currentPage).padStart(2, '0')
+            span.toybox-page-divider /
+            span.toybox-page-total= String(totalPages).padStart(2, '0')
         select#toybox-page-select(aria-label='跳转到指定页' data-toybox-i18n-aria='home.jumpPage')
           - let pageNumber = 1
           while pageNumber <= totalPages

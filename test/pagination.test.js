@@ -46,6 +46,15 @@ test('last page preserves actual post count and project-root jump destinations',
   assert.match(html, /<option value="\/project\/blog\/shelf\/13\/" data-page="13" selected/)
 })
 
+test('numeric page display reflects the real page while the native select remains accessible', () => {
+  const html = home(4)
+  assert.match(html, /class="toybox-page-display" aria-hidden="true"/)
+  assert.match(html, /class="toybox-page-current">04<\/span>/)
+  assert.match(html, /class="toybox-page-total">13<\/span>/)
+  assert.match(html, /<select id="toybox-page-select" aria-label="[^\"]+"/)
+  assert.match(html, /data-page="4" selected/)
+})
+
 test('single-page and empty collections keep valid ranges and both directions disabled', () => {
   for (const [count, range] of [[3, '1-3 / 3'], [0, '0-0 / 0']]) {
     const html = home(1, 1, count, 0)

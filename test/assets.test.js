@@ -107,6 +107,15 @@ test('maps layout and reading controls to the Toybox article manual', () => {
   assert.match(main, /newEle\.dataset\.toyboxI18nAria = 'rightside\.exitReadMode'/)
 })
 
+test('home reading save starts hidden and its runtime loads before reading and sprite hooks', () => {
+  const home = fs.readFileSync(path.join(themeRoot, 'layout/index.pug'), 'utf8')
+  const scripts = fs.readFileSync(path.join(themeRoot, 'layout/includes/additional-js.pug'), 'utf8')
+  assert.match(home, /\.toybox-resume\(hidden\)/)
+  assert.match(home, /img\.toybox-resume-cover\(hidden alt='' width='36' height='36'\)/)
+  assert.match(home, /button\.toybox-resume-clear\(type='button'/)
+  assert.match(scripts, /toybox-settings\.js[\s\S]*toybox-save\.js[\s\S]*pixel-particles\.js[\s\S]*pixel-anim-toggle\.js/)
+})
+
 test('keeps the homepage cartridge rack proportionate across desktop and mobile', () => {
   const css = fs.readFileSync(path.join(themeRoot, 'source/css/home-toybox.css'), 'utf8')
 

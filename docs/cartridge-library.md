@@ -23,11 +23,18 @@ Existing raster artwork is reused without altering the original assets.
 - Settings: one top-right entry, three-way color and locale controls, reading
   actions only on article pages, and a home-only sprite preview tool.
 - Pagination: the lower library control shows the visible article range, a
-  native page picker, and previous/next page actions. It is visually distinct
+  pixel numeric display over a native page picker, and previous/next page actions. It is visually distinct
   from the upper rack's slot lights. Home transitions preserve vertical scroll
   and return keyboard focus to the corresponding control after replacement.
 - Progress: one reading meter; the TOC does not repeat a second percentage.
-- Decorative sprites: behind content and covers, never an interactive obstacle.
+- Continue reading: one root-scoped local save, with the real title and progress.
+  It appears only while a save exists. Only its explicit resume link restores
+  position; ordinary article navigation is untouched. Completion or clearing
+  removes this entry without resetting preferences or read badges.
+- Decorative sprites: short home encounters after successful page changes or
+  reading completion, with occasional quiet idle encounters. Motion preference
+  and page visibility control their lifecycle. Non-home decorations stay behind
+  content and covers, never an interactive obstacle.
 
 ## Tokens and Ownership
 
@@ -39,7 +46,8 @@ The three old pixel layout sheets remain available in the repository but are
 not loaded by the new theme head, avoiding conflicting layers of overrides.
 
 Body text uses system Chinese/Latin fonts; Fusion Pixel is reserved for the
-brand. Text sizes are fixed at breakpoints, not scaled continuously with width.
+brand, slot numbers, and compact console counters. Text sizes are fixed at
+breakpoints, not scaled continuously with width.
 Controls use visible focus rings, fixed dimensions, and reduced-motion support.
 The main card track scrolls horizontally below 1180px; it does not compress
 five cartridges into illegible phone-width columns.

@@ -34,6 +34,37 @@ test('AJAX pagination refreshes lazy images after inserting the new rack', () =>
   assert.match(replacement, /enhancePixelUi\(\)[\s\S]*lazyLoadInstance\.update\(\)/)
 })
 
+test('successful pagination still settles and announces arrival when session storage is blocked', () => {
+  const source = runtime.slice(runtime.indexOf('  function setupToyboxPageMotion'), runtime.indexOf('  function enhanceToyboxHome'))
+  const events = []
+  const attributes = {}
+  const classes = new Set(['toybox-page-leaving'])
+  const pagination = {
+    dataset: { totalPages: '13', toyboxMotionReady: '1' },
+    classList: { add() {}, remove() {} },
+    setAttribute: (key, value) => { attributes[key] = value }
+  }
+  const body = {
+    dataset: { toyboxPageDirection: 'next' },
+    classList: { contains: name => classes.has(name), add: name => classes.add(name), remove: name => classes.delete(name) },
+    querySelector: () => ({ setAttribute() {} })
+  }
+  const context = {
+    TOYBOX_PAGE_MOTION_KEY: 'direction',
+    sessionStorage: { getItem() { throw new Error('Storage blocked') } },
+    window: { setTimeout() {}, matchMedia: () => ({ matches: false }) },
+    document: { dispatchEvent: event => events.push(event) },
+    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail } }
+  }
+  vm.runInNewContext(source + '\nthis.setup = setupToyboxPageMotion', context)
+  context.setup(body, pagination, 2)
+  assert.equal(classes.has('toybox-page-leaving'), false)
+  assert.equal(attributes['aria-busy'], 'false')
+  assert.equal(events[0].type, 'toybox:page-arrived')
+  assert.equal(events[0].detail.current, 2)
+  assert.equal(events[0].detail.total, 13)
+})
+
 test('fallback artwork stays consistent across views and leaves explicit covers alone', () => {
   let helper
   let reset

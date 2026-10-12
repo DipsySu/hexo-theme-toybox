@@ -630,10 +630,10 @@
   document.addEventListener('keydown', onToyboxGamepadBack)
 
   function setupToyboxPageMotion(body, pagination, currentPage) {
-    var incomingDirection = ''
+    var incomingDirection = body.classList.contains('toybox-page-leaving') ? body.dataset.toyboxPageDirection || '' : ''
     var recentPosts = body.querySelector('#recent-posts')
     try {
-      incomingDirection = sessionStorage.getItem(TOYBOX_PAGE_MOTION_KEY) || ''
+      incomingDirection = sessionStorage.getItem(TOYBOX_PAGE_MOTION_KEY) || incomingDirection
       sessionStorage.removeItem(TOYBOX_PAGE_MOTION_KEY)
     } catch (error) {}
 
@@ -647,6 +647,14 @@
         pagination.classList.add('is-toybox-arrived')
         pagination.setAttribute('aria-busy', 'false')
       }
+      // Reached only after AJAX replacement or a full-page fallback succeeds.
+      document.dispatchEvent(new CustomEvent('toybox:page-arrived', {
+        detail: {
+          current: currentPage,
+          total: pagination && parseInt(pagination.dataset.totalPages, 10) || currentPage,
+          direction: incomingDirection
+        }
+      }))
       window.setTimeout(function() {
         body.classList.remove('toybox-page-entering')
         if (pagination) pagination.classList.remove('is-toybox-arrived')
@@ -1121,6 +1129,7 @@
     target.value.textContent = progress + '%'
 
     if (progress >= 98 && markClearedPath(target.path)) applyClearedState()
+    if (window.ToyboxSave) window.ToyboxSave.update({ article: target.article, path: target.path, progress: progress })
   }
 
   function scheduleReadingProgress() {
@@ -1473,6 +1482,7 @@
       setupSpriteTest()
       syncRightsideTips()
       markActiveNav()
+      if (window.ToyboxSave) window.ToyboxSave.refresh()
     } finally {
       revealToyboxUi()
     }

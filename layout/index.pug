@@ -39,6 +39,19 @@ block content
           i.far.fa-folder(aria-hidden='true')
           span=site.categories.length
           small(data-toybox-i18n='home.categories') 分类
+      .toybox-resume(hidden)
+        a.toybox-resume-link(href='#')
+          .toybox-resume-art(aria-hidden='true')
+            i.fas.fa-bookmark
+            img.toybox-resume-cover(hidden alt='' width='36' height='36')
+          .toybox-resume-copy
+            small(data-toybox-i18n='home.continueReading') 继续阅读
+            span.toybox-resume-title
+          span.toybox-resume-value(aria-hidden='true')
+          span.toybox-resume-track(aria-hidden='true')
+            span.toybox-resume-fill
+        button.toybox-resume-clear(type='button' title='清除阅读存档' aria-label='清除阅读存档' data-toybox-i18n-title='home.clearSave' data-toybox-i18n-aria='home.clearSave')
+          i.fas.fa-times(aria-hidden='true')
+      include includes/pagination.pug
       footer#footer
         !=partial('includes/footer', {}, {cache: true})
-      include includes/pagination.pug

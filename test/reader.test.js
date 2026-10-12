@@ -47,8 +47,10 @@ test('reading progress is bounded and only completes at the end of the article',
   let top = 600
   let saved = 0
   let value
+  const saves = []
   const target = { article: { isConnected: true, scrollHeight: 2000, getBoundingClientRect: () => ({ top }) }, meter: { isConnected: true, style: { setProperty() {} }, setAttribute: (_, next) => { value = next }, dataset: {} }, value: {}, path: '/post/' }
-  const context = { readingProgressTarget: target, window: { innerHeight: 1000 }, markClearedPath: () => { saved++; return true }, applyClearedState() {} }
+  const ToyboxSave = { update: detail => saves.push([detail.path, detail.progress, detail.article === target.article]) }
+  const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave }, markClearedPath: () => { saved++; return true }, applyClearedState() {} }
   vm.runInNewContext(source + '\nthis.update = updateReadingProgress', context)
   context.update()
   assert.equal(value, '0')
@@ -61,6 +63,7 @@ test('reading progress is bounded and only completes at the end of the article',
   context.update()
   assert.equal(value, '100')
   assert.equal(saved, 1)
+  assert.deepEqual(saves, [['/post/', 0, true], ['/post/', 50, true], ['/post/', 100, true]])
 })
 
 test('reading mode preserves the visible paragraph and does not create duplicate exits', () => {

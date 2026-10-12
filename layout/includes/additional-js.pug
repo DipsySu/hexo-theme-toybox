@@ -10,11 +10,13 @@ div
     include ./third-party/subtitle.pug
 
   script(src=toybox_asset('/js/toybox-settings.js'))
+  script(src=toybox_asset('/js/toybox-save.js'))
   if toyboxCollectionView
     script(src=toybox_asset('/js/collection-ui.js'))
   script(src=toybox_asset('/js/pixel-sprite-assets.js'))
   script(src=toybox_asset('/js/pixel-particles.js'))
-  script(src=toybox_asset('/js/pixel-dino.js'))
+  if !is_home()
+    script(src=toybox_asset('/js/pixel-dino.js'))
   script(src=toybox_asset('/js/pixel-anim-toggle.js'))
 
   if theme.busuanzi.site_uv || theme.busuanzi.site_pv || theme.busuanzi.page_pv

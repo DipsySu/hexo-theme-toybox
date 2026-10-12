@@ -56,6 +56,10 @@ const homeCards = (home.match(/class="recent-post-item/g) || []).length
 
 assert.equal(htmlFiles.length > 10, true, 'expected a complete multi-page demo')
 assert.equal(homeCards, 5, 'home page should render five post cartridges')
+assert.match(home, /class="toybox-resume" hidden/, 'empty reading save should be hidden in SSR')
+assert.match(home, /class="toybox-page-current">01<\/span>/, 'console page display should start at page one')
+assert.match(home, /\/hexo-theme-toybox\/js\/toybox-save\.js/, 'reading save runtime must respect the project root')
+assert.doesNotMatch(home, /\/js\/pixel-dino\.js/, 'home should have only one sprite runtime')
 assert.equal(fs.existsSync(path.join(publicDirectory, 'page/2/index.html')), true, 'pagination page missing')
 assert.equal(fs.existsSync(path.join(publicDirectory, 'search.xml')), true, 'local search index missing')
 assert.deepEqual([...new Set(rootless)], [], 'root-relative assets bypass the Pages project root')
