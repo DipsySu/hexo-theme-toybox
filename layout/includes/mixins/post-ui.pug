@@ -21,6 +21,8 @@ mixin postUI(posts)
               img.post-bg(src=url_for(post_cover) width='480' height='480' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt='' data-toybox-cover-source=coverSource)
             else
               div.post-bg.pixel-cover-fallback(style=`background: ${post_cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag data-toybox-cover-source=coverSource aria-hidden="true")
+            if is_home()
+              span.toybox-card-foil(aria-hidden='true')
       .recent-post-info(class=no_cover)
         a.article-title(href=url_for(link) title=title)= title
         .article-meta-wrap
@@ -91,4 +93,5 @@ mixin postUI(posts)
           a.toybox-card-arrow(href=url_for(link) aria-label=title)
             i.fas.fa-arrow-right(aria-hidden='true')
       if is_home()
+        span.toybox-card-glare(aria-hidden='true')
         span.toybox-selection-frame(aria-hidden='true')

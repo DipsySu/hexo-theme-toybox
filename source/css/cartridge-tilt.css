@@ -1,0 +1,64 @@
+/* Light is printed onto the cover; the article text remains a matte sticker. */
+.toybox-card-foil, .toybox-card-glare { display: none; pointer-events: none; }
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  body.toybox-home:not(.toybox-paper) #recent-posts .recent-post-item.toybox-tilt-ready {
+    transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(0);
+    transform-style: preserve-3d;
+    transition: transform 550ms cubic-bezier(.2,.8,.2,1), flex-grow 320ms cubic-bezier(.2,.75,.25,1), height 320ms cubic-bezier(.2,.75,.25,1), box-shadow 220ms;
+  }
+  body.toybox-home:not(.toybox-paper) #recent-posts .recent-post-item.is-tilting {
+    --cartridge-edge: #ffffffa6;
+    --cartridge-cast: #1d2c3c3d;
+    z-index: 3;
+    transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-5px);
+    transition-duration: 100ms, 320ms, 320ms, 220ms;
+    will-change: transform;
+  }
+  body.toybox-home:not(.toybox-paper) .toybox-tilt-ready .post_cover {
+    transform: translateZ(0);
+    transition: transform 400ms cubic-bezier(.2,.8,.2,1);
+  }
+  body.toybox-home:not(.toybox-paper) .is-tilting .post_cover { transform: translateZ(12px); }
+  body.toybox-home:not(.toybox-paper) .toybox-tilt-ready .post_cover > a { position: relative; }
+  body.toybox-home:not(.toybox-paper) .toybox-tilt-ready .toybox-card-foil {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 420ms ease;
+  }
+  body.toybox-home:not(.toybox-paper) .is-tilting .toybox-card-foil { opacity: .6; }
+  .toybox-card-foil::before, .toybox-card-foil::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .toybox-card-foil::before {
+    background-image: linear-gradient(115deg, #73e9ff00 20%, #73e9ff90 30%, #a0b0ffb3 36%, #ff9ec9b3 42%, #ffe6a5cc 48%, #afffd5b3 54%, #73e9ff00 64%);
+    background-size: 250% 250%;
+    background-position: var(--foil-x, 50%) var(--foil-y, 50%);
+    opacity: .7;
+  }
+  .toybox-card-foil::after {
+    background-image: radial-gradient(ellipse at var(--foil-x, 50%) var(--foil-y, 50%), #ffffffb3 0%, #ffffff26 16%, #ffffff00 52%), repeating-linear-gradient(0deg, #ffffff00 0 3px, #ffffff12 3px 4px), repeating-linear-gradient(90deg, #ffffff00 0 3px, #ffffff12 3px 4px);
+    mix-blend-mode: screen;
+    opacity: .4;
+  }
+  body.toybox-home:not(.toybox-paper) .toybox-tilt-ready .toybox-card-glare {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background: linear-gradient(125deg, #ffffff00 20%, #ffffff90 45%, #ffffff00 70%);
+    background-size: 250% 250%;
+    background-position: var(--foil-x, 50%) var(--foil-y, 50%);
+    opacity: 0;
+    transition: opacity 420ms ease;
+  }
+  body.toybox-home:not(.toybox-paper) .is-tilting .toybox-card-glare { opacity: .18; }
+  [data-theme='dark'] body.toybox-home:not(.toybox-paper) .is-tilting .toybox-card-foil { opacity: .48; }
+}

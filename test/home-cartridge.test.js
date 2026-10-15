@@ -31,6 +31,8 @@ test('cartridge decoration is present in SSR and does not replace article links'
   assert.match(html, /class="toybox-open-button" href="\/project\/first\/" aria-label="A &lt; B &amp; C"/)
   assert.match(html, /data-toybox-i18n="home.read"/)
   assert.match(html, /aria-hidden="true">A<\/span>/)
+  assert.equal((html.match(/class="toybox-card-foil" aria-hidden="true"/g) || []).length, 1)
+  assert.equal((html.match(/class="toybox-card-glare" aria-hidden="true"/g) || []).length, 2)
 })
 
 test('cartridges retain usable text and links when all covers are disabled', () => {
@@ -44,6 +46,6 @@ test('cartridges retain usable text and links when all covers are disabled', () 
 
 test('home selection decorations do not leak into other post lists', () => {
   const html = cartridges({ home: false })
-  assert.doesNotMatch(html, /toybox-selection-frame|toybox-open-button/)
+  assert.doesNotMatch(html, /toybox-selection-frame|toybox-open-button|toybox-card-foil|toybox-card-glare/)
   assert.match(html, /class="article-title"/)
 })
