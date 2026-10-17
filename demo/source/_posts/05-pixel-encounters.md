@@ -6,7 +6,7 @@ categories:
 tags:
   - Sprite
   - 彩蛋
-cover: /img/home-toybox/featured-island.png
+cover: /img/home-toybox/featured-island.webp
 description: 原创 32×32 Sprite 会在页面边缘随机出现，为阅读过程增加一点探索感。
 ---
 

@@ -69,7 +69,8 @@ test('fallback artwork stays consistent across views and leaves explicit covers 
   let helper
   let reset
   const hexo = { extend: { helper: { register: (_, fn) => { helper = fn } }, filter: { register: (_, fn) => { reset = fn } } } }
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'scripts/helpers/cartridge-cover.js'), 'utf8'), { hexo, Map })
+  const helperPath = path.join(root, 'scripts/helpers/cartridge-cover.js')
+  vm.runInNewContext(fs.readFileSync(helperPath, 'utf8'), { hexo, Map, require: require('node:module').createRequire(helperPath) })
   const posts = ['a', 'b', 'c'].map(path => ({ path, cover: 'old', toybox_cover_source: 'fallback' }))
   const context = { theme: { cover: { default_cover: ['red.jpg', 'blue.jpg', 'green.jpg'] } }, site: { posts: { sort: () => posts } } }
   assert.deepEqual(posts.map(post => helper.call(context, post)), ['red.jpg', 'blue.jpg', 'green.jpg'])

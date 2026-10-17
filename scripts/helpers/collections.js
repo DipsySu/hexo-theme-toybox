@@ -3,6 +3,8 @@
 // View models for archives, tags, and categories. Templates render the
 // returned plain data with escaped Pug interpolation.
 
+const { fnv1a, fallbackCovers, pickCover } = require('../../lib/covers')
+
 const TONES = ['coral', 'aqua', 'yellow', 'green']
 const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
 
@@ -13,17 +15,8 @@ function list (query) {
   return Array.isArray(query.data) ? query.data : []
 }
 
-function hash (value) {
-  let result = 2166136261
-  for (let index = 0; index < value.length; index++) {
-    result ^= value.charCodeAt(index)
-    result = Math.imul(result, 16777619)
-  }
-  return result >>> 0
-}
-
 function toneFor (identity) {
-  return TONES[hash(String(identity)) % TONES.length]
+  return TONES[fnv1a(identity) % TONES.length]
 }
 
 function byName (a, b) {
@@ -59,16 +52,6 @@ function perPageFor (config, generator) {
   const options = config[generator] || {}
   const value = options.per_page !== undefined ? options.per_page : config.per_page !== undefined ? config.per_page : 10
   return Number(value) || 0
-}
-
-function fallbackCover (theme, identity) {
-  const configured = theme.cover && theme.cover.default_cover
-  const defaults = theme.toybox && theme.toybox.home && theme.toybox.home.fallback_covers
-  const covers = (typeof configured === 'string' && configured ? [configured] :
-    Array.isArray(configured) && configured.length ? configured : defaults || [])
-    .map(cover => typeof cover === 'string' ? cover : cover && (cover.src || cover.primary || cover.fallback))
-    .filter(Boolean)
-  return covers.length ? covers[hash(String(identity)) % covers.length] : ''
 }
 
 function findTaxonomy (items, path, name) {
@@ -113,7 +96,7 @@ function categoryTree (context) {
     if (!coversEnabled || !posts.length) return result
     const eligible = posts.find(post => post.cover !== false && post.cover_type === 'img' && post.cover)
     let cover = eligible ? context.toybox_cover(eligible) : ''
-    if (!cover && posts.some(post => post.cover !== false)) cover = fallbackCover(theme, category.path || category.name)
+    if (!cover && posts.some(post => post.cover !== false)) cover = pickCover(fallbackCovers(theme), category.path || category.name)
     if (cover) result.cover = context.url_for(cover)
     return result
   }

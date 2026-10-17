@@ -192,7 +192,6 @@ toybox:
   home:
     fallback_covers:
       - src: /img/home-toybox/featured-island.webp
-        fallback: /img/home-toybox/featured-island.png
       - src: /img/home-toybox/card-aqua-scene.jpg
       - src: /img/home-toybox/card-yellow-scene.jpg
       - src: /img/home-toybox/card-coral-scene.jpg

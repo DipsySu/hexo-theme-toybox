@@ -1,5 +1,6 @@
 -
-  const coverVal = page.cover_type === 'img' ? page.cover : theme.avatar.img
+  // Social previews use the same artwork as the cartridge sleeve.
+  const coverVal = page.cover_type === 'img' ? toybox_cover(page) : theme.avatar.img
   const ogOption = {
     type: is_post() ? 'article' : 'website',
     image: coverVal ? full_url_for(coverVal) : ''
