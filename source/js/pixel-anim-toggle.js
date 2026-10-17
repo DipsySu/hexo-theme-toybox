@@ -35,6 +35,9 @@
   var toyboxCarouselCleanup = null
   var toyboxHistoryBound = false
   var TOYBOX_PAGE_MOTION_KEY = 'toyboxPageMotion:v1'
+  var ANIMATION_KEY = 'pixelAnim'
+  // Holds the motion choice only while browser storage refuses writes.
+  var animationPreference = null
   var DEFAULT_HOME_FALLBACK_COVERS = [
     { src: '/img/home-toybox/featured-island.webp', fallback: '/img/home-toybox/featured-island.png' },
     { src: '/img/home-toybox/card-aqua-scene.jpg' },
@@ -1398,17 +1401,35 @@
     })
   }
 
+  // Storage can be blocked entirely or refuse writes; the toggle then keeps its choice in memory.
+  function readAnimationOff() {
+    if (animationPreference !== null) return animationPreference === 'off'
+    try {
+      return window.localStorage.getItem(ANIMATION_KEY) === 'off'
+    } catch (error) {
+      return false
+    }
+  }
+
+  function writeAnimationPreference(value) {
+    try {
+      window.localStorage.setItem(ANIMATION_KEY, value)
+      animationPreference = null
+    } catch (error) {
+      animationPreference = value
+    }
+  }
+
   // ── 同步 rightside 手柄按钮初始状态 ─────────────────────────
   function syncBtn() {
     var b = document.getElementById('pixel-anim-btn')
     if (!b) return
-    var off = localStorage.getItem('pixelAnim') === 'off'
-    syncAnimButtonState(b, off)
+    syncAnimButtonState(b, readAnimationOff())
     if (b.dataset.pixelToggleBound) return
     b.dataset.pixelToggleBound = 'true'
     b.addEventListener('click', function() {
-      var wasOff = localStorage.getItem('pixelAnim') === 'off'
-      localStorage.setItem('pixelAnim', wasOff ? 'on' : 'off')
+      var wasOff = readAnimationOff()
+      writeAnimationPreference(wasOff ? 'on' : 'off')
       syncAnimButtonState(b, !wasOff)
       window.dispatchEvent(new CustomEvent('pixel-animation-toggle', {
         detail: { enabled: wasOff }

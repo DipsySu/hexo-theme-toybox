@@ -106,3 +106,40 @@ test('sidebar toggles even when browser storage is unavailable', () => {
   assert.equal(hidden, false)
   assert.equal(pressed, 'false')
 })
+
+function motionToggle(storage) {
+  const source = runtime.slice(runtime.indexOf('  function readAnimationOff()'), runtime.indexOf('  // 把路径归一化'))
+  const states = []
+  const events = []
+  let click
+  const button = { dataset: {}, addEventListener: (_, handler) => { click = handler } }
+  const context = {
+    ANIMATION_KEY: 'pixelAnim',
+    animationPreference: null,
+    syncAnimButtonState: (_, off) => states.push(off),
+    document: { getElementById: () => button },
+    window: { localStorage: storage, dispatchEvent: event => events.push(event.detail.enabled) },
+    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail } }
+  }
+  vm.runInNewContext(source + '\nthis.syncBtn = syncBtn', context)
+  context.syncBtn()
+  return { states, events, click: () => click() }
+}
+
+test('the motion toggle keeps working when browser storage is blocked', () => {
+  const blocked = () => { throw new Error('Storage blocked') }
+  for (const storage of [{ getItem: blocked, setItem: blocked }, { getItem: () => null, setItem: blocked }]) {
+    const toggle = motionToggle(storage)
+    toggle.click()
+    toggle.click()
+    toggle.click()
+    assert.deepEqual(toggle.states, [false, true, false, true])
+    assert.deepEqual(toggle.events, [false, true, false])
+  }
+
+  const values = new Map([['pixelAnim', 'off']])
+  const toggle = motionToggle({ getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) })
+  toggle.click()
+  assert.deepEqual(toggle.states, [true, false])
+  assert.equal(values.get('pixelAnim'), 'on')
+})
