@@ -601,28 +601,6 @@
     window.addEventListener('resize', scheduleReadingProgress, { passive: true })
   }
 
-  function decorateErrorPage() {
-    var info = document.querySelector('#body-wrap.error404 .error-content .error-info')
-    if (!info || info.querySelector('.pixel-error-actions')) return
-
-    var actions = document.createElement('div')
-    actions.className = 'pixel-error-actions'
-
-    var home = document.createElement('a')
-    home.href = rootPath('')
-    home.className = 'pixel-error-action is-home'
-    bindToyboxText(home, 'notFound.home')
-    actions.appendChild(home)
-
-    var archive = document.createElement('a')
-    archive.href = rootPath('archives/')
-    archive.className = 'pixel-error-action'
-    bindToyboxText(archive, 'notFound.archives')
-    actions.appendChild(archive)
-
-    info.appendChild(actions)
-  }
-
   function syncAnimButtonState(btn, off) {
     var labelKey = off ? 'rightside.motionOff' : 'rightside.motionOn'
     btn.classList.toggle('anim-off', off)
@@ -829,7 +807,6 @@
     markCoverFallbacks()
     decorateArticleMedia()
     setupReadingProgress()
-    decorateErrorPage()
     applyClearedState()
     bindClearedStorage()
     syncBtn()

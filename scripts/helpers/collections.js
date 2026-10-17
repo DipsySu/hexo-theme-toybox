@@ -300,28 +300,56 @@ function pager (context, view) {
 }
 
 // toybox-settings.js holds the one copy of the UI strings the browser swaps in
-// on a locale change, so server output reads the same dictionaries. Reloaded
-// when the file changes, so `hexo server` picks up edits.
+// on a locale change, so server output reads the same dictionaries. Checked
+// once per generate and reloaded when the file changes, so `hexo server`
+// picks up edits; a broken file is reported once instead of failing pages.
 const SETTINGS = path.join(__dirname, '../../source/js/toybox-settings.js')
-let dictionaries
+const site = hexo
+let dictionaries = null
 let dictionariesTime
-function dictionaryFor (languages) {
-  const time = fs.statSync(SETTINGS).mtimeMs
-  if (time !== dictionariesTime) {
+let checked = false
+if (hexo.extend.filter) hexo.extend.filter.register('before_generate', () => { checked = false })
+
+function loadDictionaries () {
+  if (checked) return dictionaries
+  checked = true
+  let time
+  try {
+    time = fs.statSync(SETTINGS).mtimeMs
+  } catch {
+    return dictionaries
+  }
+  if (time === dictionariesTime) return dictionaries
+  dictionariesTime = time
+  try {
     const sandbox = { document: { readyState: 'loading', addEventListener () {} }, matchMedia: () => ({ matches: false, addEventListener () {} }) }
     sandbox.window = sandbox
-    vm.runInNewContext(fs.readFileSync(SETTINGS, 'utf8'), sandbox)
+    vm.runInNewContext(fs.readFileSync(SETTINGS, 'utf8'), sandbox, { filename: SETTINGS })
     dictionaries = sandbox.ToyboxSettings.dictionaries
-    dictionariesTime = time
+  } catch (err) {
+    if (site.log) site.log.error('toybox: cannot read UI strings from %s: %s', SETTINGS, err.message)
   }
-  const lang = languages.find(name => Object.prototype.hasOwnProperty.call(dictionaries, name))
-  return dictionaries[lang || 'en']
+  return dictionaries
 }
 
-// Hexo's _p chain (page.lang, then config.language, then English); keys the
-// dictionaries lack still come from languages/*.yml.
+// Hexo's _p order: page.lang, then config.language. A language the
+// dictionaries lack can still come from a site languages/<lang>.yml; English
+// is the last resort, and keys found nowhere fall back to _p.
+function lookup (languages, key) {
+  const dicts = loadDictionaries() || {}
+  const i18n = site.theme && site.theme.i18n
+  for (const name of languages) {
+    if (Object.prototype.hasOwnProperty.call(dicts, name)) return dicts[name][key]
+    if (i18n && i18n.list().includes(name)) {
+      const value = i18n.get([name])[key]
+      if (value !== undefined) return value
+    }
+  }
+  return dicts.en && dicts.en[key]
+}
+
 hexo.extend.helper.register('toybox_text', function (key, params) {
-  const text = dictionaryFor([].concat(this.page && this.page.lang, this.config && this.config.language))[key]
+  const text = lookup([].concat(this.page && this.page.lang, this.config && this.config.language).filter(Boolean), key)
   return String(text === undefined ? this._p(key) : text).replace(/\{\{(\w+)\}\}/g, (_, name) => {
     return params && params[name] !== undefined && params[name] !== null ? params[name] : ''
   })

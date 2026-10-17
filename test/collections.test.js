@@ -241,6 +241,50 @@ test('server collection strings come from the runtime dictionaries for the page 
   assert.equal(textFor({}, {}, 'copy.success'), 'yml:copy.success', 'keys the dictionaries lack still go through _p')
 })
 
+test('a site locale file translates server strings for languages the dictionaries lack', () => {
+  const ja = { 'collection.tags': 'タグ' }
+  const i18n = { list: () => ['default', 'en', 'zh-CN', 'zh-TW', 'ja'], get: ([lang]) => lang === 'ja' ? ja : {} }
+  const { helpers: localized } = loadHexo('scripts/helpers/collections.js', { theme: { i18n } })
+  const textFor = (lang, key) => localized.toybox_text.call({ page: {}, config: { language: lang }, _p: name => 'yml:' + name }, key)
+  assert.equal(textFor('ja', 'collection.tags'), 'タグ')
+  assert.equal(textFor('ja', 'footer.theme'), 'Theme', 'keys the site file lacks fall back to English')
+  assert.equal(textFor('zh-CN', 'collection.tags'), '标签', 'the dictionaries win for languages they cover')
+})
+
+test('a settings file that fails to run is reported once and pages still render', () => {
+  const fs = require('node:fs')
+  const os = require('node:os')
+  const path = require('node:path')
+  const theme = fs.mkdtempSync(path.join(os.tmpdir(), 'toybox-text-'))
+  const copy = (relative, content) => {
+    fs.mkdirSync(path.dirname(path.join(theme, relative)), { recursive: true })
+    fs.writeFileSync(path.join(theme, relative), content === undefined ? read(relative) : content)
+  }
+  copy('scripts/helpers/collections.js')
+  copy('lib/covers.js')
+  copy('source/js/toybox-settings.js', 'document.documentElement.lang\n')
+  try {
+    const errors = []
+    const filters = {}
+    const helpers = {}
+    const hexo = {
+      log: { error: (...args) => errors.push(args) },
+      extend: { helper: { register: (name, fn) => { helpers[name] = fn } }, filter: { register: (name, fn) => { filters[name] = fn } } }
+    }
+    const filename = path.join(theme, 'scripts/helpers/collections.js')
+    const { createRequire } = require('node:module')
+    vm.runInThisContext(`(function (exports, require, module, __filename, __dirname, hexo) {${fs.readFileSync(filename, 'utf8')}\n})`, filename)({}, createRequire(filename), { exports: {} }, filename, path.dirname(filename), hexo)
+    const render = () => helpers.toybox_text.call({ page: {}, config: { language: 'en' }, _p: name => 'yml:' + name }, 'collection.tags')
+    assert.equal(render(), 'yml:collection.tags')
+    assert.equal(render(), 'yml:collection.tags')
+    filters.before_generate()
+    assert.equal(render(), 'yml:collection.tags')
+    assert.equal(errors.length, 1, 'an unchanged broken file is not re-run or re-reported')
+  } finally {
+    fs.rmSync(theme, { recursive: true, force: true })
+  }
+})
+
 test('tag filtering and sorting work over the full SSR index and keep focus', () => {
   let focused = null
   const control = props => Object.assign({ hidden: false, disabled: true, value: '', dataset: {}, listeners: {}, addEventListener (type, callback) { this.listeners[type] = callback }, focus () { focused = this } }, props)

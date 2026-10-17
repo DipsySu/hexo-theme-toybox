@@ -7,3 +7,6 @@
     .error-info
       h1.error_title= '404'
       .error_subtitle= theme.error_404.subtitle || _p('error404')
+      .pixel-error-actions
+        a.pixel-error-action.is-home(href=url_for('/') data-toybox-i18n='notFound.home')= toybox_text('notFound.home')
+        a.pixel-error-action(href=url_for('/archives/') data-toybox-i18n='notFound.archives')= toybox_text('notFound.archives')
