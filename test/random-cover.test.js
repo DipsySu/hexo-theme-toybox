@@ -2,11 +2,15 @@
 
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
+const { createRequire } = require('node:module')
 const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const pug = require('pug')
 
-const filterSource = fs.readFileSync(path.join(__dirname, '../scripts/filters/random_cover.js'), 'utf8')
+const root = path.join(__dirname, '..')
+const filterPath = path.join(root, 'scripts/filters/random_cover.js')
+const filterSource = fs.readFileSync(filterPath, 'utf8')
 
 function loadFilter(defaultCover, postAssetFolder = false, homeCovers = []) {
   let registeredFilter
@@ -23,7 +27,7 @@ function loadFilter(defaultCover, postAssetFolder = false, homeCovers = []) {
     }
   }
 
-  vm.runInNewContext(filterSource, { hexo }, { filename: 'random_cover.js' })
+  vm.runInNewContext(filterSource, { hexo, require: createRequire(filterPath) }, { filename: 'random_cover.js' })
   return registeredFilter
 }
 
@@ -63,4 +67,40 @@ test('renders bundled fallback images with an otherwise default configuration', 
   assert.equal(article.cover, '/img/home-toybox/card-aqua-scene.jpg')
   assert.equal(article.cover_type, 'img')
   assert.equal(article.toybox_cover_source, 'fallback')
+})
+
+test('an empty default_cover falls back to the bundled covers everywhere', () => {
+  const { fallbackCovers } = require('../lib/covers')
+  const theme = { cover: { default_cover: '' }, toybox: { home: { fallback_covers: [{ src: '/a.webp', fallback: '/a.png' }, '/b.jpg', {}] } } }
+  assert.deepEqual(fallbackCovers(theme), ['/a.webp', '/b.jpg'])
+  assert.deepEqual(fallbackCovers({ cover: { default_cover: '/only.jpg' } }), ['/only.jpg'])
+  const applyCover = loadFilter('', false, theme.toybox.home.fallback_covers)
+  assert.equal(['/a.webp', '/b.jpg'].includes(applyCover({ path: 'empty-default/' }).cover), true)
+
+  let helper
+  const helperPath = path.join(root, 'scripts/helpers/cartridge-cover.js')
+  const hexo = { extend: { helper: { register: (_, fn) => { helper = fn } }, filter: { register() {} } } }
+  vm.runInNewContext(fs.readFileSync(helperPath, 'utf8'), { hexo, Map, require: createRequire(helperPath) })
+  const posts = [{ path: 'x/', toybox_cover_source: 'fallback', cover: '/b.jpg' }, { path: 'y/', toybox_cover_source: 'fallback', cover: '/a.webp' }]
+  const context = { theme, site: { posts: { sort: () => posts } } }
+  assert.deepEqual(posts.map(post => helper.call(context, post)), ['/a.webp', '/b.jpg'])
+})
+
+test('social previews and the share widget use the sleeve artwork', () => {
+  const locals = {
+    page: { cover: '/img/provisional.jpg', cover_type: 'img' },
+    theme: { avatar: { img: '/img/avatar.png' }, sharejs: { sites: 'twitter' }, asset: { sharejs_css: '/share.css', sharejs: '/share.js' } },
+    toybox_cover: () => '/img/sleeve.jpg',
+    is_post: () => true,
+    full_url_for: value => 'https://example.com' + value,
+    url_for: value => value,
+    toybox_asset: value => value,
+    open_graph: options => `<meta property="og:image" content="${options.image}">`
+  }
+  const og = pug.compileFile(path.join(root, 'layout/includes/head/Open_Graph.pug'))(locals)
+  const share = pug.compileFile(path.join(root, 'layout/includes/third-party/share/share-js.pug'))(locals)
+  assert.match(og, /content="https:\/\/example\.com\/img\/sleeve\.jpg"/)
+  assert.match(share, /data-image="\/img\/sleeve\.jpg"/)
+  locals.page = { cover: false }
+  assert.match(pug.compileFile(path.join(root, 'layout/includes/head/Open_Graph.pug'))(locals), /\/img\/avatar\.png/)
 })

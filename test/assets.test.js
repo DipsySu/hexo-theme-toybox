@@ -45,7 +45,6 @@ test('supports deployment below a project site root', () => {
   const cssFiles = collectTextFiles(path.join(themeRoot, 'source/css')).filter(file => file.endsWith('.css'))
   const runtimeFiles = [
     'source/js/pixel-anim-toggle.js',
-    'source/js/pixel-dino.js',
     'source/js/pixel-particles.js'
   ].map(file => fs.readFileSync(path.join(themeRoot, file), 'utf8'))
 
@@ -88,8 +87,7 @@ test('exposes one persistent preferences trigger in the main navigation', () => 
   const home = fs.readFileSync(path.join(themeRoot, 'layout/index.pug'), 'utf8')
   assert.match(home, /section\.toybox-stage/)
   assert.match(home, /\.toybox-card-track\(role='list'\)/)
-  assert.match(pixelUi, /classList\.remove\('toybox-ui-pending'\)/)
-  assert.match(pixelUi, /finally\s*{\s*revealToyboxUi\(\)/)
+  assert.doesNotMatch(pixelUi, /toybox-ui-pending|revealToyboxUi/)
   assert.match(scripts, /toybox-settings\.js/)
   assert.doesNotMatch(scripts, /pjax/i)
 })
@@ -155,7 +153,6 @@ test('keeps cartridge fallbacks configurable and scoped to fallback covers', () 
   const coverFilter = fs.readFileSync(path.join(themeRoot, 'scripts/filters/random_cover.js'), 'utf8')
 
   assert.match(config, /toybox:\n\s+home:\n\s+fallback_covers:/)
-  assert.match(runtimeConfig, /fallbackCovers: Array\.isArray\(toyboxRuntimeHome\.fallback_covers\)/)
   assert.match(postUi, /data-toybox-cover-source=coverSource/)
   assert.match(coverFilter, /data\.toybox_cover_source = fallbackCover \? 'fallback' : 'none'/)
   assert.doesNotMatch(coverFilter, /Math\.random/)

@@ -23,6 +23,7 @@
     "_config.yml",
     "languages",
     "layout",
+    "lib",
     "scripts",
     "source",
     "docs/cartridge-library.md",

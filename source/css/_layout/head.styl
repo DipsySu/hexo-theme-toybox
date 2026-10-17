@@ -14,65 +14,16 @@
     background-color: alpha($dark-black, .3)
     content: ''
 
-  // index
-  &.full_page
-    height: $index_top_img_height
-    background-attachment: fixed
-
-    #site-info
-      position: absolute
-      top: $index_site_info_top
-      padding: 0 10px
-      width: 100%
-
-  #site-title,
-  #site-subtitle,
-  #scroll-down .scroll-down-effects
-    text-align: center
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, .15)
-    line-height: 1.5
-
   #site-title
     margin: 0
     color: var(--white)
+    text-align: center
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, .15)
     font-size: 1.85em
+    line-height: 1.5
 
     +minWidth768()
       font-size: 2.85em
-
-  #site-subtitle
-    color: var(--light-grey)
-    font-size: 1.15em
-
-    +minWidth768()
-      font-size: 1.72em
-
-  #site_social_icons
-    display: none
-    margin: 0 auto
-    width: 300px
-    text-align: center
-
-    +maxWidth768()
-      display: block
-
-    .social-icon
-      margin: 0 10px
-      color: var(--light-grey)
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, .15)
-      font-size: 1.43em
-
-  #scroll-down
-    position: absolute
-    bottom: 0
-    width: 100%
-    cursor: pointer
-
-    .scroll-down-effects
-      position: relative
-      width: 100%
-      color: var(--light-grey)
-      font-size: 30px
 
   // page
   &.not-home-page
@@ -155,37 +106,10 @@
         &:hover
           color: $light-blue
 
-    &.fixed
-      #nav
-        top: 0
-        transition: all .5s
-
   &.nav-visible:not(.fixed)
     #nav
       transition: all .5s
       transform: translate3d(0, 100%, 0)
-
-    & + .layout
-      & > .aside-content > .sticky_layout
-        top: 70px
-        transition: top .5s
-
-  &.fixed
-    #nav
-      position: fixed
-
-    & + .layout
-      & > .aside-content > .sticky_layout
-        top: 70px
-        transition: top .5s
-
-      #card-toc
-        .toc-content
-          max-height: calc(100vh - 170px)
-
-#page
-  h1.page-title
-    margin: 8px 0 20px
 
 // for not top_img
 #post

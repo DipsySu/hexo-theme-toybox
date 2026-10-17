@@ -5,11 +5,14 @@ const fs = require('node:fs')
 const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const yaml = require('js-yaml')
 
+const root = path.join(__dirname, '..')
 const settingsSource = fs.readFileSync(
-  path.join(__dirname, '../source/js/toybox-settings.js'),
+  path.join(root, 'source/js/toybox-settings.js'),
   'utf8'
 )
+const BOUND_SELECTOR = '[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]'
 
 function createStorage(seed) {
   const values = new Map(Object.entries(seed || {}))
@@ -21,11 +24,56 @@ function createStorage(seed) {
   }
 }
 
+function classList() {
+  const names = new Set()
+  return {
+    toggle(name, force) { if (force) names.add(name); else names.delete(name) },
+    contains(name) { return names.has(name) }
+  }
+}
+
+// Enough of a selector engine for `tag[data-a][data-b], [data-c]` lookups.
+function matchesSimple(el, selector) {
+  return selector.split(/\s*,\s*/).some(part => {
+    const match = part.match(/^([a-z]*)((?:\[[\w-]+\])+)$/)
+    if (!match || (match[1] && match[1].toUpperCase() !== el.tagName)) return false
+    return match[2].slice(1, -1).split('][').every(name => {
+      const key = name.replace(/^data-/, '').replace(/-(\w)/g, (_, letter) => letter.toUpperCase())
+      return key in el.dataset
+    })
+  })
+}
+
+function preferenceButton(dataset) {
+  const attributes = {}
+  return { tagName: 'BUTTON', dataset, attributes, classList: classList(), setAttribute(key, value) { attributes[key] = String(value) } }
+}
+
+function boundElement(dataset, children, text) {
+  const attributes = {}
+  return {
+    nodeType: 1,
+    isConnected: true,
+    dataset,
+    attributes,
+    textContent: text || '',
+    matches(selector) { return selector === BOUND_SELECTOR && Object.keys(dataset).some(key => key.startsWith('toyboxI18n')) },
+    querySelectorAll(selector) { return selector === BOUND_SELECTOR ? children || [] : [] },
+    getAttribute(key) { return key in attributes ? attributes[key] : null },
+    setAttribute(key, value) { attributes[key] = String(value) }
+  }
+}
+
 function createRuntime(options) {
   const storage = createStorage(options && options.storage)
-  const attributes = {}
-  const properties = {}
+  const attributes = Object.assign({}, options && options.attributes)
   const events = []
+  const frames = []
+  const lookups = []
+  const queries = []
+  const observers = []
+  const bound = (options && options.bound) || []
+  const elements = (options && options.elements) || []
   const media = {
     matches: Boolean(options && options.prefersDark),
     listener: null,
@@ -35,9 +83,10 @@ function createRuntime(options) {
   }
   const root = {
     nodeType: 1,
+    tagName: 'HTML',
+    classList: classList(),
     dataset: {},
     lang: 'zh-CN',
-    style: { setProperty(key, value) { properties[key] = value } },
     matches() { return false },
     querySelectorAll() { return [] },
     setAttribute(key, value) { attributes[key] = String(value) },
@@ -48,15 +97,25 @@ function createRuntime(options) {
     readyState: 'complete',
     body: {},
     documentElement: root,
-    getElementById() { return null },
-    querySelector() { return null },
-    querySelectorAll() { return [] },
+    getElementById(id) { lookups.push(id); return null },
+    querySelector(selector) { lookups.push(selector); return null },
+    querySelectorAll(selector) {
+      queries.push(selector)
+      return selector === BOUND_SELECTOR ? bound : [root].concat(elements).filter(el => matchesSimple(el, selector))
+    },
     addEventListener() {},
     dispatchEvent(event) { events.push(event) }
   }
   class MutationObserver {
+    constructor(callback) {
+      this.callback = callback
+      observers.push(this)
+    }
     disconnect() {}
-    observe() {}
+    observe(target, init) {
+      this.target = target
+      this.init = init
+    }
   }
   class CustomEvent {
     constructor(type, init) {
@@ -81,13 +140,9 @@ function createRuntime(options) {
     }
   }
   context.matchMedia = () => media
-  context.requestAnimationFrame = callback => callback()
-  if (!(options && options.withoutThemeHelpers)) {
-    context.activateDarkMode = () => root.setAttribute('data-theme', 'dark')
-    context.activateLightMode = () => root.setAttribute('data-theme', 'light')
-  }
+  context.requestAnimationFrame = options && options.manualFrames ? callback => frames.push(callback) : callback => callback()
   vm.runInNewContext(settingsSource, context, { filename: 'toybox-settings.js' })
-  return { attributes, context, events, media, properties, root, storage }
+  return { attributes, context, events, frames, lookups, media, observers, queries, root, storage }
 }
 
 test('switches between all supported locales at runtime', () => {
@@ -123,9 +178,10 @@ test('applies light, dark, and system color modes', () => {
   assert.equal(runtime.storage.getItem('theme'), null)
 })
 
-test('applies color modes when legacy theme helpers are unavailable', () => {
-  const runtime = createRuntime({ prefersDark: true, withoutThemeHelpers: true })
+test('re-applies color modes over a pre-painted theme without persisting', () => {
+  const runtime = createRuntime({ prefersDark: true, attributes: { 'data-theme': 'dark' } })
   const settings = runtime.context.ToyboxSettings
+  assert.equal(runtime.attributes['data-theme'], 'dark')
 
   settings.applyColorMode('light', false)
   assert.equal(runtime.attributes['data-theme'], 'light')
@@ -135,6 +191,7 @@ test('applies color modes when legacy theme helpers are unavailable', () => {
 
   settings.applyColorMode('auto', false)
   assert.equal(runtime.attributes['data-theme'], 'dark')
+  assert.equal(runtime.storage.values.size, 0)
 })
 
 test('restores persisted visitor preferences', () => {
@@ -151,10 +208,129 @@ test('restores persisted visitor preferences', () => {
   assert.equal(runtime.root.lang, 'en')
 })
 
+test('marks only the preference buttons as pressed, never the root element', () => {
+  const english = preferenceButton({ toyboxLocale: 'en' })
+  const chinese = preferenceButton({ toyboxLocale: 'zh-CN' })
+  const dark = preferenceButton({ toyboxColorMode: 'dark' })
+  const auto = preferenceButton({ toyboxColorMode: 'auto' })
+  const runtime = createRuntime({ elements: [english, chinese, dark, auto] })
+  const settings = runtime.context.ToyboxSettings
+
+  settings.applyLocale('en', false)
+  settings.applyColorMode('dark', false)
+  assert.equal(english.classList.contains('is-active'), true)
+  assert.equal(english.attributes['aria-pressed'], 'true')
+  assert.equal(chinese.attributes['aria-pressed'], 'false')
+  assert.equal(dark.attributes['aria-pressed'], 'true')
+  assert.equal(auto.classList.contains('is-active'), false)
+  assert.equal(runtime.root.dataset.toyboxLocale, 'en')
+  assert.equal(runtime.root.dataset.toyboxColorMode, 'dark')
+  assert.equal(runtime.root.classList.contains('is-active'), false)
+  assert.equal(runtime.attributes['aria-pressed'], undefined)
+})
+
+test('still honors the legacy theme preference key', () => {
+  const runtime = createRuntime({ storage: { theme: 'dark' } })
+
+  assert.equal(runtime.context.ToyboxSettings.getColorMode(), 'dark')
+  assert.equal(runtime.attributes['data-theme'], 'dark')
+})
+
+test('dynamic UI translation only visits newly added elements', () => {
+  const runtime = createRuntime({ manualFrames: true, defaultLocale: 'en' })
+  const observer = runtime.observers[0]
+  assert.equal(runtime.observers.length, 1)
+  // One deferred chrome pass after the other DOMContentLoaded handlers, then nothing.
+  assert.equal(runtime.frames.length, 1)
+  runtime.lookups.length = 0
+  runtime.frames.shift()()
+  assert.ok(runtime.lookups.includes('go-up'))
+  assert.equal(observer.target, runtime.context.document.body)
+  assert.equal(observer.init.childList, true)
+  assert.equal(observer.init.subtree, true)
+  runtime.queries.length = 0
+  runtime.lookups.length = 0
+
+  // A reading-meter or TOC percent write swaps a Text node; that must not rescan anything.
+  const text = { nodeType: 3, isConnected: true }
+  observer.callback([
+    { type: 'characterData', target: text, addedNodes: [] },
+    { type: 'childList', target: {}, addedNodes: [text] }
+  ])
+  assert.equal(runtime.frames.length, 0)
+
+  const child = boundElement({ toyboxI18nAria: 'search.close' })
+  const added = boundElement({ toyboxI18n: 'nav.home' }, [child], '主页')
+  const detached = boundElement({ toyboxI18n: 'nav.archives' }, null, '归档')
+  detached.isConnected = false
+  observer.callback([{ type: 'childList', addedNodes: [text, added] }])
+  observer.callback([{ type: 'childList', addedNodes: [added, detached] }])
+  assert.equal(runtime.frames.length, 1)
+  runtime.frames.shift()()
+
+  assert.equal(added.textContent, 'Home')
+  assert.equal(child.attributes['aria-label'], 'Close search')
+  assert.equal(detached.textContent, '归档')
+  assert.deepEqual(runtime.queries, [])
+  assert.deepEqual(runtime.lookups, [])
+})
+
+test('switching locale still re-translates every bound element', () => {
+  const heading = boundElement({ toyboxI18n: 'nav.archives' }, null, '归档')
+  const runtime = createRuntime({ bound: [heading] })
+  runtime.queries.length = 0
+
+  runtime.context.ToyboxSettings.applyLocale('en', false)
+  assert.equal(heading.textContent, 'Archives')
+  assert.ok(runtime.queries.includes(BOUND_SELECTOR))
+  assert.ok(runtime.lookups.includes('go-up'))
+
+  runtime.context.ToyboxSettings.applyLocale('zh-TW', false)
+  assert.equal(heading.textContent, '歸檔')
+})
+
 test('keeps the three locale dictionaries in sync', () => {
   const dictionaries = createRuntime().context.ToyboxSettings.dictionaries
   const englishKeys = Object.keys(dictionaries.en).sort()
 
   assert.deepEqual(Object.keys(dictionaries['zh-CN']).sort(), englishKeys)
   assert.deepEqual(Object.keys(dictionaries['zh-TW']).sort(), englishKeys)
+})
+
+test('every literal i18n key the theme references exists in every locale', () => {
+  const dictionaries = createRuntime().context.ToyboxSettings.dictionaries
+  const files = []
+  const collect = directory => fs.readdirSync(directory, { withFileTypes: true }).forEach(entry => {
+    const absolute = path.join(directory, entry.name)
+    if (entry.isDirectory()) collect(absolute)
+    else if (/\.(pug|js)$/.test(entry.name)) files.push(absolute)
+  })
+  ;['layout', 'scripts', 'source/js'].forEach(directory => collect(path.join(root, directory)))
+  const sources = files.map(file => {
+    const source = fs.readFileSync(file, 'utf8')
+    if (!file.endsWith('toybox-settings.js')) return source
+    return source.slice(0, source.indexOf('var dictionaries = {')) + source.slice(source.indexOf('var themeConfig'))
+  }).join('\n')
+
+  const serverCall = /(?:\b_p|\b__|\btoybox_text)\(\s*(['"`])([^'"`$]+)\1/g
+  const serverKeys = new Set([...sources.matchAll(serverCall)].map(match => match[2]))
+  const flatten = (value, prefix) => Object.entries(value).flatMap(([key, child]) => {
+    const name = prefix ? prefix + '.' + key : key
+    return child && typeof child === 'object' ? flatten(child, name) : [name]
+  })
+  const ymlKeys = ['default.yml', 'en.yml', 'zh-CN.yml', 'zh-TW.yml'].map(file => [file, flatten(yaml.load(fs.readFileSync(path.join(root, 'languages', file), 'utf8')))])
+  assert.ok(serverKeys.size > 40)
+  ymlKeys.forEach(([file, keys]) => {
+    assert.deepEqual(keys.slice().sort(), ymlKeys[0][1].slice().sort(), `${file} key set`)
+    serverKeys.forEach(key => assert.ok(keys.includes(key), `${file} is missing ${key}`))
+  })
+
+  const namespaces = [...new Set(Object.keys(dictionaries.en).map(key => key.split('.')[0]))]
+  const clientLiteral = new RegExp(`['"\`]((?:${namespaces.join('|')})\\.[a-z][A-Za-z]*)['"\`]`, 'g')
+  const fileName = /\.(?:css|gif|html|jpe?g|js|json|md|png|svg|txt|webp|xml|ya?ml)$/
+  const clientKeys = new Set([...sources.replace(serverCall, '').matchAll(clientLiteral)].map(match => match[1]).filter(key => !fileName.test(key)))
+  assert.ok(clientKeys.size > 100)
+  Object.entries(dictionaries).forEach(([locale, dictionary]) => {
+    clientKeys.forEach(key => assert.ok(dictionary[key], `${locale} is missing ${key}`))
+  })
 })

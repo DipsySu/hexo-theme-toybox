@@ -10,10 +10,8 @@ body.toybox-theme button:active { box-shadow: var(--shadow-pressed); }
 body.toybox-theme button:disabled { opacity: .4; cursor: default; }
 body.toybox-theme h1, body.toybox-theme h2, body.toybox-theme h3 { color: var(--color-ink); font-family: inherit; }
 body.toybox-theme #body-wrap { min-height: 100svh; position: relative; z-index: 1; }
-body.toybox-theme #page-header, body.toybox-theme #content-inner, body.toybox-theme #footer, body.toybox-theme #site-title, body.toybox-theme #nav.show { animation: none; }
 body.toybox-theme #page-header { height: auto; min-height: 128px; background: var(--color-surface); background-image: none !important; margin: 0; transition: none; border-bottom: 1px solid var(--color-border); }
 body.toybox-theme #page-header::before, body.toybox-theme #page-header::after { content: none; }
-body.toybox-theme #page-header #site-info { display: none; }
 body.toybox-theme #page-header #nav { position: relative; top: 0; left: 0; display: flex; gap: 24px; justify-content: space-between; width: 100%; height: 128px; padding: 0 max(40px, calc((100% - 1440px) / 2)); background: var(--color-surface); opacity: 1; box-shadow: none; transform: none; transition: none; }
 body.toybox-theme #page-header.nav-fixed #nav, body.toybox-theme #page-header.fixed #nav { position: fixed; top: 0; left: 0; width: 100%; transform: none; border-bottom: 1px solid var(--color-border); }
 body.toybox-theme #page-header.nav-fixed, body.toybox-theme #page-header.fixed { padding-top: 128px; }
@@ -21,7 +19,7 @@ body.toybox-theme #page-header #blog-info { flex: 1 1 auto; min-width: 0; overfl
 body.toybox-theme .site-brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
 body.toybox-theme #nav #blog-info .site-icon { flex: 0 0 62px; width: 62px; height: 68px; object-fit: contain; margin: 0; image-rendering: pixelated; }
 .site-brand-copy { display: flex; flex-direction: column; min-width: 0; }
-body.toybox-theme #nav .site-name { font-family: "Fusion Pixel", -apple-system, sans-serif; color: var(--color-ink); text-shadow: none; font-weight: 750; font-size: 34px; line-height: 1.4; }
+body.toybox-theme #nav .site-name { font-family: -apple-system, sans-serif; color: var(--color-ink); text-shadow: none; font-weight: 750; font-size: 34px; line-height: 1.4; }
 body.toybox-theme .site-tagline { max-width: 430px; color: var(--color-muted); font-size: 13px; line-height: 1.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.toybox-theme #menus { display: flex; align-items: center; gap: 24px; flex: 0 0 auto; }
 body.toybox-theme #nav .menus_items { display: flex; gap: 8px; }
@@ -51,7 +49,6 @@ body.toybox-theme #content-inner { width: calc(100% - 80px); max-width: 1120px; 
 body.toybox-collection #content-inner, body.toybox-page #content-inner { display: block; }
 body.toybox-page #page { width: 100%; padding: 0; background: transparent; box-shadow: none; border-radius: 0; }
 body.toybox-theme #post .post-meta__tags { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; padding: 8px 16px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); color: var(--color-ink) !important; font-size: 15px !important; box-shadow: var(--shadow-control); }
-.pixel-tag-sprite { display: none; }
 
 /* Collection views: compact heading, tag labels, category boxes, and one result ledger. */
 body.toybox-collection-view #pacman-canvas { display: none !important; }
@@ -69,7 +66,7 @@ html:not(.toybox-js) .toybox-collection-toolbar, html:not(.toybox-js) .toybox-ra
 .toybox-collection-view .toybox-breadcrumb a:hover { color: var(--accent-primary); text-decoration-color: currentColor; }
 .toybox-collection-view .toybox-breadcrumb [aria-current] { color: var(--color-ink); font-weight: 600; }
 .toybox-collection-view .toybox-collection-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 0 0 8px; }
-.toybox-collection-view .toybox-collection-count { color: var(--color-muted); font: 13px/1.5 "Fusion Pixel", ui-monospace, monospace; }
+.toybox-collection-view .toybox-collection-count { color: var(--color-muted); font: 13px/1.5 ui-monospace, monospace; }
 .toybox-collection-view .toybox-collection-nav { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
 .toybox-collection-view .toybox-collection-nav-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border-bottom: 3px solid transparent; color: var(--color-muted); font-size: 14px; font-weight: 600; white-space: nowrap; transition: color 150ms, border-color 150ms; }
 .toybox-collection-view .toybox-collection-nav-link:hover { color: var(--color-ink); border-bottom-color: var(--color-border-strong); }
@@ -82,13 +79,13 @@ html:not(.toybox-js) .toybox-collection-toolbar, html:not(.toybox-js) .toybox-ra
 .toybox-collection-view .toybox-rail-link:hover { background: var(--color-surface-soft); color: var(--color-ink); }
 .toybox-collection-view .toybox-rail-link.is-current { border-left-color: var(--accent-primary); background: var(--color-surface-soft); color: var(--accent-primary); font-weight: 650; }
 .toybox-collection-view .toybox-rail-name { min-width: 0; overflow-wrap: anywhere; }
-.toybox-collection-view .toybox-rail-count, .toybox-collection-view .toybox-tag-count, .toybox-collection-view .toybox-category-child-count { flex: 0 0 auto; color: var(--color-muted); font: 12px/1 "Fusion Pixel", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.toybox-collection-view .toybox-rail-count, .toybox-collection-view .toybox-tag-count, .toybox-collection-view .toybox-category-child-count { flex: 0 0 auto; color: var(--color-muted); font: 12px/1 var(--font-pixel); font-variant-numeric: tabular-nums; }
 .toybox-collection-view .toybox-rail-picker { display: none; position: relative; }
 .toybox-collection-view .toybox-select { position: relative; }
 .toybox-collection-view .toybox-select select, .toybox-collection-view .toybox-rail-picker select { display: block; width: 100%; min-height: 44px; padding: 0 36px 0 14px; appearance: none; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); box-shadow: var(--shadow-control); color: var(--color-ink); font: inherit; font-size: 14px; cursor: pointer; }
 .toybox-collection-view .toybox-select > i, .toybox-collection-view .toybox-rail-picker > i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--color-muted); font-size: 11px; pointer-events: none; }
 .toybox-collection-view .toybox-ledger-main { min-width: 0; }
-.toybox-collection-view .toybox-ledger-year { margin: 28px 0 6px; padding: 0 12px; color: var(--color-muted); font: 18px/1.5 "Fusion Pixel", ui-monospace, monospace; }
+.toybox-collection-view .toybox-ledger-year { margin: 28px 0 6px; padding: 0 12px; color: var(--color-muted); font: 18px/1.5 var(--font-pixel); }
 .toybox-collection-view .toybox-ledger-year:first-child { margin-top: 0; }
 .toybox-collection-view .toybox-ledger-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--color-border); }
 .toybox-collection-view .toybox-ledger-row { position: relative; display: grid; grid-template-columns: 72px minmax(0, 1fr) 16px; align-items: center; gap: 16px; padding: 14px 12px; border-bottom: 1px solid var(--color-border); transition: background-color 150ms; }
@@ -113,6 +110,14 @@ html:not(.toybox-js) .toybox-collection-toolbar, html:not(.toybox-js) .toybox-ra
 .toybox-collection-view .toybox-page-step { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); box-shadow: var(--shadow-control); color: var(--color-ink); }
 .toybox-collection-view a.toybox-page-step.next { background: var(--toy-aqua-soft); border-color: var(--accent-secondary); }
 .toybox-collection-view a.toybox-page-step:hover { border-color: var(--accent-secondary); color: var(--color-ink); }
+.toybox-page-controls { display: flex; align-items: center; gap: 8px; }
+.toybox-page-picker { position: relative; min-width: 150px; height: 52px; border: 1px solid var(--color-border-strong); border-radius: 4px; background: var(--color-surface-soft); box-shadow: inset 0 2px 0 #15253626, 0 1px 0 var(--toybox-key-shine); }
+.toybox-page-picker:focus-within { outline: 2px solid var(--accent-secondary); outline-offset: 3px; }
+.toybox-page-picker > i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 10px; color: var(--color-muted); }
+/* Collection pages render no digit overlay, so their native select is the visible control. */
+.toybox-collection-pager .toybox-page-picker select { display: block; width: 100%; height: 100%; padding: 0 32px 0 12px; appearance: none; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; }
+.toybox-collection-pager .toybox-page-picker select:focus-visible { outline: none; }
+.toybox-collection-pager .toybox-page-picker select option { background-color: var(--color-surface); color: var(--color-ink); }
 .toybox-collection-view .toybox-collection-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 8px; }
 .toybox-collection-view .toybox-field { display: grid; gap: 6px; min-width: 0; }
 .toybox-collection-view .toybox-field label { color: var(--color-muted); font-size: 12px; font-weight: 600; }
@@ -141,7 +146,7 @@ html:not(.toybox-js) .toybox-collection-toolbar, html:not(.toybox-js) .toybox-ra
 .toybox-collection-view .toybox-category-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .toybox-collection-view .toybox-category-copy { display: grid; gap: 4px; min-width: 0; }
 .toybox-collection-view .toybox-category-name { font-size: 19px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
-.toybox-collection-view .toybox-category-count { color: var(--color-muted); font: 13px/1.5 "Fusion Pixel", ui-monospace, monospace; }
+.toybox-collection-view .toybox-category-count { color: var(--color-muted); font: 13px/1.5 ui-monospace, monospace; }
 .toybox-collection-view .toybox-category-latest { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; overflow: hidden; color: var(--color-muted); font-size: 13px; overflow-wrap: anywhere; }
 .toybox-collection-view .toybox-category-arrow { color: var(--color-border-strong); font-size: 13px; transition: color 150ms; }
 .toybox-collection-view a.toybox-category-main:hover .toybox-category-arrow { color: var(--tone); }
@@ -209,7 +214,6 @@ body.toybox-theme #body-wrap #post-info:not(:has(.pixel-article-sleeve-art)) { g
 body.toybox-theme #body-wrap #post-info:not(:has(.pixel-article-sleeve-art)) > * { grid-column: 1; }
 body.toybox-post #content-inner.layout { display: block; max-width: 1048px; padding-top: 0; transition: none; }
 body.toybox-post #body-wrap.post #content-inner > #post { width: 100%; padding: 0; background: transparent; box-shadow: none; transition: none; }
-body.toybox-post #aside-content { display: none; }
 .toybox-reader-toolbar { position: sticky; top: var(--reader-nav-height); z-index: 20; display: flex; align-items: center; gap: 16px; min-height: 64px; margin-bottom: 32px; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
 .toybox-reader-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; font-size: 12px; color: var(--color-muted); }
 body.toybox-post .toybox-reader-toolbar button { flex: 0 0 44px; width: 44px; height: 44px; padding: 0; font-size: 17px; }
@@ -307,7 +311,6 @@ body.toybox-theme #pagination .pagination .space { min-width: 10px; border: 0; b
 body.toybox-theme #pagination .pagination .current { color: #fff; border-color: #bc3a35; background: #ef4b43; box-shadow: 0 2px 0 #b93130; }
 body.toybox-theme #pagination .pagination a:hover { border-color: var(--accent-primary); }
 body.toybox-theme #footer { background: transparent; color: var(--color-muted); margin: 0 auto; padding: 0 24px 32px; max-width: var(--content-max); }
-body.toybox-theme #footer::before { content: none; }
 body.toybox-theme #footer-wrap { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 16px; padding: 0; font-size: 12px; color: var(--color-muted); }
 body.toybox-theme #footer-wrap a { color: var(--color-muted); }
 body.toybox-theme .footer-separator { margin: 0 10px; }
@@ -333,8 +336,7 @@ body.toybox-theme #local-search .search-result-stats, body.toybox-theme #loading
 #search-error[hidden], #loading-database[hidden] { display: none; }
 #local-search .search-dialog.is-open { display: block; animation: search-appear 160ms ease-out; }
 @keyframes search-appear { from { opacity: 0; } to { opacity: 1; } }
-#toybox-side-pacman, #pixel-particles-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; image-rendering: pixelated; }
-#pixel-dino-game { display: none; }
+#pixel-particles-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; image-rendering: pixelated; }
 body.toybox-theme .pixel-cover-fallback { min-height: 100%; background-size: cover !important; background-position: center !important; }
 body.toybox-theme #sidebar-menus { background: var(--color-surface); color: var(--color-ink); }
 body.toybox-theme #sidebar-menus .site-page { min-height: 44px; display: flex; align-items: center; gap: 12px; }
@@ -400,4 +402,4 @@ body.toybox-theme .pixel-error-action { display: inline-flex; gap: 8px; align-it
   body.toybox-theme #rightside { right: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { body.toybox-theme *, body.toybox-theme *::before, body.toybox-theme *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
-@media print { #nav, #rightside, .pixel-manual-index, .toybox-reader-toolbar, #pixel-particles-canvas, #toybox-side-pacman { display: none !important; } body.toybox-theme #content-inner { width: 100%; } .pixel-manual-body { display: block; } .toybox-article-footer { margin-left: 0; } }
+@media print { #nav, #rightside, .pixel-manual-index, .toybox-reader-toolbar, #pixel-particles-canvas { display: none !important; } body.toybox-theme #content-inner { width: 100%; } .pixel-manual-body { display: block; } .toybox-article-footer { margin-left: 0; } }

@@ -55,22 +55,6 @@
     background: $dark-black
 
 .layout
-  & > .recent-posts
-    .pagination
-      & > *
-        display: inline-block
-        margin: 0 6px
-        width: w = 2.5em
-        height: w
-        line-height: w
-
-      & > *:not(.space)
-        @extend .cardHover
-
-        &:hover
-          background: var(--btn-hover-color)
-          color: var(--btn-color)
-
   & > div:not(.recent-posts)
     .pagination
       .page-number

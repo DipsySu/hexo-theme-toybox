@@ -22,7 +22,7 @@ block content
             span.toybox-deck-counter(aria-live='polite')
         .toybox-card-row
           .toybox-card-track(role='list')
-            +postUI
+            +postUI(page.posts.data)
         if !page.posts.length
           p.toybox-empty-slot(data-toybox-i18n='home.selectionEmpty') 没有可选择的文章
     section.toybox-bottom-console

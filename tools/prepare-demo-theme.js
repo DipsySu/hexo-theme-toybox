@@ -7,7 +7,7 @@ const repositoryRoot = path.resolve(__dirname, '..')
 const themesDirectory = path.join(repositoryRoot, 'demo', 'themes')
 const themeDirectory = path.join(themesDirectory, 'toybox')
 const generatedMarker = path.join(themeDirectory, '.toybox-demo-copy')
-const themeEntries = ['_config.yml', 'package.json', 'languages', 'layout', 'scripts', 'source']
+const themeEntries = ['_config.yml', 'package.json', 'languages', 'layout', 'lib', 'scripts', 'source']
 
 fs.mkdirSync(themesDirectory, { recursive: true })
 

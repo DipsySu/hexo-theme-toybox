@@ -371,3 +371,37 @@ test('sprite preview uses the same single-encounter lifecycle and honors motion 
   assert.equal(runtime.canvas.dataset.encounter, '')
   assert.equal(runtime.activeFrames.size, 0)
 })
+
+test('phone-width article pages leave the canvas idle and skip the sprite atlas', () => {
+  const runtime = createPostRuntime({ width: 375, height: 812, contentRect: { left: 0, right: 375 } })
+
+  assert.equal(runtime.canvas.dataset.pageKind, 'post')
+  assert.equal(runtime.canvas.dataset.spriteCount, '0')
+  assert.equal(runtime.activeFrames.size, 0)
+  assert.equal(runtime.image.src, undefined)
+
+  runtime.storage.setItem('pixelAnim', 'on')
+  runtime.windowListeners.get('pixel-animation-toggle')({ detail: { enabled: true } })
+  runtime.dispatch('visibilitychange')
+  assert.equal(runtime.activeFrames.size, 0)
+})
+
+test('reads the motion preference once instead of on every frame', () => {
+  const runtime = createPostRuntime()
+  let reads = 0
+  const getItem = runtime.storage.getItem
+  runtime.storage.getItem = key => { reads += 1; return getItem(key) }
+  assert.ok(runtime.image.src.endsWith('img/toybox-sprites/atlas.png?v=platform-1'))
+  runtime.image.onload()
+
+  for (let frame = 1; frame <= 30; frame++) runtime.runFrame(frame * 40)
+  assert.equal(reads, 0)
+  assert.equal(runtime.activeFrames.size, 1)
+
+  runtime.storage.setItem('pixelAnim', 'off')
+  runtime.windowListeners.get('storage')({ key: 'pixelAnim', newValue: 'off' })
+  assert.equal(runtime.activeFrames.size, 0)
+
+  runtime.windowListeners.get('pixel-animation-toggle')({ detail: { enabled: true } })
+  assert.equal(runtime.activeFrames.size, 1)
+})

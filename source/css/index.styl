@@ -1,5 +1,5 @@
-if hexo-config('css_prefix')
-  @import 'nib'
+// Stylus clones @keyframes for every vendor in `vendors`; current browsers only need the official one.
+vendors = official
 
 @import '_third-party/normalize.min.css'
 @import '_variables'
@@ -8,7 +8,6 @@ if hexo-config('css_prefix')
 @import '_highlight/highlight'
 
 @import '_page/common'
-@import '_page/homepage'
 @import '_page/flink'
 @import '_page/404'
 
@@ -21,9 +20,13 @@ if hexo-config('css_prefix')
 @import '_layout/sidebar'
 @import '_layout/aside'
 
-@import '_mode/darkmode'
 @import '_mode/readmode'
 
 if hexo-config('local_search.enable')
   @import '_search/index'
   @import '_search/local-search'
+
+@import 'pixel-icons.css'
+@import 'cartridge-tokens.css'
+@import 'toybox-theme.css'
+@import 'toybox-settings.css'

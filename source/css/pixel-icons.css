@@ -1,22 +1,35 @@
 /* ========================================
-   Toybox 像素图标层 — 用 Pixelarticons 覆盖 Font Awesome 图标
+   Toybox 像素图标层 — 用 Pixelarticons 绘制全部 .fa-* 图标
    ----------------------------------------
-   原理：保留主题里硬编码的 .fa-* 类名作为钩子，仅用 CSS 把字体字形换成像素 SVG。
+   原理：保留主题里硬编码的 .fa-* 类名作为钩子，不再加载 Font Awesome，图标全部由 CSS 遮罩绘制。
    - 用 mask + background-color:currentColor → 图标自动随文字色（浅/深色模式都对）
-   - image-rendering:pixelated → 缩放时保持像素硬边
+   - 遮罩 SVG 以 data URI 内联在下方 --pi-* 变量里，随样式表一起到达，没有额外请求
    - 不改任何 pug 模板，主题升级不丢
-   图标来源：Pixelarticons (MIT, https://pixelarticons.com)，见 /img/pixel-icons/LICENSE
+   图标来源：Pixelarticons (MIT, https://pixelarticons.com)，源文件与许可证见 /img/pixel-icons/
    品牌图标 fa-github 用自绘的像素 Octocat（github.svg）。
+   改动 img/pixel-icons 里的 SVG 后需同步更新对应的 --pi-* 变量（test/pixel-icons.test.js 会校验）。
    ======================================== */
 
-/* 所有被接管的图标共用的基础样式 */
-.fa-bullhorn::before,
+/* Font Awesome 兼容层：保留 FA 提供的盒模型、等宽与旋转动画。
+   'Toybox Icon Box' 不画任何字形，只借本地无衬线字体并覆写成 FA 字体的度量（上 0.875em / 下 0.125em），
+   让图标所在行盒的高度与基线和加载 FA 时完全一致。 */
+@font-face { font-family: 'Toybox Icon Box'; src: local('Arial'), local('Helvetica'), local('Liberation Sans'), local('DejaVu Sans'), local('Roboto'); ascent-override: 87.5%; descent-override: 12.5%; line-gap-override: 0%; }
+.fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands { display: inline-block; font-family: 'Toybox Icon Box'; font-style: normal; font-variant: normal; line-height: 1; text-rendering: auto; }
+.fa-fw { width: 1.25em; text-align: center; }
+.fa-spin { animation: toybox-fa-spin 2s linear infinite; }
+.fa-pulse { animation: toybox-fa-spin 1s steps(8) infinite; }
+@keyframes toybox-fa-spin { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .fa-spin, .fa-pulse { animation: none; } }
+
+/* 所有图标共用的基础样式 */
 .fa-calendar-alt::before,
 .fa-history::before,
 .fa-clock::before,
 .fa-eye::before,
 .fa-inbox::before,
+.fa-folder::before,
 .fa-folder-open::before,
+.fa-bookmark::before,
 .fa-tag::before,
 .fa-tags::before,
 .fa-archive::before,
@@ -24,29 +37,30 @@
 .fa-search::before,
 .fa-chevron-left::before,
 .fa-chevron-right::before,
-.fa-chevron-down::before,
 .fa-angle-right::before,
+.fa-chevron-down::before,
 .fa-angle-down::before,
+.fa-angle-double-down::before,
 .fa-arrow-up::before,
+.fa-arrow-right::before,
+.fa-arrow-left::before,
 .fa-bars::before,
+.fa-file-alt::before,
+.fa-file-word::before,
 .fa-paste::before,
 .fa-list-ul::before,
 .fa-stream::before,
-.fa-comments::before,
-.fa-comment-dots::before,
+.fa-th::before,
 .fa-gamepad::before,
 .fa-cog::before,
-.fa-adjust::before,
 .fa-book-open::before,
 .fa-arrows-alt-h::before,
-.fa-sms::before,
 .fa-pencil-alt::before,
-.fa-file-word::before,
-.fa-chart-line::before,
 .fa-thumbtack::before,
+.fa-thumbs-up::before,
+.fa-copy::before,
 .fa-spinner::before,
 .fa-times::before,
-.fa-angle-double-down::before,
 .fa-envelope::before,
 .fa-github::before {
   content: "" !important;
@@ -64,38 +78,83 @@
   image-rendering: pixelated;
 }
 
+/* 接替 FA 字形的图标沿用原字形的步进宽度与基线，周围文字不移位 */
+.fa-arrow-right::before, .fa-arrow-left::before, .fa-copy::before { width: 0.875em; }
+.fa-file-alt::before, .fa-bookmark::before { width: 0.75em; }
+.fa-arrow-right::before, .fa-arrow-left::before, .fa-copy::before, .fa-file-alt::before, .fa-bookmark::before, .fa-folder::before, .fa-th::before, .fa-thumbs-up::before {
+  vertical-align: -0.125em;
+  -webkit-mask-size: 1em 1em;
+  mask-size: 1em 1em;
+}
+
+/* 每个 SVG 只内联一次 */
+:root {
+  --pi-calendar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 4h14v2H5zm0 16h14v2H5zM3 10h2v10H3zm0-4h2v2H3zm16 0h2v2h-2zm0 4h2v10h-2zM3 8h18v2H3zm12-6h2v2h-2zM7 2h2v2H7z'/%3E%3C/svg%3E");
+  --pi-reload: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16 4h2v6h-2zm-2-2h2v2h-2zm0 2h2v8h-2zM4 8H2v5h2z'/%3E%3Cpath d='M4 6h16v2H4zm4 14H6v-6h2zm2 2H8v-2h2zm0-2H8v-8h2zm10-4h2v-5h-2z'/%3E%3Cpath d='M20 18H4v-2h16z'/%3E%3C/svg%3E");
+  --pi-clock: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12v2H6zM2 6h2v12H2zm18 0h2v12h-2zm-2-2h2v2h-2zM4 4h2v2H4zm2 18h12v-2H6zm12-2h2v-2h-2zM4 20h2v-2H4zm7-14h2v7h-2zm2 7h2v2h-2zm2 2h2v2h-2z'/%3E%3C/svg%3E");
+  --pi-eye: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16 20H8v-2h8v2Zm-8-2H4v-2h4v2Zm12 0h-4v-2h4v2ZM4 16H2v-2h2v2Zm10-6h-2v2h2v-2h2v4h-2v2h-4v-2H8v-4h2V8h4v2Zm8 6h-2v-2h2v2ZM2 14H0v-4h2v4Zm22 0h-2v-4h2v4ZM4 10H2V8h2v2Zm18 0h-2V8h2v2ZM8 8H4V6h4v2Zm12 0h-4V6h4v2Zm-4-2H8V4h8v2Z'/%3E%3C/svg%3E");
+  --pi-inbox: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 4h2v16H2zm2 16h16v2H4zM20 4h2v16h-2zM4 2h16v2H4zm0 12h4v2H4zm4 2h8v2H8zm8-2h4v2h-4z'/%3E%3C/svg%3E");
+  --pi-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h6v2H4zm0 14h16v2H4zM20 8h2v10h-2zM2 6h2v12H2zm8 0h10v2H10z'/%3E%3C/svg%3E");
+  --pi-bookmark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12v2H6zM4 4h2v18H4zm14 0h2v18h-2zm-2 16h2v2h-2zm-2-2h2v2h-2zm-8 2h2v2H6zm2-2h2v2H8zm2-2h4v2h-4z'/%3E%3C/svg%3E");
+  --pi-archive: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 2h18v2H3zm0 5h18v2H3zM1 4h2v3H1zm20 0h2v3h-2zm-2 5h2v11h-2zM3 9h2v11H3zm2 11h14v2H5zm4-9h6v2H9z'/%3E%3C/svg%3E");
+  --pi-home: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20h16v2H4zm16-10h2v10h-2zM2 10h2v10H2zm2-2h2v2H4zm2-2h2v2H6zm2-2h2v2H8zm2-2h4v2h-4zm4 2h2v2h-2zm2 2h2v2h-2zm2 2h2v2h-2zM8 14h2v6H8zm2-2h4v2h-4zm4 2h2v6h-2z'/%3E%3C/svg%3E");
+  --pi-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M22 22h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-6-2H6v-2h8v2Zm4 0h-2v-2h2v2ZM6 16H4v-2h2v2Zm10 0h-2v-2h2v2ZM4 14H2V6h2v8Zm14 0h-2V6h2v8ZM6 6H4V4h2v2Zm10 0h-2V4h2v2Zm-2-2H6V2h8v2Z'/%3E%3C/svg%3E");
+  --pi-chevron-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 13v-2h2v2H8Zm2-2V9h2v2h-2Zm0 4v-2h2v2h-2Zm2-6V7h2v2h-2Zm0 8v-2h2v2h-2Zm2-10V5h2v2h-2Zm0 12v-2h2v2h-2Z'/%3E%3C/svg%3E");
+  --pi-chevron-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16 13v-2h-2v2h2Zm-2-2V9h-2v2h2Zm0 4v-2h-2v2h2Zm-2-6V7h-2v2h2Zm0 8v-2h-2v2h2ZM10 7V5H8v2h2Zm0 12v-2H8v2h2Z'/%3E%3C/svg%3E");
+  --pi-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 16h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2Z'/%3E%3C/svg%3E");
+  --pi-arrow-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 20h2V4h-2zm2-12h2V6h-2zm2 2h2V8h-2zm2 2h2v-2h-2zm-6-4H9V6h2z'/%3E%3Cpath d='M15 10H7V8h8zm2 2H5v-2h12z'/%3E%3C/svg%3E");
+  --pi-arrow-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h16v2H4zm12-2h2v6h-2zm-2-2h2v10h-2zm-2-2h2v14h-2z'/%3E%3C/svg%3E");
+  --pi-arrow-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 11h16v2H4zm2-2h2v6H6zm2-2h2v10H8zm2-2h2v14h-2z'/%3E%3C/svg%3E");
+  --pi-menu: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 18H4v-2h16v2Zm0-5H4v-2h16v2Zm0-5H4V6h16v2Z'/%3E%3C/svg%3E");
+  --pi-file-text: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 4H4v16h2zm10-2H6v2h10zm4 4h-2v14h2zm-2 14H6v2h12zM16 4h2v2h-2zm-4 0h2v6h-2z'/%3E%3Cpath d='M12 8h6v2h-6zm-4 8h8v2H8zm0-4h8v2H8zm0-4h2v2H8z'/%3E%3C/svg%3E");
+  --pi-bulletlist: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 5h12v2H10zm0 4h8v2h-8zm0 4h12v2H10zm0 4h8v2h-8zm-4-6H4V9h2v2ZM4 9H2V7h2v2Zm4 0H6V7h2v2ZM6 7H4V5h2v2Zm-2 6h2v2H4zm0 4h2v2H4zm-2 0v-2h2v2zm4 0v-2h2v2z'/%3E%3C/svg%3E");
+  --pi-list-box: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 2h16v2H4zm2 5h2v2H6zm4 0h8v2h-8zm-4 4h2v2H6zm4 0h8v2h-8zm-4 4h2v2H6zm4 0h8v2h-8zm-6 5h16v2H4zM2 4h2v16H2zm18 0h2v16h-2z'/%3E%3C/svg%3E");
+  --pi-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 2h20v2H2zm0 18h20v2H2zM2 4h2v16H2zm18 0h2v16h-2zM8 4h2v16H8zm6 0h2v16h-2zM4 8h16v2H4zm0 6h16v2H4z'/%3E%3C/svg%3E");
+  --pi-gamepad: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h16v2H4zm0 14h16v2H4zM2 6h2v12H2zm18 0h2v12h-2zM8 9h2v6H8z'/%3E%3Cpath d='M6 11h6v2H6zm8-2h2v2h-2zm2 4h2v2h-2z'/%3E%3C/svg%3E");
+  --pi-settings-cog: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 0h6v2H9zm6 24H9v-2h6zM0 15V9h2v6zm24-6v6h-2V9zM9 2h2v4H9zm6 20h-2v-4h2zM2 15v-2h4v2zm20-6v2h-4V9zm-9-7h2v4h-2zm-2 20H9v-4h2zM2 11V9h4v2zm20 2v2h-4v-2zM7 4h2v2H7zm10 0h-2v2h2zm0 16h-2v-2h2zM7 20h2v-2H7zM2 2h5v2H2zm20 0h-5v2h5zm0 20h-5v-2h5zM2 22h5v-2H2z'/%3E%3Cpath d='M2 2h2v5H2zm20 0h-2v5h2zm0 20h-2v-5h2zM2 22h2v-5H2zM4 7h2v2H4zm16 0h-2v2h2zm0 10h-2v-2h2zM4 17h2v-2H4zm6-9h4v2h-4zm0 6h4v2h-4zm-2-4h2v4H8zm6 0h2v4h-2z'/%3E%3C/svg%3E");
+  --pi-book-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 3h9v2H2zM0 19h11v2H0zM13 3h9v2h-9zm0 16h11v2H13zM11 5h2v18h-2zM0 5h2v14H0zm22 0h2v14h-2zm-7 2h5v2h-5zm0 4h5v2h-5zm0 4h2v2h-2z'/%3E%3C/svg%3E");
+  --pi-arrows-horizontal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 13v-2h10v2zm6 2v-2h2v2zm-2 2v-2h2v2zm2-6V9h2v2z'/%3E%3Cpath d='M17 15V7h2v8zm-6-2v-2H1v2zm-6 2v-2H3v2zm2 2v-2H5v2zm-2-6V9H3v2z'/%3E%3Cpath d='M7 15V7H5v8z'/%3E%3C/svg%3E");
+  --pi-magic-edit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M16 2h4v2h-4zm2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H8zm-2 2h2v2H6zm-2 2h2v2H4zm-2-2h2v4H2zm2-2h2v2H4zm2-2h2v2H6zm2-2h2v2H8zm2-2h2v2h-2zm2-2h2v2h-2zm2-2h2v2h-2zm0 2h2v2h-2zm2-2h2v2h-2zm0 8h2v2h-2zm0 8h2v2h-2zm-4-4h2v2h-2zm8 0h2v2h-2zm-6-2h2v2h-2zm4 0h2v2h-2zm0 4h2v2h-2zm-4 0h2v2h-2zM4 2h2v2H4zM2 4h2v2H2zm2 2h2v2H4zm2-2h2v2H6zm14 6h2v2h-2zM8 20h2v2H8z'/%3E%3C/svg%3E");
+  --pi-map-pin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h10v2H7zM5 4h2v2H5zm14 0h-2v2h2zM7 17h2v2H7zm2 2h2v2H9zm6-2h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2h-2zm-6-7h2v3H5zm12 0h2v3h-2zM3 6h2v8H3zm18 0h-2v8h2zM10 6h4v2h-4zM8 8h2v4H8zm2 4h4v2h-4zm4-4h2v4h-2z'/%3E%3C/svg%3E");
+  --pi-thumbs-up: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 2h4v2h-4zM9 4h2v4H9zm4 0h2v4h-2zM7 8h2v2H7zm6 0h8v2h-8zM1 10h6v2H1zm20 0h2v8h-2zM1 12h2v8H1zm4 0h2v8H5zm14 6h2v2h-2zM1 20h18v2H1z'/%3E%3C/svg%3E");
+  --pi-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 2h11v2H6v13H4zm4 4h12v2H8zm0 14h12v2H8zM8 8h2v12H8zm10 0h2v12h-2z'/%3E%3C/svg%3E");
+  --pi-loader: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 22h-2v-6h2v6Zm-6-3H5v-2h2v2Zm12 0h-2v-2h2v2ZM9 17H7v-2h2v2Zm8 0h-2v-2h2v2Zm-9-4H2v-2h6v2Zm14 0h-6v-2h6v2ZM9 9H7V7h2v2Zm8 0h-2V7h2v2Zm-4-1h-2V2h2v6ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Z'/%3E%3C/svg%3E");
+  --pi-close: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 19H5V17H7V19ZM19 19H17V17H19V19ZM9 15V17H7V15H9ZM17 17H15V15H17V17ZM11 15H9V13H11V15ZM15 15H13V13H15V15ZM13 13H11V11H13V13ZM11 11H9V9H11V11ZM15 11H13V9H15V11ZM9 9H7V7H9V9ZM17 9H15V7H17V9ZM7 7H5V5H7V7ZM19 7H17V5H19V7Z'/%3E%3C/svg%3E");
+  --pi-mail: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 8h2v2H6zm2 2h2v2H8zm10-2h-2v2h2zm-2 2h-2v2h2zm-6 2h4v2h-4zM2 6h2v12H2zm18 0h2v12h-2zM4 4h16v2H4zm0 14h16v2H4z'/%3E%3C/svg%3E");
+  --pi-github: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='1' width='2' height='1'/%3E%3Crect x='12' y='1' width='2' height='1'/%3E%3Crect x='1' y='2' width='4' height='1'/%3E%3Crect x='11' y='2' width='4' height='1'/%3E%3Crect x='1' y='3' width='14' height='1'/%3E%3Crect x='0' y='4' width='16' height='1'/%3E%3Crect x='0' y='5' width='16' height='1'/%3E%3Crect x='0' y='6' width='4' height='1'/%3E%3Crect x='6' y='6' width='4' height='1'/%3E%3Crect x='12' y='6' width='4' height='1'/%3E%3Crect x='0' y='7' width='4' height='1'/%3E%3Crect x='6' y='7' width='4' height='1'/%3E%3Crect x='12' y='7' width='4' height='1'/%3E%3Crect x='0' y='8' width='16' height='1'/%3E%3Crect x='0' y='9' width='16' height='1'/%3E%3Crect x='1' y='10' width='14' height='1'/%3E%3Crect x='2' y='11' width='12' height='1'/%3E%3Crect x='3' y='12' width='10' height='1'/%3E%3Crect x='3' y='13' width='9' height='1'/%3E%3Crect x='3' y='14' width='3' height='1'/%3E%3Crect x='8' y='14' width='3' height='1'/%3E%3Crect x='3' y='15' width='2' height='1'/%3E%3C/svg%3E");
+}
+
 /* 单图标映射（FA 类名 → Pixelarticons SVG） */
-.fa-calendar-alt::before { -webkit-mask-image: url(../img/pixel-icons/calendar.svg);           mask-image: url(../img/pixel-icons/calendar.svg); }
-.fa-history::before      { -webkit-mask-image: url(../img/pixel-icons/reload.svg);             mask-image: url(../img/pixel-icons/reload.svg); }
-.fa-clock::before        { -webkit-mask-image: url(../img/pixel-icons/clock.svg);              mask-image: url(../img/pixel-icons/clock.svg); }
-.fa-eye::before          { -webkit-mask-image: url(../img/pixel-icons/eye.svg);                mask-image: url(../img/pixel-icons/eye.svg); }
-.fa-inbox::before        { -webkit-mask-image: url(../img/pixel-icons/inbox.svg);              mask-image: url(../img/pixel-icons/inbox.svg); }
-.fa-folder-open::before  { -webkit-mask-image: url(../img/pixel-icons/folder.svg);             mask-image: url(../img/pixel-icons/folder.svg); }
-.fa-tag::before          { -webkit-mask-image: url(../img/pixel-icons/bookmark.svg);           mask-image: url(../img/pixel-icons/bookmark.svg); }
-.fa-tags::before         { -webkit-mask-image: url(../img/pixel-icons/bookmark.svg);           mask-image: url(../img/pixel-icons/bookmark.svg); }
-.fa-archive::before      { -webkit-mask-image: url(../img/pixel-icons/archive.svg);            mask-image: url(../img/pixel-icons/archive.svg); }
-.fa-home::before         { -webkit-mask-image: url(../img/pixel-icons/home.svg);               mask-image: url(../img/pixel-icons/home.svg); }
-.fa-search::before       { -webkit-mask-image: url(../img/pixel-icons/search.svg);             mask-image: url(../img/pixel-icons/search.svg); }
-.fa-chevron-left::before { -webkit-mask-image: url(../img/pixel-icons/chevron-left.svg);       mask-image: url(../img/pixel-icons/chevron-left.svg); }
-.fa-chevron-right::before{ -webkit-mask-image: url(../img/pixel-icons/chevron-right.svg);      mask-image: url(../img/pixel-icons/chevron-right.svg); }
-.fa-chevron-down::before { -webkit-mask-image: url(../img/pixel-icons/chevron-down.svg);       mask-image: url(../img/pixel-icons/chevron-down.svg); }
-.fa-angle-right::before  { -webkit-mask-image: url(../img/pixel-icons/chevron-right.svg);      mask-image: url(../img/pixel-icons/chevron-right.svg); }
-.fa-angle-down::before   { -webkit-mask-image: url(../img/pixel-icons/chevron-down.svg);       mask-image: url(../img/pixel-icons/chevron-down.svg); }
-.fa-arrow-up::before     { -webkit-mask-image: url(../img/pixel-icons/arrow-up.svg);           mask-image: url(../img/pixel-icons/arrow-up.svg); }
-.fa-bars::before         { -webkit-mask-image: url(../img/pixel-icons/menu.svg);               mask-image: url(../img/pixel-icons/menu.svg); }
-.fa-paste::before        { -webkit-mask-image: url(../img/pixel-icons/file-text.svg);          mask-image: url(../img/pixel-icons/file-text.svg); }
-.fa-list-ul::before      { -webkit-mask-image: url(../img/pixel-icons/bulletlist.svg);         mask-image: url(../img/pixel-icons/bulletlist.svg); }
-.fa-stream::before       { -webkit-mask-image: url(../img/pixel-icons/list-box.svg);           mask-image: url(../img/pixel-icons/list-box.svg); }
-.fa-gamepad::before      { -webkit-mask-image: url(../img/pixel-icons/gamepad.svg);            mask-image: url(../img/pixel-icons/gamepad.svg); }
-.fa-cog::before          { -webkit-mask-image: url(../img/pixel-icons/settings-cog.svg);       mask-image: url(../img/pixel-icons/settings-cog.svg); }
-.fa-book-open::before    { -webkit-mask-image: url(../img/pixel-icons/book-open.svg);          mask-image: url(../img/pixel-icons/book-open.svg); }
-.fa-arrows-alt-h::before { -webkit-mask-image: url(../img/pixel-icons/arrows-horizontal.svg);  mask-image: url(../img/pixel-icons/arrows-horizontal.svg); }
-.fa-pencil-alt::before   { -webkit-mask-image: url(../img/pixel-icons/magic-edit.svg);         mask-image: url(../img/pixel-icons/magic-edit.svg); }
-.fa-file-word::before    { -webkit-mask-image: url(../img/pixel-icons/file-text.svg);          mask-image: url(../img/pixel-icons/file-text.svg); }
-.fa-thumbtack::before    { -webkit-mask-image: url(../img/pixel-icons/map-pin.svg);            mask-image: url(../img/pixel-icons/map-pin.svg); }
-.fa-spinner::before      { -webkit-mask-image: url(../img/pixel-icons/loader.svg);             mask-image: url(../img/pixel-icons/loader.svg); }
-.fa-times::before        { -webkit-mask-image: url(../img/pixel-icons/close.svg);              mask-image: url(../img/pixel-icons/close.svg); }
-.fa-angle-double-down::before { -webkit-mask-image: url(../img/pixel-icons/chevron-down.svg);  mask-image: url(../img/pixel-icons/chevron-down.svg); }
-.fa-envelope::before     { -webkit-mask-image: url(../img/pixel-icons/mail.svg);               mask-image: url(../img/pixel-icons/mail.svg); }
-/* 自绘像素 Octocat（Pixelarticons 无品牌 logo），16x16 currentColor */
-.fa-github::before       { -webkit-mask-image: url(../img/pixel-icons/github.svg);             mask-image: url(../img/pixel-icons/github.svg); }
+.fa-calendar-alt::before { -webkit-mask-image: var(--pi-calendar); mask-image: var(--pi-calendar); }
+.fa-history::before { -webkit-mask-image: var(--pi-reload); mask-image: var(--pi-reload); }
+.fa-clock::before { -webkit-mask-image: var(--pi-clock); mask-image: var(--pi-clock); }
+.fa-eye::before { -webkit-mask-image: var(--pi-eye); mask-image: var(--pi-eye); }
+.fa-inbox::before { -webkit-mask-image: var(--pi-inbox); mask-image: var(--pi-inbox); }
+.fa-folder::before, .fa-folder-open::before { -webkit-mask-image: var(--pi-folder); mask-image: var(--pi-folder); }
+.fa-bookmark::before, .fa-tag::before, .fa-tags::before { -webkit-mask-image: var(--pi-bookmark); mask-image: var(--pi-bookmark); }
+.fa-archive::before { -webkit-mask-image: var(--pi-archive); mask-image: var(--pi-archive); }
+.fa-home::before { -webkit-mask-image: var(--pi-home); mask-image: var(--pi-home); }
+.fa-search::before { -webkit-mask-image: var(--pi-search); mask-image: var(--pi-search); }
+.fa-chevron-left::before { -webkit-mask-image: var(--pi-chevron-left); mask-image: var(--pi-chevron-left); }
+.fa-chevron-right::before, .fa-angle-right::before { -webkit-mask-image: var(--pi-chevron-right); mask-image: var(--pi-chevron-right); }
+.fa-chevron-down::before, .fa-angle-down::before, .fa-angle-double-down::before { -webkit-mask-image: var(--pi-chevron-down); mask-image: var(--pi-chevron-down); }
+.fa-arrow-up::before { -webkit-mask-image: var(--pi-arrow-up); mask-image: var(--pi-arrow-up); }
+.fa-arrow-right::before { -webkit-mask-image: var(--pi-arrow-right); mask-image: var(--pi-arrow-right); }
+.fa-arrow-left::before { -webkit-mask-image: var(--pi-arrow-left); mask-image: var(--pi-arrow-left); }
+.fa-bars::before { -webkit-mask-image: var(--pi-menu); mask-image: var(--pi-menu); }
+.fa-file-alt::before, .fa-file-word::before, .fa-paste::before { -webkit-mask-image: var(--pi-file-text); mask-image: var(--pi-file-text); }
+.fa-list-ul::before { -webkit-mask-image: var(--pi-bulletlist); mask-image: var(--pi-bulletlist); }
+.fa-stream::before { -webkit-mask-image: var(--pi-list-box); mask-image: var(--pi-list-box); }
+.fa-th::before { -webkit-mask-image: var(--pi-grid); mask-image: var(--pi-grid); }
+.fa-gamepad::before { -webkit-mask-image: var(--pi-gamepad); mask-image: var(--pi-gamepad); }
+.fa-cog::before { -webkit-mask-image: var(--pi-settings-cog); mask-image: var(--pi-settings-cog); }
+.fa-book-open::before { -webkit-mask-image: var(--pi-book-open); mask-image: var(--pi-book-open); }
+.fa-arrows-alt-h::before { -webkit-mask-image: var(--pi-arrows-horizontal); mask-image: var(--pi-arrows-horizontal); }
+.fa-pencil-alt::before { -webkit-mask-image: var(--pi-magic-edit); mask-image: var(--pi-magic-edit); }
+.fa-thumbtack::before { -webkit-mask-image: var(--pi-map-pin); mask-image: var(--pi-map-pin); }
+.fa-thumbs-up::before { -webkit-mask-image: var(--pi-thumbs-up); mask-image: var(--pi-thumbs-up); }
+.fa-copy::before { -webkit-mask-image: var(--pi-copy); mask-image: var(--pi-copy); }
+.fa-spinner::before { -webkit-mask-image: var(--pi-loader); mask-image: var(--pi-loader); }
+.fa-times::before { -webkit-mask-image: var(--pi-close); mask-image: var(--pi-close); }
+.fa-envelope::before { -webkit-mask-image: var(--pi-mail); mask-image: var(--pi-mail); }
+.fa-github::before { -webkit-mask-image: var(--pi-github); mask-image: var(--pi-github); }

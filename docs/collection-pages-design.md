@@ -169,7 +169,7 @@ behavior that removes real duplication:
 | Compact title and breadcrumbs | `layout/includes/header/index.pug` |
 | Tags index | `layout/includes/page/tags.pug` |
 | Categories index | `layout/includes/page/categories.pug` |
-| Result shell | `layout/tag.pug`, `layout/category.pug`, `layout/archive.pug` |
+| Result shell | `layout/archive.pug` (Hexo's fallback layout for tags and categories) |
 | Reusable result rows | `layout/includes/mixins/article-sort.pug` |
 | Shared collection rail/pager | focused partials in `layout/includes/collection/` |
 | Taxonomy view models | focused helper in `scripts/helpers/` only if needed |

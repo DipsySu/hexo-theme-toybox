@@ -1,6 +1,7 @@
 'use strict'
 
 const { prettyUrls } = require('hexo-util')
+const { IMAGE } = require('../../lib/covers')
 
 hexo.extend.helper.register('urlNoIndex', function (url = null, trailingIndex = false, trailingHtml = false) {
   return prettyUrls(url || this.url, {
@@ -28,5 +29,5 @@ hexo.extend.helper.register('findArchivesTitle', function (page, menu, date) {
 
 hexo.extend.helper.register('isImgOrUrl', function (path) {
   if (!path) return false
-  return path.includes('//') || /\.(png|jpe?g|gif|svg|webp)(\?.*)?$/i.test(path)
+  return path.includes('//') || IMAGE.test(path)
 })

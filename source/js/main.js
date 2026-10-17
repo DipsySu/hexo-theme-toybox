@@ -1,3 +1,12 @@
+// vanilla-lazyload loads async (additional-js.pug) and builds its instance from these
+// options as soon as it arrives, so theme init never waits on the CDN. Anything using
+// window.lazyLoadInstance must tolerate it arriving late, or (CDN blocked) being
+// replaced by btf.lazyloadFallback.
+if (GLOBAL_CONFIG.islazyload) {
+  window.lazyLoadOptions = { elements_selector: 'img', threshold: 0, data_src: 'lazy-src' }
+  window.addEventListener('LazyLoad::Initialized', e => { window.lazyLoadInstance = e.detail.instance }, { once: true })
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   let headerContentWidth, $nav
   let mobileSidebarOpen = false
@@ -57,16 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /**
-   * 首頁top_img底下的箭頭
-   */
-  const scrollDownInIndex = () => {
-    const $scrollDownEle = document.getElementById('scroll-down')
-    $scrollDownEle && $scrollDownEle.addEventListener('click', function () {
-      btf.scrollToDest(document.getElementById('content-inner').offsetTop, 300)
-    })
-  }
-
-  /**
    * 代碼
    * 只適用於Hexo默認的代碼渲染
    */
@@ -89,20 +88,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const copy = (text, ctx) => {
       if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
         document.execCommand('copy')
-        if (GLOBAL_CONFIG.Snackbar !== undefined) {
-          btf.snackbarShow(GLOBAL_CONFIG.copy.success)
-        } else {
-          const prevEle = ctx.previousElementSibling
-          prevEle.textContent = GLOBAL_CONFIG.copy.success
-          prevEle.style.opacity = 1
-          setTimeout(() => { prevEle.style.opacity = 0 }, 700)
-        }
+        const prevEle = ctx.previousElementSibling
+        prevEle.textContent = GLOBAL_CONFIG.copy.success
+        prevEle.style.opacity = 1
+        setTimeout(() => { prevEle.style.opacity = 0 }, 700)
       } else {
-        if (GLOBAL_CONFIG.Snackbar !== undefined) {
-          btf.snackbarShow(GLOBAL_CONFIG.copy.noSupport)
-        } else {
-          ctx.previousElementSibling.textContent = GLOBAL_CONFIG.copy.noSupport
-        }
+        ctx.previousElementSibling.textContent = GLOBAL_CONFIG.copy.noSupport
       }
     }
 
@@ -200,13 +191,12 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   function addPhotoFigcaption () {
     document.querySelectorAll('#article-container img').forEach(function (item) {
-      const parentEle = item.parentNode
       const altValue = item.title || item.alt
-      if (altValue && !parentEle.parentNode.classList.contains('justified-gallery')) {
+      if (altValue) {
         const ele = document.createElement('div')
         ele.className = 'img-alt is-center'
         ele.textContent = altValue
-        parentEle.insertBefore(ele, item.nextSibling)
+        item.parentNode.insertBefore(ele, item.nextSibling)
       }
     })
   }
@@ -219,79 +209,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /**
-   * justified-gallery 圖庫排版
-   */
-  const runJustifiedGallery = function (ele) {
-    const htmlStr = arr => {
-      let str = ''
-      const replaceDq = str => str.replace(/"/g, '&quot;') // replace double quotes to &quot;
-      arr.forEach(i => {
-        const alt = i.alt ? `alt="${replaceDq(i.alt)}"` : ''
-        const title = i.title ? `title="${replaceDq(i.title)}"` : ''
-        str += `<div class="fj-gallery-item"><img src="${i.url}" ${alt + title}"></div>`
-      })
-      return str
-    }
-
-    const lazyloadFn = (i, arr, limit) => {
-      const loadItem = limit
-      const arrLength = arr.length
-      if (arrLength > loadItem) i.insertAdjacentHTML('beforeend', htmlStr(arr.splice(0, loadItem)))
-      else {
-        i.insertAdjacentHTML('beforeend', htmlStr(arr))
-        i.classList.remove('lazyload')
-      }
-      return arrLength > loadItem ? loadItem : arrLength
-    }
-
-    const fetchUrl = async (url) => {
-      const response = await fetch(url)
-      return await response.json()
-    }
-
-    const runJustifiedGallery = (item, arr) => {
-      if (!item.classList.contains('lazyload')) item.innerHTML = htmlStr(arr)
-      else {
-        const limit = item.getAttribute('data-limit')
-        lazyloadFn(item, arr, limit)
-        const clickBtnFn = () => {
-          const lastItemLength = lazyloadFn(item, arr, limit)
-          fjGallery(item, 'appendImages', item.querySelectorAll(`.fj-gallery-item:nth-last-child(-n+${lastItemLength})`))
-          btf.loadLightbox(item.querySelectorAll('img'))
-          lastItemLength < limit && item.nextElementSibling.removeEventListener('click', clickBtnFn)
-        }
-        item.nextElementSibling.addEventListener('click', clickBtnFn)
-      }
-      btf.initJustifiedGallery(item)
-      btf.loadLightbox(item.querySelectorAll('img'))
-    }
-
-    const addJustifiedGallery = () => {
-      ele.forEach(item => {
-        item.classList.contains('url')
-          ? fetchUrl(item.textContent).then(res => { runJustifiedGallery(item, res) })
-          : runJustifiedGallery(item, JSON.parse(item.textContent))
-      })
-    }
-
-    if (window.fjGallery) {
-      addJustifiedGallery()
-      return
-    }
-
-    getCSS(`${GLOBAL_CONFIG.source.justifiedGallery.css}`)
-    getScript(`${GLOBAL_CONFIG.source.justifiedGallery.js}`).then(addJustifiedGallery)
-  }
-
-  /**
    * rightside scroll percent
    */
-  const rightsideScrollPercent = currentTop => {
-    const perNum = btf.getScrollPercent(currentTop, document.body)
+  const rightsideScrollPercent = perNum => {
     const $goUp = document.getElementById('go-up')
     if (perNum < 95) {
+      const $percent = $goUp.querySelector('.scroll-percent')
       $goUp.classList.add('show-percent')
-      $goUp.querySelector('.scroll-percent').textContent = perNum
+      if ($percent.textContent !== String(perNum)) $percent.textContent = perNum
     } else {
       $goUp.classList.remove('show-percent')
     }
@@ -304,10 +229,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const $rightside = document.getElementById('rightside')
     const innerHeight = window.innerHeight + 56
     let initTop = 0
-    let isChatShow = true
+    // whether cssText last made #rightside visible; replaces a getComputedStyle probe
+    let isRightsideShown = false
     const $header = document.getElementById('page-header')
-    const isChatBtnHide = typeof chatBtnHide === 'function'
-    const isChatBtnShow = typeof chatBtnShow === 'function'
     const isShowPercent = GLOBAL_CONFIG.percent.rightside
 
     // 當滾動條小于 56 的時候
@@ -323,39 +247,36 @@ document.addEventListener('DOMContentLoaded', function () {
       return result
     }
 
+    const showRightside = () => {
+      $rightside.style.cssText = 'opacity: 0.8; transform: translateX(-58px)'
+      isRightsideShown = true
+    }
+
     const scrollTask = btf.throttle(() => {
+      // read layout once, before any write in this tick
       const currentTop = window.scrollY || document.documentElement.scrollTop
+      const isShort = document.body.scrollHeight <= innerHeight
+      const perNum = isShowPercent && btf.getScrollPercent(currentTop, document.body)
       const isDown = scrollDirection(currentTop)
       if (currentTop > 56) {
         if (isDown) {
           if ($header.classList.contains('nav-visible')) $header.classList.remove('nav-visible')
-          if (isChatBtnShow && isChatShow === true) {
-            chatBtnHide()
-            isChatShow = false
-          }
         } else {
           if (!$header.classList.contains('nav-visible')) $header.classList.add('nav-visible')
-          if (isChatBtnHide && isChatShow === false) {
-            chatBtnShow()
-            isChatShow = true
-          }
         }
         $header.classList.add('nav-fixed')
-        if (window.getComputedStyle($rightside).getPropertyValue('opacity') === '0') {
-          $rightside.style.cssText = 'opacity: 0.8; transform: translateX(-58px)'
-        }
+        if (!isRightsideShown) showRightside()
       } else {
         if (currentTop === 0) {
           $header.classList.remove('nav-fixed', 'nav-visible')
         }
         $rightside.style.cssText = "opacity: ''; transform: ''"
+        isRightsideShown = false
       }
 
-      isShowPercent && rightsideScrollPercent(currentTop)
+      isShowPercent && rightsideScrollPercent(perNum)
 
-      if (document.body.scrollHeight <= innerHeight) {
-        $rightside.style.cssText = 'opacity: 0.8; transform: translateX(-58px)'
-      }
+      if (isShort) showRightside()
     }, 200)
 
     window.scrollCollect = scrollTask
@@ -367,17 +288,18 @@ document.addEventListener('DOMContentLoaded', function () {
   * toc,anchor
   */
   const scrollFnToDo = function () {
-    const isToc = GLOBAL_CONFIG_SITE.isToc
     const isAnchor = GLOBAL_CONFIG.isAnchor
     const $article = document.getElementById('article-container')
+    const $cardTocLayout = document.getElementById('card-toc')
+    const $cardToc = $cardTocLayout && $cardTocLayout.querySelector('.toc-content')
+    // Defensive: a custom layout can set isToc without rendering #card-toc
+    const isToc = GLOBAL_CONFIG_SITE.isToc && !!$cardToc
 
     if (!($article && (isToc || isAnchor))) return
 
-    let $tocLink, $cardToc, autoScrollToc, $tocPercentage, isExpand
+    let $tocLink, autoScrollToc, $tocPercentage, isExpand
 
     if (isToc) {
-      const $cardTocLayout = document.getElementById('card-toc')
-      $cardToc = $cardTocLayout.getElementsByClassName('toc-content')[0]
       $tocLink = $cardToc.querySelectorAll('.toc-link')
       $tocPercentage = $cardTocLayout.querySelector('.toc-percentage')
       isExpand = $cardToc.classList.contains('is-expand')
@@ -473,29 +395,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // main of scroll
     window.tocScrollFn = btf.throttle(() => {
       const currentTop = window.scrollY || document.documentElement.scrollTop
-      if (isToc && GLOBAL_CONFIG.percent.toc) {
-        $tocPercentage.textContent = btf.getScrollPercent(currentTop, $article)
-      }
+      const percent = isToc && $tocPercentage && GLOBAL_CONFIG.percent.toc ? String(btf.getScrollPercent(currentTop, $article)) : ''
       findHeadPosition(currentTop)
+      // skip identical writes: each textContent write is a DOM mutation the i18n observer rescans
+      if (percent && $tocPercentage.textContent !== percent) $tocPercentage.textContent = percent
     }, 100)
 
     window.addEventListener('scroll', tocScrollFn)
-  }
-
-  const modeChangeFn = mode => {
-    if (!window.themeChange) {
-      return
-    }
-
-    const turnMode = item => window.themeChange[item](mode)
-
-    Object.keys(window.themeChange).forEach(item => {
-      if (['disqus', 'disqusjs'].includes(item)) {
-        setTimeout(() => turnMode(item), 300)
-      } else {
-        turnMode(item)
-      }
-    })
   }
 
   /**
@@ -536,19 +442,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       newEle.addEventListener('click', clickFn)
       newEle.focus({ preventScroll: true })
-    },
-    switchDarkMode: () => { // Switch Between Light And Dark Mode
-      const willChangeMode = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'
-      if (willChangeMode === 'dark') {
-        activateDarkMode()
-        saveToLocal.set('theme', 'dark', 2)
-        GLOBAL_CONFIG.Snackbar !== undefined && btf.snackbarShow(GLOBAL_CONFIG.Snackbar.day_to_night)
-      } else {
-        activateLightMode()
-        saveToLocal.set('theme', 'light', 2)
-        GLOBAL_CONFIG.Snackbar !== undefined && btf.snackbarShow(GLOBAL_CONFIG.Snackbar.night_to_day)
-      }
-      modeChangeFn(willChangeMode)
     },
     scrollToTop: () => { // Back to top
       btf.scrollToDest(0, 500)
@@ -591,9 +484,6 @@ document.addEventListener('DOMContentLoaded', function () {
         window.ToyboxSettings && window.ToyboxSettings.closePanel()
         rightSideFn.switchReadMode($target)
         break
-      case 'darkmode':
-        rightSideFn.switchDarkMode()
-        break
       case 'hide-aside-btn':
         rightSideFn.hideAsideBtn($target)
         break
@@ -622,48 +512,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /**
- * 複製時加上版權信息
- */
-  const addCopyright = () => {
-    const copyright = GLOBAL_CONFIG.copyright
-    document.body.oncopy = (e) => {
-      e.preventDefault()
-      const copyFont = window.getSelection(0).toString()
-      let textFont = copyFont
-      if (copyFont.length > copyright.limitCount) {
-        textFont = `${copyFont}\n\n\n${copyright.languages.author}\n${copyright.languages.link}${window.location.href}\n${copyright.languages.source}\n${copyright.languages.info}`
-      }
-      if (e.clipboardData) {
-        return e.clipboardData.setData('text', textFont)
-      } else {
-        return window.clipboardData.setData('text', textFont)
-      }
-    }
-  }
-
-  /**
-   * 網頁運行時間
-   */
-  const addRuntime = () => {
-    const $runtimeCount = document.getElementById('runtimeshow')
-    if ($runtimeCount) {
-      const publishDate = $runtimeCount.getAttribute('data-publishDate')
-      $runtimeCount.textContent = `${btf.diffDate(publishDate)} ${GLOBAL_CONFIG.runtime}`
-    }
-  }
-
-  /**
-   * 最後一次更新時間
-   */
-  const addLastPushDate = () => {
-    const $lastPushDateItem = document.getElementById('last-push-date')
-    if ($lastPushDateItem) {
-      const lastPushDate = $lastPushDateItem.getAttribute('data-lastPushDate')
-      $lastPushDateItem.textContent = btf.diffDate(lastPushDate, true)
-    }
-  }
-
-  /**
    * table overflow
    */
   const addTableWrap = () => {
@@ -673,121 +521,6 @@ document.addEventListener('DOMContentLoaded', function () {
         btf.wrap(item, 'div', { class: 'table-wrap' })
       })
     }
-  }
-
-  /**
-   * tag-hide
-   */
-  const clickFnOfTagHide = function () {
-    const $hideInline = document.querySelectorAll('#article-container .hide-button')
-    if ($hideInline.length) {
-      $hideInline.forEach(function (item) {
-        item.addEventListener('click', function (e) {
-          const $this = this
-          $this.classList.add('open')
-          const $fjGallery = $this.nextElementSibling.querySelectorAll('.fj-gallery')
-          $fjGallery.length && btf.initJustifiedGallery($fjGallery)
-        })
-      })
-    }
-  }
-
-  const tabsFn = {
-    clickFnOfTabs: function () {
-      document.querySelectorAll('#article-container .tab > button').forEach(function (item) {
-        item.addEventListener('click', function (e) {
-          const $this = this
-          const $tabItem = $this.parentNode
-
-          if (!$tabItem.classList.contains('active')) {
-            const $tabContent = $tabItem.parentNode.nextElementSibling
-            const $siblings = btf.siblings($tabItem, '.active')[0]
-            $siblings && $siblings.classList.remove('active')
-            $tabItem.classList.add('active')
-            const tabId = $this.getAttribute('data-href').replace('#', '')
-            const childList = [...$tabContent.children]
-            childList.forEach(item => {
-              if (item.id === tabId) item.classList.add('active')
-              else item.classList.remove('active')
-            })
-            const $isTabJustifiedGallery = $tabContent.querySelectorAll(`#${tabId} .fj-gallery`)
-            if ($isTabJustifiedGallery.length > 0) {
-              btf.initJustifiedGallery($isTabJustifiedGallery)
-            }
-          }
-        })
-      })
-    },
-    backToTop: () => {
-      document.querySelectorAll('#article-container .tabs .tab-to-top').forEach(function (item) {
-        item.addEventListener('click', function () {
-          btf.scrollToDest(btf.getEleTop(btf.getParents(this, '.tabs')), 300)
-        })
-      })
-    }
-  }
-
-  const toggleCardCategory = function () {
-    const $cardCategory = document.querySelectorAll('#aside-cat-list .card-category-list-item.parent i')
-    if ($cardCategory.length) {
-      $cardCategory.forEach(function (item) {
-        item.addEventListener('click', function (e) {
-          e.preventDefault()
-          const $this = this
-          $this.classList.toggle('expand')
-          const $parentEle = $this.parentNode.nextElementSibling
-          if (btf.isHidden($parentEle)) {
-            $parentEle.style.display = 'block'
-          } else {
-            $parentEle.style.display = 'none'
-          }
-        })
-      })
-    }
-  }
-
-  const switchComments = function () {
-    let switchDone = false
-    const $switchBtn = document.querySelector('#comment-switch > .switch-btn')
-    $switchBtn && $switchBtn.addEventListener('click', function () {
-      this.classList.toggle('move')
-      document.querySelectorAll('#post-comment > .comment-wrap > div').forEach(function (item) {
-        if (btf.isHidden(item)) {
-          item.style.cssText = 'display: block;animation: tabshow .5s'
-        } else {
-          item.style.cssText = "display: none;animation: ''"
-        }
-      })
-
-      if (!switchDone && typeof loadOtherComment === 'function') {
-        switchDone = true
-        loadOtherComment()
-      }
-    })
-  }
-
-  const addPostOutdateNotice = function () {
-    const data = GLOBAL_CONFIG.noticeOutdate
-    const diffDay = btf.diffDate(GLOBAL_CONFIG_SITE.postUpdate)
-    if (diffDay >= data.limitDay) {
-      const ele = document.createElement('div')
-      ele.className = 'post-outdate-notice'
-      ele.textContent = data.messagePrev + ' ' + diffDay + ' ' + data.messageNext
-      const $targetEle = document.getElementById('article-container')
-      if (data.position === 'top') {
-        $targetEle.insertBefore(ele, $targetEle.firstChild)
-      } else {
-        $targetEle.appendChild(ele)
-      }
-    }
-  }
-
-  const lazyloadImg = () => {
-    window.lazyLoadInstance = new LazyLoad({
-      elements_selector: 'img',
-      threshold: 0,
-      data_src: 'lazy-src'
-    })
   }
 
   const relativeDate = function (selector) {
@@ -807,15 +540,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('menu-mask').addEventListener('click', e => { sidebarFn.close() })
 
     clickFnOfSubMenu()
-    GLOBAL_CONFIG.islazyload && lazyloadImg()
-    GLOBAL_CONFIG.copyright !== undefined && addCopyright()
-
-    if (GLOBAL_CONFIG.autoDarkmode) {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        if (saveToLocal.get('theme') !== undefined) return
-        e.matches ? modeChangeFn('dark') : modeChangeFn('light')
-      })
-    }
   }
 
   window.refreshFn = function () {
@@ -823,30 +547,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (GLOBAL_CONFIG_SITE.isPost) {
       document.querySelectorAll('.toybox-reader-toolbar button[hidden]').forEach(button => { button.hidden = false })
-      GLOBAL_CONFIG.noticeOutdate !== undefined && addPostOutdateNotice()
       GLOBAL_CONFIG.relativeDate.post && relativeDate(document.querySelectorAll('#post-meta time'))
     } else {
       GLOBAL_CONFIG.relativeDate.homepage && relativeDate(document.querySelectorAll('#recent-posts time'))
-      GLOBAL_CONFIG.runtime && addRuntime()
-      addLastPushDate()
-      toggleCardCategory()
     }
 
     scrollFnToDo()
-    GLOBAL_CONFIG_SITE.isHome && scrollDownInIndex()
     addHighlightTool()
     GLOBAL_CONFIG.isPhotoFigcaption && addPhotoFigcaption()
     scrollFn()
-
-    const $jgEle = document.querySelectorAll('#article-container .fj-gallery')
-    $jgEle.length && runJustifiedGallery($jgEle)
-
     runLightbox()
     addTableWrap()
-    clickFnOfTagHide()
-    tabsFn.clickFnOfTabs()
-    tabsFn.backToTop()
-    switchComments()
     document.getElementById('toggle-menu').addEventListener('click', () => { sidebarFn.open() })
   }
 

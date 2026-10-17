@@ -21,10 +21,9 @@ beautify()
       position: absolute
       top: calc(50% - 7px)
       color: $title-prefix-icon-color
-      content: $title-prefix-icon
       line-height: 1
       transition: all .2s ease-out
-      fontawesomeIcon()
+      pixelIcon($pixel-icon-link)
 
     &:hover
       &:before
@@ -105,10 +104,9 @@ beautify()
   if hexo-config('anchor.button.enable')
     a.headerlink
       &:after
-        fontawesomeIcon()
+        pixelIcon($pixel-icon-link)
         float: right
         color: var(--headline-presudo)
-        content: $archor-button-icon
         font-size: .95em
         transition: all .3s
 
@@ -191,22 +189,6 @@ beautify()
           background: $light-blue
           color: var(--white)
 
-    .post_share
-      display: inline-block
-      float: right
-      margin: 8px 0 0
-      width: fit-content
-
-      .social-share
-        font-size: .85em
-
-        .social-share-icon
-          margin: 0 4px
-          width: w = 1.85em
-          height: w
-          font-size: 1.2em
-          line-height: w
-
   .post-copyright
     position: relative
     margin: 40px 0 10px
@@ -215,12 +197,11 @@ beautify()
     transition: box-shadow .3s ease-in-out
 
     &:before
-      fontawesomeIcon()
+      pixelIcon($pixel-icon-copyright)
       position: absolute
       top: 2px
       right: 12px
       color: $theme-color
-      content: '\f1f9'
       font-size: 1.3em
 
     &:hover
@@ -240,27 +221,3 @@ beautify()
 
           &:hover
             text-decoration: none
-
-  .post-outdate-notice
-    position: relative
-    margin: 0 0 20px
-    padding: .5em 1.2em
-    border-radius: 3px
-    background-color: $noticeOutdate-bg
-    color: $noticeOutdate-color
-
-    if hexo-config('noticeOutdate.style') == 'flat'
-      padding: .5em 1em .5em 2.6em
-      border-left: 5px solid $noticeOutdate-border
-
-      &:before
-        fontawesomeIcon()
-        position: absolute
-        top: 50%
-        left: .9em
-        color: $noticeOutdate-border
-        content: '\f071'
-        transform: translateY(-50%)
-
-  .ads-wrap
-    margin: 40px 0

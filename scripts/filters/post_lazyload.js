@@ -4,10 +4,19 @@
 
 const urlFor = require('hexo-util').url_for.bind(hexo)
 
+// One whole <img> tag, including quoted attributes that contain ">".
+const IMAGE_TAG = /<img\b(?:"[^"]*"|'[^']*'|[^"'<>])*>/ig
+// The tag up to its real src attribute, never a "src=" inside a quoted value.
+const IMAGE_SRC = /^(<img\b(?:"[^"]*"|'[^']*'|[^"'<>])*?\ssrc\s*=)/i
+// Images that already choose native loading, or opt out, keep their src.
+const OPT_OUT = /\s(?:loading\s*=|data-no-lazy(?=[\s=/>]))/i
+
 function lazyload (htmlContent) {
   const bg = hexo.theme.config.lazyload.placeholder ? urlFor(hexo.theme.config.lazyload.placeholder) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-  // Stay within one image tag, including when a quoted attribute contains ">".
-  return htmlContent.replace(/(<img\b(?:"[^"]*"|'[^']*'|[^"'<>])*?\ssrc\s*=)/ig, `$1 "${bg}" data-lazy-src=`)
+  return htmlContent.replace(IMAGE_TAG, tag => {
+    if (OPT_OUT.test(tag.replace(/"[^"]*"|'[^']*'/g, '""'))) return tag
+    return tag.replace(IMAGE_SRC, `$1 "${bg}" data-lazy-src=`)
+  })
 }
 
 hexo.extend.filter.register('after_render:html', function (data) {

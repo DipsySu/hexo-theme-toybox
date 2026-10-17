@@ -1,20 +1,4 @@
 const btf = {
-  debounce: function (func, wait, immediate) {
-    let timeout
-    return function () {
-      const context = this
-      const args = arguments
-      const later = function () {
-        timeout = null
-        if (!immediate) func.apply(context, args)
-      }
-      const callNow = immediate && !timeout
-      clearTimeout(timeout)
-      timeout = setTimeout(later, wait)
-      if (callNow) func.apply(context, args)
-    }
-  },
-
   throttle: function (func, wait, options) {
     let timeout, context, args
     let previous = 0
@@ -58,19 +42,6 @@ const btf = {
     }
   },
 
-  snackbarShow: (text, showAction = false, duration = 2000) => {
-    const { position, bgLight, bgDark } = GLOBAL_CONFIG.Snackbar
-    const bg = document.documentElement.getAttribute('data-theme') === 'light' ? bgLight : bgDark
-    Snackbar.show({
-      text,
-      backgroundColor: bg,
-      showAction,
-      duration,
-      pos: position,
-      customClass: 'snackbar-css'
-    })
-  },
-
   diffDate: (d, more = false) => {
     const dateNow = new Date()
     const datePost = new Date(d)
@@ -94,20 +65,6 @@ const btf = {
     if (hourCount >= 1) return `${parseInt(hourCount)} ${dateSuffix.hour}`
     if (minuteCount >= 1) return `${parseInt(minuteCount)} ${dateSuffix.min}`
     return dateSuffix.just
-  },
-
-  loadComment: (dom, callback) => {
-    if ('IntersectionObserver' in window) {
-      const observerItem = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          callback()
-          observerItem.disconnect()
-        }
-      }, { threshold: [0] })
-      observerItem.observe(dom)
-    } else {
-      callback()
-    }
   },
 
   scrollToDest: (pos, time = 500) => {
@@ -155,22 +112,6 @@ const btf = {
     ele.style.animation = text
   },
 
-  getParents: (elem, selector) => {
-    for (; elem && elem !== document; elem = elem.parentNode) {
-      if (elem.matches(selector)) return elem
-    }
-    return null
-  },
-
-  siblings: (ele, selector) => {
-    return [...ele.parentNode.children].filter((child) => {
-      if (selector) {
-        return child !== ele && child.matches(selector)
-      }
-      return child !== ele
-    })
-  },
-
   /**
    * @param {*} selector
    * @param {*} eleType the type of create element
@@ -183,14 +124,6 @@ const btf = {
     }
     selector.parentNode.insertBefore(createEle, selector)
     createEle.appendChild(selector)
-  },
-
-  unwrap: el => {
-    const elParentNode = el.parentNode
-    if (elParentNode !== document.body) {
-      elParentNode.parentNode.insertBefore(el, elParentNode)
-      elParentNode.parentNode.removeChild(elParentNode)
-    }
   },
 
   isHidden: ele => ele.offsetHeight === 0 && ele.offsetWidth === 0,
@@ -207,29 +140,88 @@ const btf = {
     return actualTop
   },
 
-  loadLightbox: ele => {
-    const service = GLOBAL_CONFIG.lightbox
+  /**
+   * Load a third-party script or stylesheet on demand, once per URL.
+   * The promise rejects instead of throwing when the file cannot be fetched,
+   * and a failed URL is forgotten so a later call can retry it.
+   */
+  loadScript: url => btf.loadAsset(url, () => {
+    const script = document.createElement('script')
+    script.src = url
+    script.async = true
+    return script
+  }),
 
-    if (service === 'mediumZoom') {
-      const zoom = mediumZoom(ele)
-      zoom.on('open', e => {
-        const photoBg = document.documentElement.getAttribute('data-theme') === 'dark' ? '#121212' : '#fff'
-        zoom.update({
-          background: photoBg
-        })
+  loadCSS: url => btf.loadAsset(url, () => {
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = url
+    return link
+  }),
+
+  loadAsset: (url, create) => {
+    if (!btf.assets.has(url)) {
+      btf.assets.set(url, new Promise((resolve, reject) => {
+        const ele = create()
+        ele.onload = () => resolve()
+        ele.onerror = () => {
+          btf.assets.delete(url)
+          ele.remove()
+          reject(new Error(`Failed to load ${url}`))
+        }
+        document.head.appendChild(ele)
+      }))
+    }
+    return btf.assets.get(url)
+  },
+
+  assets: new Map(),
+
+  /**
+   * Runs when the async vanilla-lazyload script fails (CDN blocked or down):
+   * show the real sources with native lazy loading, and stand in for
+   * window.lazyLoadInstance so later update() calls reveal new images too.
+   */
+  lazyloadFallback: () => {
+    const reveal = () => {
+      document.querySelectorAll('img[data-lazy-src]').forEach(img => {
+        img.loading = 'lazy'
+        img.src = img.dataset.lazySrc
+        img.removeAttribute('data-lazy-src')
       })
     }
+    window.lazyLoadInstance = window.lazyLoadInstance || { update: reveal }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', reveal)
+    else reveal()
+  },
 
-    if (service === 'fancybox') {
-      ele.forEach(i => {
-        if (i.parentNode.tagName !== 'A') {
-          const dataSrc = i.dataset.lazySrc || i.src
-          const dataCaption = i.title || i.alt || ''
-          btf.wrap(i, 'a', { href: dataSrc, 'data-fancybox': 'gallery', 'data-caption': dataCaption, 'data-thumb': dataSrc })
-        }
-      })
+  loadLightbox: ele => {
+    const source = GLOBAL_CONFIG.lightbox
+    if (!source || !ele.length) return
 
-      if (!window.fancyboxRun) {
+    ele.forEach(i => {
+      if (i.parentNode.tagName !== 'A') {
+        const dataSrc = i.dataset.lazySrc || i.src
+        const dataCaption = i.title || i.alt || ''
+        btf.wrap(i, 'a', { href: dataSrc, 'data-fancybox': 'gallery', 'data-caption': dataCaption, 'data-thumb': dataSrc })
+      }
+    })
+
+    if (btf.lightboxReady) return
+
+    // Fancybox is only fetched on pages with images. While it loads, hold
+    // clicks on the wrapped images and replay them once it is bound; if it
+    // cannot load, the links simply open the full-size image.
+    let pending = true
+    document.addEventListener('click', e => {
+      const link = pending && e.target.closest && e.target.closest('a[data-fancybox]')
+      if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      e.preventDefault()
+      btf.lightboxReady.then(() => typeof Fancybox === 'undefined' ? window.location.assign(link.href) : link.click())
+    }, true)
+
+    btf.lightboxReady = Promise.all([btf.loadCSS(source.css), btf.loadScript(source.js)])
+      .then(() => {
         Fancybox.bind('[data-fancybox]', {
           Hash: false,
           Thumbs: {
@@ -259,27 +251,9 @@ const btf = {
             }
           }
         })
-        window.fancyboxRun = true
-      }
-    }
-  },
-
-  initJustifiedGallery: function (selector) {
-    const runJustifiedGallery = i => {
-      if (!btf.isHidden(i)) {
-        fjGallery(i, {
-          itemSelector: '.fj-gallery-item',
-          rowHeight: i.getAttribute('data-rowHeight'),
-          gutter: 4,
-          onJustify: function () {
-            this.$container.style.opacity = '1'
-          }
-        })
-      }
-    }
-
-    if (Array.from(selector).length === 0) runJustifiedGallery(selector)
-    else selector.forEach(i => { runJustifiedGallery(i) })
+      })
+      .catch(() => {})
+      .then(() => { pending = false })
   },
 
   updateAnchor: (anchor) => {
@@ -302,13 +276,5 @@ const btf = {
     const scrollPercentRounded = Math.round(scrollPercent * 100)
     const percentage = (scrollPercentRounded > 100) ? 100 : (scrollPercentRounded <= 0) ? 0 : scrollPercentRounded
     return percentage
-  },
-
-  addModeChange: (name, fn) => {
-    if (window.themeChange && window.themeChange[name]) return
-    window.themeChange = {
-      ...window.themeChange,
-      [name]: fn
-    }
   }
 }

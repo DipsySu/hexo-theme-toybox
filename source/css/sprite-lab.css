@@ -1,8 +1,4 @@
-/* Optional sprite inspection panel. Kept out of homepage layout styles. */
-body:not(.toybox-home) #pixel-sprite-test-btn {
-  display: none !important;
-}
-
+/* Optional sprite inspection panel (home only). Kept out of homepage layout styles. */
 #pixel-sprite-test-btn.is-active {
   color: #fff !important;
   background: var(--accent-primary) !important;

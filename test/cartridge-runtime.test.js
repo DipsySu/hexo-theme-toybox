@@ -69,7 +69,8 @@ test('fallback artwork stays consistent across views and leaves explicit covers 
   let helper
   let reset
   const hexo = { extend: { helper: { register: (_, fn) => { helper = fn } }, filter: { register: (_, fn) => { reset = fn } } } }
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'scripts/helpers/cartridge-cover.js'), 'utf8'), { hexo, Map })
+  const helperPath = path.join(root, 'scripts/helpers/cartridge-cover.js')
+  vm.runInNewContext(fs.readFileSync(helperPath, 'utf8'), { hexo, Map, require: require('node:module').createRequire(helperPath) })
   const posts = ['a', 'b', 'c'].map(path => ({ path, cover: 'old', toybox_cover_source: 'fallback' }))
   const context = { theme: { cover: { default_cover: ['red.jpg', 'blue.jpg', 'green.jpg'] } }, site: { posts: { sort: () => posts } } }
   assert.deepEqual(posts.map(post => helper.call(context, post)), ['red.jpg', 'blue.jpg', 'green.jpg'])
@@ -105,4 +106,64 @@ test('sidebar toggles even when browser storage is unavailable', () => {
   ctx.actions.hideAsideBtn(button)
   assert.equal(hidden, false)
   assert.equal(pressed, 'false')
+})
+
+function motionToggle(storage) {
+  const source = runtime.slice(runtime.indexOf('  function readAnimationOff()'), runtime.indexOf('  // 把路径归一化'))
+  const states = []
+  const events = []
+  let click
+  const button = { dataset: {}, addEventListener: (_, handler) => { click = handler } }
+  const context = {
+    ANIMATION_KEY: 'pixelAnim',
+    animationPreference: null,
+    syncAnimButtonState: (_, off) => states.push(off),
+    document: { getElementById: () => button },
+    window: { localStorage: storage, dispatchEvent: event => events.push(event.detail.enabled) },
+    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail } }
+  }
+  vm.runInNewContext(source + '\nthis.syncBtn = syncBtn', context)
+  context.syncBtn()
+  return { states, events, click: () => click() }
+}
+
+test('the motion toggle keeps working when browser storage is blocked', () => {
+  const blocked = () => { throw new Error('Storage blocked') }
+  for (const storage of [{ getItem: blocked, setItem: blocked }, { getItem: () => null, setItem: blocked }]) {
+    const toggle = motionToggle(storage)
+    toggle.click()
+    toggle.click()
+    toggle.click()
+    assert.deepEqual(toggle.states, [false, true, false, true])
+    assert.deepEqual(toggle.events, [false, true, false])
+  }
+
+  const values = new Map([['pixelAnim', 'off']])
+  const toggle = motionToggle({ getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) })
+  toggle.click()
+  assert.deepEqual(toggle.states, [true, false])
+  assert.equal(values.get('pixelAnim'), 'on')
+})
+
+test('reading progress skips meter writes while the percentage is unchanged', () => {
+  const source = runtime.slice(runtime.indexOf('  function updateReadingProgress()'), runtime.indexOf('  function scheduleReadingProgress()'))
+  let top = 600
+  let writes = 0
+  const saves = []
+  const target = {
+    article: { isConnected: true, scrollHeight: 2000, getBoundingClientRect: () => ({ top }) },
+    meter: { isConnected: true, style: { setProperty: () => { writes++ } }, setAttribute: () => { writes++ } },
+    value: { set textContent(_) { writes++ } },
+    path: '/post/'
+  }
+  const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave: { update: detail => saves.push(detail.progress) } }, markClearedPath: () => false, applyClearedState() {} }
+  vm.runInNewContext(source + '\nthis.update = updateReadingProgress', context)
+  context.update()
+  context.update()
+  assert.equal(writes, 3)
+  top = -445
+  context.update()
+  context.update()
+  assert.equal(writes, 6)
+  assert.deepEqual(saves, [0, 0, 50, 50])
 })

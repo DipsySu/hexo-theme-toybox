@@ -86,7 +86,6 @@
   document.addEventListener('keydown', function() { reset() })
   document.addEventListener('scroll', syncMotion, { passive: true, capture: true })
   document.addEventListener('visibilitychange', syncMotion)
-  document.addEventListener('pjax:send', syncMotion)
   document.addEventListener('toybox:page-arrived', syncMotion)
   window.addEventListener('blur', syncMotion)
   window.addEventListener('resize', syncMotion)

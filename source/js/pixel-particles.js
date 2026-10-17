@@ -26,6 +26,7 @@
   var reducedMotion = !!(motionQuery && motionQuery.matches)
   var atlas = new window.Image()
   var atlasReady = false
+  var atlasRequested = false
   var canvas = null
   var ctx = null
   var items = []
@@ -42,6 +43,7 @@
   var idleTimer = 0
   var encounterPath = ''
   var encounterRandom = Math.random
+  var animationPreference = readAnimationPreference()
 
   function range(start, end) {
     var values = []
@@ -69,20 +71,21 @@
     }
   }
 
-  function animationOff() {
+  // Read once and refreshed by the toggle and storage events, never per frame.
+  function readAnimationPreference() {
     try {
-      return window.localStorage.getItem('pixelAnim') === 'off'
+      return window.localStorage.getItem('pixelAnim')
     } catch (error) {
-      return false
+      return null
     }
   }
 
+  function animationOff() {
+    return animationPreference === 'off'
+  }
+
   function animationExplicitlyOn() {
-    try {
-      return window.localStorage.getItem('pixelAnim') === 'on'
-    } catch (error) {
-      return false
-    }
+    return animationPreference === 'on'
   }
 
   function motionAllowed() {
@@ -224,7 +227,16 @@
     items = kind === 'home' ? [] : placed
     canvas.dataset.spriteIndices = items.map(function (item) { return item.spriteIndex }).join(',')
     syncEncounterData()
+    loadAtlas()
     draw(0, false)
+  }
+
+  // Phone-width and gutterless pages have nothing to draw, so they skip the atlas request.
+  function loadAtlas() {
+    if (!atlasRequested && (items.length || homeSlots.length)) {
+      atlasRequested = true
+      atlas.src = ATLAS_URL
+    }
   }
 
   function drawSprite(spriteIndex, x, y, size, alpha) {
@@ -374,6 +386,10 @@
         draw(0, false)
         return
       }
+    } else if (!items.length) {
+      // Encounters are home-only, so an empty non-home scene has nothing to animate.
+      draw(0, false)
+      return
     }
     frameId = window.requestAnimationFrame(tick)
   }
@@ -430,7 +446,6 @@
       if (!queued || !startEncounter(queued.kind, queued.spriteIndex)) syncMotion()
     }
   }
-  atlas.src = ATLAS_URL
 
   function handlePageArrived() {
     if (!canvas || pageKind() !== 'home') return
@@ -442,8 +457,21 @@
     if (canvas && currentKind === 'home') startEncounter('complete')
   }
 
+  function handleAnimationToggle(event) {
+    var enabled = event && event.detail && event.detail.enabled
+    animationPreference = typeof enabled === 'boolean' ? (enabled ? 'on' : 'off') : readAnimationPreference()
+    syncMotion()
+  }
+
+  function handleStorage(event) {
+    if (event.key !== 'pixelAnim' && event.key !== null) return
+    animationPreference = readAnimationPreference()
+    syncMotion()
+  }
+
   window.addEventListener('resize', scheduleResize, { passive: true })
-  window.addEventListener('pixel-animation-toggle', syncMotion)
+  window.addEventListener('pixel-animation-toggle', handleAnimationToggle)
+  window.addEventListener('storage', handleStorage)
   window.addEventListener('pixel-sprite-preview', function (event) {
     if (pageKind() !== 'home') return
     layoutItems()
@@ -453,7 +481,6 @@
   document.addEventListener('toybox:color-mode-change', syncMotion)
   document.addEventListener('toybox:page-arrived', handlePageArrived)
   document.addEventListener('toybox:reading-complete', handleReadingComplete)
-  document.addEventListener('pjax:complete', setup)
   if (motionQuery) {
     if (motionQuery.addEventListener) motionQuery.addEventListener('change', handleReducedMotionChange)
     else if (motionQuery.addListener) motionQuery.addListener(handleReducedMotionChange)

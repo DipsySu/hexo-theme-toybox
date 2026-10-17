@@ -6,14 +6,14 @@ nav:
   display_title: true
   fixed: false
 
+# Icons are pixel masks from source/css/pixel-icons.css (Font Awesome is not
+# loaded); fa-* names without a mask there render as an empty slot.
 menu:
   主页: / || fas fa-home
   归档: /archives/ || fas fa-archive
   标签: /tags/ || fas fa-tags
   分类: /categories/ || fas fa-folder-open
   GitHub: https://github.com/ || fab fa-github
-
-social: {}
 
 favicon: /img/favicon-lotus.png
 avatar:
@@ -42,6 +42,7 @@ error_img:
 error_404:
   enable: true
   subtitle: Page not found
+  background: # 404 image; defaults to error_img.post_page
 
 post_meta:
   page:
@@ -49,7 +50,6 @@ post_meta:
     date_format: date
     categories: true
     tags: false
-    label: true
   post:
     date_type: both
     date_format: date
@@ -72,18 +72,16 @@ anchor:
   button:
     enable: false
     always_show: false
-    icon:
   auto_update: false
 
 copy:
   enable: true
 
+# Article table of contents (pages never render one).
 toc:
   post: true
-  page: false
   number: true
   expand: false
-  style_simple: false
   scroll_percent: true
 
 post_copyright:
@@ -116,7 +114,6 @@ aside:
   enable: true
   hide: false
   button: true
-  mobile: true
   position: left
   display:
     archive: false
@@ -139,15 +136,6 @@ sharejs:
   enable: true
   sites: facebook,twitter,wechat,weibo,qq
 
-subtitle:
-  enable: false
-  effect: true
-  startDelay: 300
-  typeSpeed: 120
-  backSpeed: 45
-  loop: true
-  sub: []
-
 wordcount:
   enable: false
   post_wordcount: true
@@ -166,14 +154,11 @@ readmode: true
 display_mode: light
 rightside_scroll_percent: false
 rightside-bottom: 40px
-rightside_item_order:
-  show: toc
 
 # Collection results: leave blank for compact rows, or use index for excerpts.
 category_ui:
 tag_ui:
 archive_date_format: MMMM YYYY
-css_prefix: true
 enter_transitions: true
 
 font:
@@ -193,7 +178,6 @@ toybox:
   home:
     fallback_covers:
       - src: /img/home-toybox/featured-island.webp
-        fallback: /img/home-toybox/featured-island.png
       - src: /img/home-toybox/card-aqua-scene.jpg
       - src: /img/home-toybox/card-yellow-scene.jpg
       - src: /img/home-toybox/card-coral-scene.jpg
@@ -213,8 +197,6 @@ asset:
   utils: /js/utils.js
   main: /js/main.js
   local_search: /js/search/local-search.js
-  fontawesome: https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css
-  typed: https://cdn.jsdelivr.net/npm/typed.js@2.0.16/dist/typed.umd.js
   lazyload: https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.8.3/dist/lazyload.iife.min.js
   fancybox_css: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.css
   fancybox: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.umd.js
