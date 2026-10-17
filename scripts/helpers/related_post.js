@@ -2,95 +2,51 @@
 
 'use strict'
 
-hexo.extend.helper.register('related_posts', function (currentPost, allPosts) {
-  let relatedPosts = []
+// More shared tags first, then newer posts, then path, so tied posts keep the
+// same order in every build regardless of the order Hexo loaded the sources.
+function byRelevance (a, b) {
+  return b.weight - a.weight || b.post.date - a.post.date || (a.post.path < b.post.path ? -1 : a.post.path > b.post.path ? 1 : 0)
+}
+
+hexo.extend.helper.register('related_posts', function (currentPost) {
+  const weights = new Map()
   currentPost.tags.forEach(tag => {
-    allPosts.forEach(post => {
-      if (isTagRelated(tag.name, post.tags)) {
-        const relatedPost = {
-          title: post.title,
-          path: post.path,
-          cover: this.toybox_cover(post),
-          cover_type: post.cover_type,
-          weight: 1,
-          updated: post.updated,
-          created: post.date
-        }
-        const index = findItem(relatedPosts, 'path', post.path)
-        if (index !== -1) {
-          relatedPosts[index].weight += 1
-        } else {
-          if (currentPost.path !== post.path) {
-            relatedPosts.push(relatedPost)
-          }
-        }
-      }
+    tag.posts.forEach(post => {
+      if (post.path === currentPost.path) return
+      const entry = weights.get(post.path)
+      if (entry) entry.weight++
+      else weights.set(post.path, { post, weight: 1 })
     })
   })
-  if (relatedPosts.length === 0) {
-    return ''
-  }
-  let result = ''
-  const hexoConfig = hexo.config
-  const config = hexo.theme.config
+  if (weights.size === 0) return ''
 
-  const limitNum = config.related_post.limit || 6
-  const dateType = config.related_post.date_type || 'created'
-  const headlineLang = this._p('post.recommend')
+  const config = this.theme.related_post || {}
+  const limit = config.limit || 6
+  const dateType = config.date_type || 'created'
+  const related = [...weights.values()].sort(byRelevance).slice(0, limit)
 
-  relatedPosts = relatedPosts.sort(compare('weight'))
+  let result = '<div class="relatedPosts">'
+  result += `<div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>${this._p('post.recommend')}</span></div>`
+  result += '<div class="relatedPosts-list">'
 
-  if (relatedPosts.length > 0) {
-    result += '<div class="relatedPosts">'
-    result += `<div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>${headlineLang}</span></div>`
-    result += '<div class="relatedPosts-list">'
-
-    for (let i = 0; i < Math.min(relatedPosts.length, limitNum); i++) {
-      const cover = relatedPosts[i].cover || 'var(--default-bg-color)'
-      const title = this.escape_html(relatedPosts[i].title)
-      result += `<div><a href="${this.url_for(relatedPosts[i].path)}" title="${title}">`
-      if (relatedPosts[i].cover_type === 'img') {
-        result += `<img class="cover" src="${this.url_for(cover)}" alt="cover">`
-      } else {
-        result += `<div class="cover" style="background: ${cover}"></div>`
-      }
-      if (dateType === 'created') {
-        result += `<div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> ${this.date(relatedPosts[i].created, hexoConfig.date_format)}</div>`
-      } else {
-        result += `<div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> ${this.date(relatedPosts[i].updated, hexoConfig.date_format)}</div>`
-      }
-      result += `<div class="title">${title}</div>`
-      result += '</div></a></div>'
+  related.forEach(({ post }) => {
+    const cover = this.toybox_cover(post) || 'var(--default-bg-color)'
+    const title = this.escape_html(post.title)
+    result += `<div><a href="${this.url_for(post.path)}" title="${title}">`
+    if (post.cover_type === 'img') {
+      result += `<img class="cover" src="${this.url_for(cover)}" alt="cover">`
+    } else {
+      result += `<div class="cover" style="background: ${cover}"></div>`
     }
-
-    result += '</div></div>'
-    return result
-  }
-})
-
-function isTagRelated (tagName, TBDtags) {
-  let result = false
-  TBDtags.forEach(function (tag) {
-    if (tagName === tag.name) {
-      result = true
+    if (dateType === 'created') {
+      result += `<div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> ${this.date(post.date, this.config.date_format)}</div>`
+    } else {
+      result += `<div class="content is-center"><div class="date"><i class="fas fa-history fa-fw"></i> ${this.date(post.updated, this.config.date_format)}</div>`
     }
+    result += `<div class="title">${title}</div>`
+    result += '</div></a></div>'
   })
+
+  result += '</div></div>'
   return result
-}
-
-function findItem (arrayToSearch, attr, val) {
-  for (let i = 0; i < arrayToSearch.length; i++) {
-    if (arrayToSearch[i][attr] === val) {
-      return i
-    }
-  }
-  return -1
-}
-
-function compare (attr) {
-  return function (a, b) {
-    const val1 = a[attr]
-    const val2 = b[attr]
-    return val2 - val1
-  }
-}
+})
