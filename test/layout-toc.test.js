@@ -1,17 +1,14 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
 const pug = require('pug')
+const { compile, file, section } = require('./helpers')
 
-const root = path.join(__dirname, '..')
-const layoutPath = path.join(root, 'layout/includes/layout.pug')
-const layout = fs.readFileSync(layoutPath, 'utf8')
 // The page facts computed at the top of the shared layout, without the shell.
-const renderFacts = pug.compile(layout.slice(0, layout.indexOf('doctype html')) + '\n| !{JSON.stringify({ showToc, tocHtml })}\n', { filename: layoutPath })
+const layout = 'layout/includes/layout.pug'
+const renderFacts = pug.compile(section(layout, '', 'doctype html') + '\n| !{JSON.stringify({ showToc, tocHtml })}\n', { filename: file(layout) })
 
 function facts({ post = true, pageToc, aside = true, headings = true } = {}) {
   const calls = []
@@ -51,14 +48,14 @@ test('front matter and the aside switch can turn the article contents off', () =
 })
 
 test('the article contents card prints the precomputed list', () => {
-  const html = pug.compileFile(path.join(root, 'layout/includes/post/toc.pug'))({
+  const html = compile('layout/includes/post/toc.pug')({
     tocHtml: '<ol class="toc-child"></ol>', page: {}, theme: { toc: { expand: true } }, _p: key => key
   })
   assert.match(html, /<div class="toc-content is-expand"><ol class="toc-child"><\/ol><\/div>/)
 })
 
 test('the inline page config is valid script for any title', () => {
-  const render = pug.compileFile(path.join(root, 'layout/includes/head/config.pug'))
+  const render = compile('layout/includes/head/config.pug')
   const title = 'It\'s "quoted" \\ </script><script>alert(1)</script> next'
   const theme = { highlight_shrink: false, local_search: {}, post_meta: { page: {}, post: {} }, lazyload: {}, anchor: {}, toc: {} }
   const html = render({ pageTitle: title, showToc: false, page: {}, theme, config: {}, _p: key => key, is_post: () => true, is_home: () => false })

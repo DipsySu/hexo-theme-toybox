@@ -1,11 +1,10 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const vm = require('node:vm')
 const test = require('node:test')
-const source = fs.readFileSync(path.join(__dirname, '../source/js/search/local-search.js'), 'utf8').split(';(() => {')[0]
+const { read } = require('./helpers')
+const source = read('source/js/search/local-search.js').split(';(() => {')[0]
 
 function searchFixture(fetch) {
   const events = []

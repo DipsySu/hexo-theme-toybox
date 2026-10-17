@@ -1,65 +1,29 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const { clock, eventTarget, read, storage } = require('./helpers')
 
-const themeRoot = path.resolve(__dirname, '..')
-const particleSource = fs.readFileSync(
-  path.join(themeRoot, 'source/js/pixel-particles.js'),
-  'utf8'
-)
+const particleSource = read('source/js/pixel-particles.js')
 
-function createStorage(seed) {
-  const values = new Map(Object.entries(seed || {}))
-  return {
-    getItem(key) { return values.has(key) ? values.get(key) : null },
-    setItem(key, value) { values.set(key, String(value)) },
-    values
-  }
-}
-
-function createRuntime(options) {
-  const settings = options || {}
+function createRuntime(settings = {}) {
   const width = settings.width || 1440
   const height = settings.height || 900
-  const storage = createStorage(settings.storage)
-  const windowListeners = new Map()
-  const documentListeners = new Map()
-  const activeFrames = new Map()
-  const timers = new Map()
+  const time = clock()
   const appended = []
   const styleProperties = new Map()
-  let frameSequence = 0
-  let timerSequence = 0
-  let now = 0
   let image
   let drawCount = 0
 
-  const media = {
-    matches: Boolean(settings.reducedMotion),
-    listener: null,
-    addEventListener(type, listener) {
-      if (type === 'change') this.listener = listener
-    }
-  }
-  const context2d = {
-    globalAlpha: 1,
-    imageSmoothingEnabled: true,
-    clearRect() {},
-    drawImage() { drawCount += 1 },
-    setTransform() {}
-  }
+  const media = eventTarget({ matches: Boolean(settings.reducedMotion) }, true)
+  const context2d = { globalAlpha: 1, imageSmoothingEnabled: true, clearRect() {}, drawImage() { drawCount += 1 }, setTransform() {} }
   const canvas = {
     dataset: {},
     id: '',
     style: {
       cssText: '',
-      setProperty(name, value, priority) {
-        styleProperties.set(name, { value: String(value), priority: priority || '' })
-      },
+      setProperty(name, value, priority) { styleProperties.set(name, { value: String(value), priority: priority || '' }) },
       removeProperty(name) { styleProperties.delete(name) }
     },
     getContext(type) {
@@ -68,93 +32,52 @@ function createRuntime(options) {
     },
     setAttribute() {}
   }
-  const recentPosts = {}
-  const content = {
-    getBoundingClientRect() {
-      return settings.contentRect || { left: 40, right: width - 40 }
-    }
-  }
-  const body = {
-    appendChild(element) { appended.push(element) }
-  }
-  const document = {
-    body,
+  const content = { getBoundingClientRect: () => settings.contentRect || { left: 40, right: width - 40 } }
+  const document = eventTarget({
+    body: { appendChild: element => appended.push(element) },
     documentElement: { clientHeight: height, clientWidth: width },
     hidden: false,
     readyState: 'complete',
-    addEventListener(type, listener) { documentListeners.set(type, listener) },
     createElement(tag) {
       assert.equal(tag, 'canvas')
       return canvas
     },
-    getElementById(id) {
-      if (id === 'recent-posts') return recentPosts
-      if (id === 'content-inner') return content
-      return null
-    },
-    querySelector(selector) {
-      return settings.post && selector === '#body-wrap.post #post' ? {} : null
-    }
-  }
+    getElementById: id => id === 'recent-posts' ? {} : id === 'content-inner' ? content : null,
+    querySelector: selector => settings.post && selector === '#body-wrap.post #post' ? {} : null
+  }, true)
 
-  function Image() { image = this }
-
-  const context = {
-    Image,
+  const context = eventTarget({
+    Image: function Image() { image = this },
     console,
     devicePixelRatio: 1,
     document,
     innerHeight: height,
     innerWidth: width,
-    localStorage: storage,
+    localStorage: storage(settings.storage),
     location: { pathname: settings.pathname || '/' },
     GLOBAL_CONFIG: { root: settings.root || '/' },
-    addEventListener(type, listener) { windowListeners.set(type, listener) },
-    cancelAnimationFrame(id) { activeFrames.delete(id) },
-    clearTimeout(id) { timers.delete(id) },
-    matchMedia() { return media },
-    requestAnimationFrame(callback) {
-      frameSequence += 1
-      activeFrames.set(frameSequence, callback)
-      return frameSequence
-    },
-    setTimeout(callback, delay) {
-      timerSequence += 1
-      timers.set(timerSequence, { callback, at: now + delay, delay })
-      return timerSequence
-    }
-  }
+    matchMedia: () => media,
+    ...time.globals
+  }, true)
   context.window = context
 
   vm.runInNewContext(particleSource, context, { filename: 'pixel-particles.js' })
 
   return {
-    activeFrames,
+    activeFrames: time.frames,
+    advance: time.advance,
+    timers: time.timers,
     appended,
     canvas,
     document,
-    documentListeners,
     get drawCount() { return drawCount },
     image,
     media,
-    storage,
+    storage: context.localStorage,
     styleProperties,
-    timers,
-    windowListeners,
-    advance(ms) {
-      now += ms
-      for (const [id, timer] of [...timers]) {
-        if (timer.at > now) continue
-        timers.delete(id)
-        timer.callback()
-      }
-    },
-    dispatch(type) { documentListeners.get(type)({ type }) },
-    runFrame(time) {
-      const callbacks = [...activeFrames.values()]
-      activeFrames.clear()
-      callbacks.forEach(callback => callback(time))
-    }
+    window: context,
+    dispatch: type => document.emit(type, { type }),
+    runFrame: time.frame
   }
 }
 
@@ -167,11 +90,7 @@ function createPostRuntime(options) {
 }
 
 test('loads the particle runtime before the animation controls', () => {
-  const scripts = fs.readFileSync(
-    path.join(themeRoot, 'layout/includes/additional-js.pug'),
-    'utf8'
-  )
-
+  const scripts = read('layout/includes/additional-js.pug')
   const particles = scripts.indexOf('/js/pixel-particles.js')
   const controls = scripts.indexOf('/js/pixel-anim-toggle.js')
   assert.ok(particles >= 0)
@@ -220,11 +139,11 @@ test('renders a static scene for reduced motion and honors an explicit animation
   assert.equal(runtime.activeFrames.size, 0)
 
   runtime.storage.setItem('pixelAnim', 'on')
-  runtime.windowListeners.get('pixel-animation-toggle')()
+  runtime.window.emit('pixel-animation-toggle')
   assert.equal(runtime.activeFrames.size, 1)
 
   runtime.storage.setItem('pixelAnim', 'off')
-  runtime.windowListeners.get('pixel-animation-toggle')()
+  runtime.window.emit('pixel-animation-toggle')
   assert.equal(runtime.activeFrames.size, 0)
 })
 
@@ -234,7 +153,7 @@ test('keeps one canvas alive across color-mode changes', () => {
 
   runtime.image.onload()
   runtime.dispatch('toybox:page-arrived')
-  runtime.documentListeners.get('toybox:color-mode-change')()
+  runtime.dispatch('toybox:color-mode-change')
 
   assert.equal(runtime.appended.length, 1)
   assert.equal(runtime.canvas, canvas)
@@ -248,10 +167,10 @@ test('reacts when the system reduced-motion preference changes', () => {
   runtime.image.onload()
   assert.equal(runtime.activeFrames.size, 1)
 
-  runtime.media.listener({ matches: true })
+  runtime.media.emit('change', { matches: true })
   assert.equal(runtime.activeFrames.size, 0)
 
-  runtime.media.listener({ matches: false })
+  runtime.media.emit('change', { matches: false })
   assert.equal(runtime.activeFrames.size, 1)
 })
 
@@ -326,7 +245,7 @@ test('encounters pause when motion is off, reduced or the tab is hidden', () => 
   assert.equal(reduced.timers.size, 0)
 
   reduced.storage.setItem('pixelAnim', 'on')
-  reduced.windowListeners.get('pixel-animation-toggle')()
+  reduced.window.emit('pixel-animation-toggle')
   reduced.dispatch('toybox:page-arrived')
   assert.equal(reduced.canvas.dataset.encounter, 'page')
 
@@ -356,7 +275,7 @@ test('article pages keep their ambient sprites and ignore homepage encounters', 
 
 test('sprite preview uses the same single-encounter lifecycle and honors motion controls', () => {
   const runtime = createRuntime()
-  const preview = runtime.windowListeners.get('pixel-sprite-preview')
+  const preview = event => runtime.window.emit('pixel-sprite-preview', event)
   preview({ detail: { index: 88 } })
   runtime.image.onload()
   assert.equal(runtime.canvas.dataset.encounter, 'preview')
@@ -366,7 +285,7 @@ test('sprite preview uses the same single-encounter lifecycle and honors motion 
   preview({ detail: { index: 123 } })
   assert.equal(runtime.canvas.dataset.encounterSprite, '88')
   runtime.storage.setItem('pixelAnim', 'off')
-  runtime.windowListeners.get('pixel-animation-toggle')()
+  runtime.window.emit('pixel-animation-toggle')
   preview({ detail: { index: 89 } })
   assert.equal(runtime.canvas.dataset.encounter, '')
   assert.equal(runtime.activeFrames.size, 0)
@@ -381,7 +300,7 @@ test('phone-width article pages leave the canvas idle and skip the sprite atlas'
   assert.equal(runtime.image.src, undefined)
 
   runtime.storage.setItem('pixelAnim', 'on')
-  runtime.windowListeners.get('pixel-animation-toggle')({ detail: { enabled: true } })
+  runtime.window.emit('pixel-animation-toggle', { detail: { enabled: true } })
   runtime.dispatch('visibilitychange')
   assert.equal(runtime.activeFrames.size, 0)
 })
@@ -399,9 +318,9 @@ test('reads the motion preference once instead of on every frame', () => {
   assert.equal(runtime.activeFrames.size, 1)
 
   runtime.storage.setItem('pixelAnim', 'off')
-  runtime.windowListeners.get('storage')({ key: 'pixelAnim', newValue: 'off' })
+  runtime.window.emit('storage', { key: 'pixelAnim', newValue: 'off' })
   assert.equal(runtime.activeFrames.size, 0)
 
-  runtime.windowListeners.get('pixel-animation-toggle')({ detail: { enabled: true } })
+  runtime.window.emit('pixel-animation-toggle', { detail: { enabled: true } })
   assert.equal(runtime.activeFrames.size, 1)
 })

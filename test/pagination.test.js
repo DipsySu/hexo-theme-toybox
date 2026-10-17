@@ -1,11 +1,10 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const path = require('node:path')
 const test = require('node:test')
-const pug = require('pug')
+const { compile } = require('./helpers')
 
-const render = pug.compileFile(path.join(__dirname, '../layout/includes/pagination.pug'))
+const render = compile('layout/includes/pagination.pug')
 
 function home(current, total = 13, count = 63, perPage = 5) {
   const base = 'blog/'

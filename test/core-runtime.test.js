@@ -2,14 +2,11 @@
 
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
-const pug = require('pug')
+const { compile, evaluate, file, read, section } = require('./helpers')
 
-const root = path.join(__dirname, '..')
-const utilsSource = fs.readFileSync(path.join(root, 'source/js/utils.js'), 'utf8')
-const main = fs.readFileSync(path.join(root, 'source/js/main.js'), 'utf8')
+const utilsSource = read('source/js/utils.js')
 
 function createUtils(globals = {}) {
   const appended = []
@@ -156,7 +153,7 @@ test('lazyload fallback shows real sources and stands in for later update() call
 })
 
 test('contents and anchors tolerate pages that enable the TOC without rendering #card-toc', () => {
-  const source = main.slice(main.indexOf('  const scrollFnToDo = function () {'), main.indexOf('  const rightSideFn = {'))
+  const source = section('source/js/main.js', '  const scrollFnToDo = function () {', '  const rightSideFn = {')
   const listeners = []
   const article = { querySelectorAll: () => [] }
   const run = isAnchor => {
@@ -167,7 +164,7 @@ test('contents and anchors tolerate pages that enable the TOC without rendering 
       btf: { throttle: fn => fn, getScrollPercent: () => { throw new Error('no TOC percentage to update') } }
     }
     context.window = Object.assign(context, { scrollY: 120, addEventListener: (type, fn) => listeners.push([type, fn]) })
-    vm.runInNewContext(source + '\nscrollFnToDo()', context)
+    evaluate(source, context, 'scrollFnToDo()')
     return context
   }
 
@@ -179,7 +176,6 @@ test('contents and anchors tolerate pages that enable the TOC without rendering 
 })
 
 test('rightside visibility follows scroll state without probing computed styles', () => {
-  const source = main.slice(main.indexOf('  const scrollFn = function () {'), main.indexOf('  /**\n  * toc,anchor'))
   const writes = []
   const classes = new Set()
   const rightside = { style: { set cssText(value) { writes.push(value) } } }
@@ -195,7 +191,7 @@ test('rightside visibility follows scroll state without probing computed styles'
     getComputedStyle: () => { throw new Error('scroll ticks must not force style recalculation') }
   }
   context.window = context
-  vm.runInNewContext(source + '\nscrollFn()', context)
+  evaluate(section('source/js/main.js', '  const scrollFn = function () {', '  /**\n  * toc,anchor'), context, 'scrollFn()')
 
   const scrollTo = top => { context.scrollY = top; onScroll() }
   scrollTo(300)
@@ -212,7 +208,7 @@ test('rightside visibility follows scroll state without probing computed styles'
 
 test('inline GLOBAL_CONFIG survives quotes, backslashes and closing script tags', () => {
   const hostile = 'It\'s "quoted" \\ </script><script>alert(1)</script>'
-  const render = pug.compileFile(path.join(root, 'layout/includes/head/config.pug'))
+  const render = compile('layout/includes/head/config.pug')
   const html = render({
     theme: {
       local_search: { enable: true, preload: true, top_n_per_article: 1, unescape: false },
@@ -256,7 +252,7 @@ test('inline GLOBAL_CONFIG survives quotes, backslashes and closing script tags'
 })
 
 test('third-party scripts never block theme init and home-only scripts stay on home', () => {
-  const render = pug.compileFile(path.join(root, 'layout/includes/additional-js.pug'))
+  const render = compile('layout/includes/additional-js.pug')
   const page = home => render({
     theme: {
       asset: { utils: '/js/utils.js', main: '/js/main.js', lazyload: 'https://cdn.example/lazyload.js', busuanzi: '//busuanzi.example/b.js' },
@@ -279,5 +275,5 @@ test('third-party scripts never block theme init and home-only scripts stay on h
     assert.doesNotMatch(html, /fancybox|pixel-sprite-assets|typed|subtitle/i)
     assert.equal((html.match(/<script src="https:/g) || []).length, 0)
   }
-  assert.equal(fs.existsSync(path.join(root, 'layout/includes/third-party/subtitle.pug')), false)
+  assert.equal(fs.existsSync(file('layout/includes/third-party/subtitle.pug')), false)
 })

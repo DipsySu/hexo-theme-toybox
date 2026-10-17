@@ -1,30 +1,13 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const { classList, read, settingsRuntime, storage } = require('./helpers')
 
-const root = path.resolve(__dirname, '..')
-const head = fs.readFileSync(path.join(root, 'layout/includes/head.pug'), 'utf8')
-const settingsScript = new vm.Script(fs.readFileSync(path.join(root, 'source/js/toybox-settings.js'), 'utf8'), { filename: 'toybox-settings.js' })
-
+const head = read('layout/includes/head.pug')
 const defaultBlock = head.match(/^-\n((?: {2}.+\n)+)/m)[1]
 const bootstrapSource = head.match(/^script\.\n((?: {2}.*\n)+)/m)[1].replace(/^ {2}/gm, '')
-
-function createStorage (seed, throws) {
-  const values = new Map(Object.entries(seed).filter(([, value]) => value !== null))
-  const storage = {
-    getItem (key) { return values.has(key) ? values.get(key) : null },
-    setItem (key, value) { values.set(key, String(value)) },
-    removeItem (key) { values.delete(key) }
-  }
-  return () => {
-    if (throws) throw new Error('SecurityError')
-    return storage
-  }
-}
 
 function renderedDefault (configured) {
   const context = { theme: { toybox: { settings: { color_mode: { default: configured } } } } }
@@ -32,57 +15,23 @@ function renderedDefault (configured) {
   return context.result
 }
 
-function runBootstrap ({ storage = {}, prefersDark = false, configured = 'auto', hideAside = false, throws = false, matchMedia = true }) {
+function runBootstrap ({ storage: seed = {}, prefersDark = false, configured = 'auto', hideAside = false, throws = false, matchMedia = true }) {
   const attributes = {}
-  const classes = new Set(hideAside ? ['hide-aside'] : [])
-  const rootElement = {
-    setAttribute (key, value) { attributes[key] = String(value) },
-    classList: { toggle (name, force) { if (force) classes.add(name); else classes.delete(name) } }
-  }
-  const context = { document: { documentElement: rootElement } }
+  const classes = classList(hideAside ? ['hide-aside'] : [])
+  const context = { document: { documentElement: { classList: classes, setAttribute (key, value) { attributes[key] = String(value) } } } }
   context.window = context
-  Object.defineProperty(context, 'localStorage', { get: createStorage(storage, throws) })
+  const local = storage(seed)
+  Object.defineProperty(context, 'localStorage', { get () { if (throws) throw new Error('SecurityError'); return local } })
   if (matchMedia) context.matchMedia = () => ({ matches: prefersDark })
   const source = bootstrapSource.replace("'!{toyboxColorDefault}'", JSON.stringify(renderedDefault(configured)))
   vm.runInNewContext(source, context)
-  return { theme: attributes['data-theme'], mode: attributes['data-toybox-color-mode'], hideAside: classes.has('hide-aside') }
+  return { theme: attributes['data-theme'], mode: attributes['data-toybox-color-mode'], hideAside: classes.contains('hide-aside') }
 }
 
-function runSettings ({ storage = {}, prefersDark = false, configured = 'auto' }) {
-  const attributes = {}
-  const rootElement = {
-    nodeType: 1,
-    dataset: {},
-    lang: 'zh-CN',
-    style: { setProperty () {} },
-    matches () { return false },
-    querySelectorAll () { return [] },
-    setAttribute (key, value) { attributes[key] = String(value) },
-    getAttribute (key) { return attributes[key] || null }
-  }
-  const context = {
-    document: {
-      nodeType: 9,
-      readyState: 'complete',
-      body: {},
-      documentElement: rootElement,
-      getElementById () { return null },
-      querySelector () { return null },
-      querySelectorAll () { return [] },
-      addEventListener () {},
-      dispatchEvent () {}
-    },
-    CustomEvent: class { constructor (type, init) { this.type = type; this.detail = init && init.detail } },
-    MutationObserver: class { disconnect () {} observe () {} },
-    requestAnimationFrame: callback => callback(),
-    matchMedia: () => ({ matches: prefersDark, addEventListener () {} })
-  }
-  context.window = context
-  Object.defineProperty(context, 'localStorage', { get: createStorage(storage, false) })
-  // head/config.pug passes the configured default through unnormalized.
-  context.GLOBAL_CONFIG = { toybox: { colorMode: configured || 'auto', locale: 'zh-CN' } }
-  settingsScript.runInNewContext(context)
-  return { theme: attributes['data-theme'], mode: rootElement.dataset.toyboxColorMode }
+// head/config.pug passes the configured default through unnormalized.
+function runSettings ({ storage, prefersDark = false, configured = 'auto' }) {
+  const runtime = settingsRuntime({ storage, prefersDark, defaultMode: configured })
+  return { theme: runtime.attributes['data-theme'], mode: runtime.root.dataset.toyboxColorMode }
 }
 
 test('pre-paint color bootstrap resolves exactly what toybox-settings.js applies after load', () => {
@@ -121,8 +70,8 @@ test('head renders the bootstrap before one bundled stylesheet and gates home-on
   assert.match(head, /if is_home\(\) \|\| toyboxCollectionView\n {2}link\(rel='preload' as='font'/)
   assert.doesNotMatch(head, /fusion-pixel-fonts\.css|fancybox_css|fontawesome/)
 
-  const bundle = fs.readFileSync(path.join(root, 'source/css/index.styl'), 'utf8')
+  const bundle = read('source/css/index.styl')
   assert.match(bundle, /@import 'pixel-icons\.css'\n@import 'cartridge-tokens\.css'\n@import 'toybox-theme\.css'\n@import 'toybox-settings\.css'\n$/)
-  const homeBundle = fs.readFileSync(path.join(root, 'source/css/toybox-home.styl'), 'utf8')
+  const homeBundle = read('source/css/toybox-home.styl')
   assert.match(homeBundle, /@import 'home-toybox\.css'\n@import 'cartridge-tilt\.css'\n@import 'sprite-lab\.css'\n$/)
 })

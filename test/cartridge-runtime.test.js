@@ -1,18 +1,13 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
-const vm = require('node:vm')
 const test = require('node:test')
-const root = path.join(__dirname, '..')
-const runtime = fs.readFileSync(path.join(root, 'source/js/pixel-anim-toggle.js'), 'utf8')
+const { CustomEvent, classList, evaluate, loadHexo, section, storage } = require('./helpers')
+const ANIM = 'source/js/pixel-anim-toggle.js'
 
 function guard(panels = []) {
-  const source = runtime.slice(runtime.indexOf('  function toyboxShortcutsBlocked'), runtime.indexOf('  function setupToyboxCarousel'))
   const ctx = { document: { querySelectorAll: () => panels }, getComputedStyle: panel => ({ visibility: panel.visibility || 'visible' }) }
-  vm.runInNewContext(source + '\nthis.blocked = toyboxShortcutsBlocked', ctx)
-  return ctx.blocked
+  return evaluate(section(ANIM, '  function toyboxShortcutsBlocked', '  function setupToyboxCarousel'), ctx, 'toyboxShortcutsBlocked')
 }
 
 test('page shortcuts stay active on the rack but suspend in overlays and controls', () => {
@@ -30,15 +25,14 @@ test('page shortcuts stay active on the rack but suspend in overlays and control
 })
 
 test('AJAX pagination refreshes lazy images after inserting the new rack', () => {
-  const replacement = runtime.slice(runtime.indexOf('recentPosts.replaceWith'), runtime.indexOf('function enhanceToyboxHome'))
+  const replacement = section(ANIM, 'recentPosts.replaceWith', 'function enhanceToyboxHome')
   assert.match(replacement, /enhancePixelUi\(\)[\s\S]*lazyLoadInstance\.update\(\)/)
 })
 
 test('successful pagination still settles and announces arrival when session storage is blocked', () => {
-  const source = runtime.slice(runtime.indexOf('  function setupToyboxPageMotion'), runtime.indexOf('  function enhanceToyboxHome'))
   const events = []
   const attributes = {}
-  const classes = new Set(['toybox-page-leaving'])
+  const classes = classList(['toybox-page-leaving'])
   const pagination = {
     dataset: { totalPages: '13', toyboxMotionReady: '1' },
     classList: { add() {}, remove() {} },
@@ -46,7 +40,7 @@ test('successful pagination still settles and announces arrival when session sto
   }
   const body = {
     dataset: { toyboxPageDirection: 'next' },
-    classList: { contains: name => classes.has(name), add: name => classes.add(name), remove: name => classes.delete(name) },
+    classList: classes,
     querySelector: () => ({ setAttribute() {} })
   }
   const context = {
@@ -54,11 +48,10 @@ test('successful pagination still settles and announces arrival when session sto
     sessionStorage: { getItem() { throw new Error('Storage blocked') } },
     window: { setTimeout() {}, matchMedia: () => ({ matches: false }) },
     document: { dispatchEvent: event => events.push(event) },
-    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail } }
+    CustomEvent
   }
-  vm.runInNewContext(source + '\nthis.setup = setupToyboxPageMotion', context)
-  context.setup(body, pagination, 2)
-  assert.equal(classes.has('toybox-page-leaving'), false)
+  evaluate(section(ANIM, '  function setupToyboxPageMotion', '  function enhanceToyboxHome'), context, 'setupToyboxPageMotion')(body, pagination, 2)
+  assert.equal(classes.contains('toybox-page-leaving'), false)
   assert.equal(attributes['aria-busy'], 'false')
   assert.equal(events[0].type, 'toybox:page-arrived')
   assert.equal(events[0].detail.current, 2)
@@ -66,11 +59,7 @@ test('successful pagination still settles and announces arrival when session sto
 })
 
 test('fallback artwork stays consistent across views and leaves explicit covers alone', () => {
-  let helper
-  let reset
-  const hexo = { extend: { helper: { register: (_, fn) => { helper = fn } }, filter: { register: (_, fn) => { reset = fn } } } }
-  const helperPath = path.join(root, 'scripts/helpers/cartridge-cover.js')
-  vm.runInNewContext(fs.readFileSync(helperPath, 'utf8'), { hexo, Map, require: require('node:module').createRequire(helperPath) })
+  const { helpers: { toybox_cover: helper }, filters: { before_generate: reset } } = loadHexo('scripts/helpers/cartridge-cover.js')
   const posts = ['a', 'b', 'c'].map(path => ({ path, cover: 'old', toybox_cover_source: 'fallback' }))
   const context = { theme: { cover: { default_cover: ['red.jpg', 'blue.jpg', 'green.jpg'] } }, site: { posts: { sort: () => posts } } }
   assert.deepEqual(posts.map(post => helper.call(context, post)), ['red.jpg', 'blue.jpg', 'green.jpg'])
@@ -82,34 +71,30 @@ test('fallback artwork stays consistent across views and leaves explicit covers 
 })
 
 test('demo isolation excludes generated copies but not real theme layouts', () => {
-  const hexo = { theme_dir: '/site/themes/toybox/', theme: { ignore: [], options: { ignored: [] } } }
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'scripts/events/demo-isolation.js'), 'utf8'), { hexo, require })
+  const { hexo } = loadHexo('scripts/events/demo-isolation.js', { theme_dir: '/site/themes/toybox/', theme: { ignore: [], options: { ignored: [] } } })
   const pattern = hexo.theme.options.ignored[0]
   assert.equal(pattern.test('/site/themes/toybox/demo/themes/toybox/layout/index.pug'), true)
   assert.equal(pattern.test('/site/themes/toybox/layout/index.pug'), false)
 })
 
 test('sidebar toggles even when browser storage is unavailable', () => {
-  const main = fs.readFileSync(path.join(root, 'source/js/main.js'), 'utf8')
-  const body = main.slice(main.indexOf('    hideAsideBtn: button => {'), main.indexOf('    runMobileToc:'))
   let hidden = false
   let pressed
   const ctx = {
     document: { documentElement: { classList: { contains: () => hidden, toggle: () => { hidden = !hidden } } } },
     window: { localStorage: { setItem: () => { throw new Error('Storage blocked') } } }
   }
-  vm.runInNewContext('this.actions = ({' + body + '})', ctx)
+  const actions = evaluate('', ctx, '({' + section('source/js/main.js', '    hideAsideBtn: button => {', '    runMobileToc:') + '})')
   const button = { setAttribute: (_, value) => { pressed = value } }
-  ctx.actions.hideAsideBtn(button)
+  actions.hideAsideBtn(button)
   assert.equal(hidden, true)
   assert.equal(pressed, 'true')
-  ctx.actions.hideAsideBtn(button)
+  actions.hideAsideBtn(button)
   assert.equal(hidden, false)
   assert.equal(pressed, 'false')
 })
 
-function motionToggle(storage) {
-  const source = runtime.slice(runtime.indexOf('  function readAnimationOff()'), runtime.indexOf('  // 把路径归一化'))
+function motionToggle(localStorage) {
   const states = []
   const events = []
   let click
@@ -119,18 +104,17 @@ function motionToggle(storage) {
     animationPreference: null,
     syncAnimButtonState: (_, off) => states.push(off),
     document: { getElementById: () => button },
-    window: { localStorage: storage, dispatchEvent: event => events.push(event.detail.enabled) },
-    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init.detail } }
+    window: { localStorage, dispatchEvent: event => events.push(event.detail.enabled) },
+    CustomEvent
   }
-  vm.runInNewContext(source + '\nthis.syncBtn = syncBtn', context)
-  context.syncBtn()
+  evaluate(section(ANIM, '  function readAnimationOff()', '  // 把路径归一化'), context, 'syncBtn')()
   return { states, events, click: () => click() }
 }
 
 test('the motion toggle keeps working when browser storage is blocked', () => {
   const blocked = () => { throw new Error('Storage blocked') }
-  for (const storage of [{ getItem: blocked, setItem: blocked }, { getItem: () => null, setItem: blocked }]) {
-    const toggle = motionToggle(storage)
+  for (const local of [storage({}, true), { getItem: () => null, setItem: blocked }]) {
+    const toggle = motionToggle(local)
     toggle.click()
     toggle.click()
     toggle.click()
@@ -138,15 +122,14 @@ test('the motion toggle keeps working when browser storage is blocked', () => {
     assert.deepEqual(toggle.events, [false, true, false])
   }
 
-  const values = new Map([['pixelAnim', 'off']])
-  const toggle = motionToggle({ getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) })
+  const local = storage({ pixelAnim: 'off' })
+  const toggle = motionToggle(local)
   toggle.click()
   assert.deepEqual(toggle.states, [true, false])
-  assert.equal(values.get('pixelAnim'), 'on')
+  assert.equal(local.values.get('pixelAnim'), 'on')
 })
 
 test('reading progress skips meter writes while the percentage is unchanged', () => {
-  const source = runtime.slice(runtime.indexOf('  function updateReadingProgress()'), runtime.indexOf('  function scheduleReadingProgress()'))
   let top = 600
   let writes = 0
   const saves = []
@@ -157,13 +140,13 @@ test('reading progress skips meter writes while the percentage is unchanged', ()
     path: '/post/'
   }
   const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave: { update: detail => saves.push(detail.progress) } }, markClearedPath: () => false, applyClearedState() {} }
-  vm.runInNewContext(source + '\nthis.update = updateReadingProgress', context)
-  context.update()
-  context.update()
+  const update = evaluate(section(ANIM, '  function updateReadingProgress()', '  function scheduleReadingProgress()'), context, 'updateReadingProgress')
+  update()
+  update()
   assert.equal(writes, 3)
   top = -445
-  context.update()
-  context.update()
+  update()
+  update()
   assert.equal(writes, 6)
   assert.deepEqual(saves, [0, 0, 50, 50])
 })

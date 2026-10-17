@@ -1,22 +1,10 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
-const vm = require('node:vm')
 const test = require('node:test')
+const { loadHexo } = require('./helpers')
 
-function createFilter(field = 'site') {
-  const filters = {}
-  const hexo = {
-    theme: { config: { lazyload: { enable: true, field } } },
-    extend: { filter: { register: (name, callback) => { filters[name] = callback } } }
-  }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../scripts/filters/post_lazyload.js'), 'utf8'), {
-    hexo, require: () => ({ url_for: value => value })
-  })
-  return filters
-}
+const createFilter = (field = 'site') => loadHexo('scripts/filters/post_lazyload.js', { theme: { config: { lazyload: { enable: true, field } } } }).filters
 
 test('lazy loading never crosses an image without src into the next script or image', () => {
   const filter = createFilter()['after_render:html']

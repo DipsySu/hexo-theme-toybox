@@ -1,17 +1,12 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
-const pug = require('pug')
+const { compile, loadHexo, read } = require('./helpers')
 
-const root = path.join(__dirname, '..')
-const helpers = {}
-globalThis.hexo = { extend: { helper: { register: (name, callback) => { helpers[name] = callback } } } }
-require('../scripts/helpers/collections.js')
-delete globalThis.hexo
+const { helpers } = loadHexo('scripts/helpers/collections.js')
+const collectionUi = read('source/js/collection-ui.js')
 
 const text = (key, params) => helpers.toybox_text.call({ page: { lang: 'en' }, config: {}, _p: name => name }, key, params)
 const url = value => '/blog/' + String(value).replace(/^\//, '')
@@ -85,10 +80,10 @@ function locals (collection, page, extra = {}) {
   }, extra)
 }
 
-const renderResults = pug.compileFile(path.join(root, 'layout/includes/collection/results.pug'))
-const renderHeading = pug.compileFile(path.join(root, 'layout/includes/collection/heading.pug'))
-const renderTags = pug.compileFile(path.join(root, 'layout/includes/page/tags.pug'))
-const renderCategories = pug.compileFile(path.join(root, 'layout/includes/page/categories.pug'))
+const renderResults = compile('layout/includes/collection/results.pug')
+const renderHeading = compile('layout/includes/collection/heading.pug')
+const renderTags = compile('layout/includes/page/tags.pug')
+const renderCategories = compile('layout/includes/page/categories.pug')
 
 test('tag index uses real counts, skips empty tags, and orders deterministically', () => {
   const index = helpers.toybox_tag_index.call(context({}))
@@ -267,7 +262,7 @@ test('tag filtering and sorting work over the full SSR index and keep focus', ()
     addEventListener () {}
   }
   runtime.window = runtime
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'source/js/collection-ui.js'), 'utf8'), runtime)
+  vm.runInNewContext(collectionUi, runtime)
 
   assert.equal(input.disabled, false)
   assert.equal(sort.disabled, false)
@@ -311,7 +306,7 @@ test('destination pickers commit keyboard steps on Enter and retain native point
     location: { assign: value => assigned.push(value) }, addEventListener () {}
   }
   runtime.window = runtime
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'source/js/collection-ui.js'), 'utf8'), runtime)
+  vm.runInNewContext(collectionUi, runtime)
   const press = key => select.listeners.keydown({ key, preventDefault () {} })
   assert.equal(select.disabled, false)
   press('ArrowDown')
