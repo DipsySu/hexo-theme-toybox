@@ -2,23 +2,19 @@ div
   script(src=toybox_asset(theme.asset.utils))
   script(src=toybox_asset(theme.asset.main))
 
-  if theme.fancybox
-    script(src=toybox_asset(theme.asset.fancybox))
   if theme.lazyload.enable
-    script(src=toybox_asset(theme.asset.lazyload))
-  if loadSubJs
-    include ./third-party/subtitle.pug
+    script(async src=toybox_asset(theme.asset.lazyload) onerror='btf.lazyloadFallback()')
 
   script(src=toybox_asset('/js/toybox-settings.js'))
   script(src=toybox_asset('/js/toybox-save.js'))
   if toyboxCollectionView
     script(src=toybox_asset('/js/collection-ui.js'))
-  script(src=toybox_asset('/js/pixel-sprite-assets.js'))
   script(src=toybox_asset('/js/pixel-particles.js'))
   if !is_home()
     script(src=toybox_asset('/js/pixel-dino.js'))
   script(src=toybox_asset('/js/pixel-anim-toggle.js'))
-  script(src=toybox_asset('/js/cartridge-tilt.js'))
+  if is_home()
+    script(src=toybox_asset('/js/cartridge-tilt.js'))
 
   if theme.busuanzi.site_uv || theme.busuanzi.site_pv || theme.busuanzi.page_pv
     script(async src=toybox_asset(theme.asset.busuanzi))

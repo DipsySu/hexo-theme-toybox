@@ -67,7 +67,7 @@ test('reading progress is bounded and only completes at the end of the article',
 })
 
 test('reading mode preserves the visible paragraph and does not create duplicate exits', () => {
-  const source = main.slice(main.indexOf('    switchReadMode:'), main.indexOf('    switchDarkMode:'))
+  const source = main.slice(main.indexOf('    switchReadMode:'), main.indexOf('    scrollToTop:'))
   let reading = false
   let count = 0
   let exit

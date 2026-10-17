@@ -1,7 +1,11 @@
 -
-  let localSearch = 'undefined'
+  // Serialise for an inline <script>: JSON keeps quotes and backslashes valid JS,
+  // and escaping '<' stops a value from closing the tag (</script>).
+  const toJs = value => value === undefined ? 'undefined' : JSON.stringify(value).replace(/</g, '\\u003c')
+
+  let localSearch
   if (theme.local_search.enable) {
-    localSearch = JSON.stringify({
+    localSearch = {
       path: theme.local_search.CDN || config.root + config.search.path,
       preload: theme.local_search.preload,
       top_n_per_article: theme.local_search.top_n_per_article,
@@ -10,66 +14,58 @@
         hits_empty: _p('search.local_search.hits_empty'),
         hits_stats: _p('search.local_search.hits_stats')
       }
-    })
+    }
   }
 
   const toyboxRuntimeConfig = theme.toybox || {}
   const toyboxRuntimeSettings = toyboxRuntimeConfig.settings || {}
   const toyboxRuntimeColorMode = toyboxRuntimeSettings.color_mode || {}
   const toyboxRuntimeLocale = toyboxRuntimeSettings.locale || {}
-  const toyboxRuntimeHome = toyboxRuntimeConfig.home || {}
-  const toybox = JSON.stringify({
+  const toybox = {
     colorMode: toyboxRuntimeColorMode.default || 'auto',
-    locale: toyboxRuntimeLocale.default || 'zh-CN',
-    home: {
-      fallbackCovers: Array.isArray(toyboxRuntimeHome.fallback_covers) ? toyboxRuntimeHome.fallback_covers : []
-    }
-  })
+    locale: toyboxRuntimeLocale.default || 'zh-CN'
+  }
 
-  let highlight = 'undefined'
+  let highlight
   if ((config.highlight && config.highlight.enable) || (config.prismjs && config.prismjs.enable)) {
-    highlight = JSON.stringify({
+    highlight = {
       plugin: config.highlight && config.highlight.enable ? 'highlightjs' : 'prismjs',
       highlightCopy: theme.highlight_copy,
       highlightLang: theme.highlight_lang,
       highlightHeightLimit: theme.highlight_height_limit
-    })
+    }
   }
+
+  // Fancybox is loaded on demand by btf.loadLightbox, only on pages with article images.
+  const lightbox = theme.fancybox ? { css: toybox_asset(theme.asset.fancybox_css), js: toybox_asset(theme.asset.fancybox) } : null
 
 script.
   window.GLOBAL_CONFIG = {
-    root: '!{config.root}',
-    localSearch: !{localSearch},
-    toybox: !{toybox},
-    highlight: !{highlight},
+    root: !{toJs(config.root)},
+    localSearch: !{toJs(localSearch)},
+    toybox: !{toJs(toybox)},
+    highlight: !{toJs(highlight)},
     copy: {
-      success: '!{_p("copy.success")}',
-      error: '!{_p("copy.error")}',
-      noSupport: '!{_p("copy.noSupport")}'
+      success: !{toJs(_p('copy.success'))},
+      noSupport: !{toJs(_p('copy.noSupport'))}
     },
     relativeDate: {
-      homepage: !{theme.post_meta.page.date_format === 'relative'},
-      post: !{theme.post_meta.post.date_format === 'relative'}
+      homepage: !{toJs(theme.post_meta.page.date_format === 'relative')},
+      post: !{toJs(theme.post_meta.post.date_format === 'relative')}
     },
     dateSuffix: {
-      just: '!{_p("date_suffix.just")}',
-      min: '!{_p("date_suffix.min")}',
-      hour: '!{_p("date_suffix.hour")}',
-      day: '!{_p("date_suffix.day")}',
-      month: '!{_p("date_suffix.month")}'
+      just: !{toJs(_p('date_suffix.just'))},
+      min: !{toJs(_p('date_suffix.min'))},
+      hour: !{toJs(_p('date_suffix.hour'))},
+      day: !{toJs(_p('date_suffix.day'))},
+      month: !{toJs(_p('date_suffix.month'))}
     },
-    lightbox: '!{theme.fancybox ? "fancybox" : "null"}',
-    islazyload: !{theme.lazyload.enable},
-    isAnchor: !{theme.anchor.auto_update},
-    isPhotoFigcaption: !{theme.photofigcaption},
+    lightbox: !{toJs(lightbox)},
+    islazyload: !{toJs(theme.lazyload.enable)},
+    isAnchor: !{toJs(theme.anchor.auto_update)},
+    isPhotoFigcaption: !{toJs(theme.photofigcaption)},
     percent: {
-      toc: !{theme.toc.scroll_percent},
-      rightside: !{theme.rightside_scroll_percent}
-    },
-    Snackbar: undefined,
-    copyright: undefined,
-    noticeOutdate: undefined,
-    runtime: '',
-    source: { justifiedGallery: { js: '', css: '' } },
-    autoDarkmode: false
+      toc: !{toJs(theme.toc.scroll_percent)},
+      rightside: !{toJs(theme.rightside_scroll_percent)}
+    }
   }
