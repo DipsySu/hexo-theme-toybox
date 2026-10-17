@@ -76,6 +76,7 @@ $code-block
           border-bottom-color: var(--hl-color)
 
     &.copy-true
+      -webkit-user-select: all
       user-select: all
 
       & > table,
@@ -116,6 +117,7 @@ $code-block
       text-transform: uppercase
       font-weight: bold
       font-size: 1.15em
+      -webkit-user-select: none
       user-select: none
 
     .copy-notice
@@ -134,13 +136,8 @@ $code-block
         color: $theme-color
 
   .gutter
+    -webkit-user-select: none
     user-select: none
-
-  .gist table
-    width: auto
-
-    td
-      border: none
 
   if $highlight_theme == 'mac' || ($highlight_theme == 'mac light')
     figure.highlight
@@ -206,12 +203,13 @@ $code-block
           overflow: hidden
           height: unit(hexo-config('highlight_height_limit'), px)
 
-@keyframes code-expand-key
-  0%
-    opacity: .6
+if hexo-config('highlight_height_limit')
+  @keyframes code-expand-key
+    0%
+      opacity: .6
 
-  50%
-    opacity: .1
+    50%
+      opacity: .1
 
-  100%
-    opacity: .6
+    100%
+      opacity: .6

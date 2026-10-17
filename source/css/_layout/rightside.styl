@@ -12,18 +12,8 @@
     transition: transform .4s
     transform: translate(45px, 0)
 
-    &.show
-      height: auto
-      opacity: 1
-      transform: translate(0, 0)
-
-    &.status
-      height: auto
-      opacity: 1
-
   & > div
-    & > button,
-    & > a
+    & > button
       display: block
       margin-bottom: 5px
       width: w = 35px
@@ -43,10 +33,6 @@
 
     +maxWidth900()
       display: block
-
-  +maxWidth900()
-    #hide-aside-btn
-      display: none
 
   if hexo-config('rightside_scroll_percent')
     #go-up
