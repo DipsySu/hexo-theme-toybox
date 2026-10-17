@@ -1,29 +1,6 @@
 ;(function () {
   'use strict'
 
-  var PALETTES = [
-    { name: 'ember', bg: ['#ffb25b', '#d95f12'], cover: ['#ffd166', '#ef476f', '#7c2d12'], shadow: '#78350f', highlight: '#ffe8a3', sprite: 'ember_compass', relic: 'relic-ember.png', item: 'TRAVEL CHARM', props: ['flame', 'star_shard'] },
-    { name: 'aqua', bg: ['#5eead4', '#0e7490'], cover: ['#67e8f9', '#0f766e', '#164e63'], shadow: '#164e63', highlight: '#cffafe', sprite: 'code_shrine', relic: 'relic-aqua.png', item: 'CODE RELIC', props: ['go_block', 'code_braces'] },
-    { name: 'violet', bg: ['#c4b5fd', '#6d28d9'], cover: ['#c084fc', '#4f46e5', '#312e81'], shadow: '#3b0764', highlight: '#ede9fe', sprite: 'hero_sword', relic: 'relic-violet.png', item: 'MOON QUILL', props: ['moon_talisman', 'sword_relic'] },
-    { name: 'rose', bg: ['#f9a8d4', '#be185d'], cover: ['#f9a8d4', '#db2777', '#831843'], shadow: '#831843', highlight: '#fce7f3', sprite: 'quill_book', relic: 'relic-rose.png', item: 'MEMORY REEL', props: ['lotus', 'film'] },
-    { name: 'jade', bg: ['#86efac', '#15803d'], cover: ['#bbf7d0', '#16a34a', '#14532d'], shadow: '#14532d', highlight: '#dcfce7', sprite: 'tea_charm', relic: 'relic-jade.png', item: 'PRISM WING', props: ['xp_orb', 'bamboo_leaf'] },
-    { name: 'amber', bg: ['#fcd34d', '#b45309'], cover: ['#fde68a', '#d97706', '#78350f'], shadow: '#713f12', highlight: '#fff7ed', sprite: 'scroll_code', relic: 'relic-amber.png', item: 'ALGORITHM KEY', props: ['scroll', 'gear'] },
-    { name: 'vermillion', bg: ['#fca5a5', '#b91c1c'], cover: ['#fca5a5', '#dc2626', '#7f1d1d'], shadow: '#7f1d1d', highlight: '#fee2e2', sprite: 'talisman', relic: 'relic-vermillion.png', item: 'SERVER KIT', props: ['lantern', 'flame'] },
-    { name: 'cobalt', bg: ['#93c5fd', '#1d4ed8'], cover: ['#93c5fd', '#2563eb', '#1e3a8a'], shadow: '#1e3a8a', highlight: '#dbeafe', sprite: 'crystal_chest', relic: 'relic-cobalt.png', item: 'CIRCUIT CORE', props: ['chest', 'sword_relic'] },
-  ]
-
-  var TAG_MATCHERS = [
-    { re: /ios|swift|objective|uikit/i, palette: 7 },
-    { re: /go|golang|gin|后端/i, palette: 1 },
-    { re: /flutter|前端|css|javascript|js|html/i, palette: 4 },
-    { re: /电影/i, palette: 3 },
-    { re: /随笔/i, palette: 0 },
-    { re: /夜炉诗话|散文|青春|回忆|武侠|赛博/i, palette: 2 },
-    { re: /读书|读书笔记|英雄志/i, palette: 3 },
-    { re: /巧篆|实用|工具|算法|python/i, palette: 5 },
-  ]
-
-  var spriteCache = {}
   var readingProgressTarget = null
   var readingProgressFrame = 0
   var readingProgressBound = false
@@ -35,13 +12,9 @@
   var toyboxCarouselCleanup = null
   var toyboxHistoryBound = false
   var TOYBOX_PAGE_MOTION_KEY = 'toyboxPageMotion:v1'
-  var DEFAULT_HOME_FALLBACK_COVERS = [
-    { src: '/img/home-toybox/featured-island.webp', fallback: '/img/home-toybox/featured-island.png' },
-    { src: '/img/home-toybox/card-aqua-scene.jpg' },
-    { src: '/img/home-toybox/card-yellow-scene.jpg' },
-    { src: '/img/home-toybox/card-coral-scene.jpg' },
-    { src: '/img/home-toybox/card-mint-wing-scene.png' }
-  ]
+  var ANIMATION_KEY = 'pixelAnim'
+  // Holds the motion choice only while browser storage refuses writes.
+  var animationPreference = null
 
   function rootPath(path) {
     var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
@@ -53,20 +26,6 @@
     root = root.replace(/\/?$/, '/')
     if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
     return path
-  }
-
-  function themeAssetUrl(path) {
-    if (!path) return ''
-    if (/^(?:(?:[a-z][a-z\d+.-]*:)?\/\/|data:|blob:)/i.test(path)) return path
-    return rootPath(path)
-  }
-
-  function homeFallbackCovers() {
-    var toybox = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.toybox || {}
-    var home = toybox.home || {}
-    return Array.isArray(home.fallbackCovers) && home.fallbackCovers.length
-      ? home.fallbackCovers
-      : DEFAULT_HOME_FALLBACK_COVERS
   }
 
   function toyboxText(key, params, fallback) {
@@ -83,169 +42,10 @@
     return el
   }
 
-  function bindToyboxDataset(el, property, key, params, fallback) {
-    if (!el) return el
-    el.dataset.toyboxI18nDataset = property
-    el.dataset.toyboxI18nDatasetKey = key
-    el.dataset.toyboxI18nDatasetParams = JSON.stringify(params || {})
-    el.dataset[property] = toyboxText(key, params, fallback)
-    return el
-  }
-
-  function refreshToyboxDatasets(root) {
-    var scope = root || document
-    scope.querySelectorAll('[data-toybox-i18n-dataset]').forEach(function(el) {
-      var params = {}
-      try { params = JSON.parse(el.dataset.toyboxI18nDatasetParams || '{}') } catch (error) {}
-      el.dataset[el.dataset.toyboxI18nDataset] = toyboxText(el.dataset.toyboxI18nDatasetKey, params)
-    })
-  }
-
-  function getSpriteDataUrl(name, scale) {
-    var assets = window.PixelSpriteAssets && window.PixelSpriteAssets.sprites
-    var sprite = assets && assets[name]
-    if (!sprite) return ''
-
-    var key = name + ':' + scale
-    if (spriteCache[key]) return spriteCache[key]
-
-    var canvas = document.createElement('canvas')
-    canvas.width = sprite.w * scale
-    canvas.height = sprite.h * scale
-    var ctx = canvas.getContext('2d')
-    for (var row = 0; row < sprite.h; row++) {
-      for (var col = 0; col < sprite.w; col++) {
-        var idx = sprite.pixels[row][col]
-        if (!idx) continue
-        ctx.fillStyle = sprite.palette[idx]
-        ctx.fillRect(col * scale, row * scale, scale, scale)
-      }
-    }
-    spriteCache[key] = canvas.toDataURL('image/png')
-    return spriteCache[key]
-  }
-
-  function paletteForText(text, index) {
-    for (var i = 0; i < TAG_MATCHERS.length; i++) {
-      if (TAG_MATCHERS[i].re.test(text)) return PALETTES[TAG_MATCHERS[i].palette]
-    }
-    return PALETTES[index % PALETTES.length]
-  }
-
-  function applyPalette(el, palette) {
-    el.dataset.pixelTheme = palette.name
-    el.style.setProperty('--tag-bg-start', palette.bg[0])
-    el.style.setProperty('--tag-bg-end', palette.bg[1])
-    el.style.setProperty('--tag-shadow', palette.shadow)
-    el.style.setProperty('--tag-highlight', palette.highlight)
-    el.style.setProperty('--tag-sprite', 'url("' + getSpriteDataUrl(palette.sprite, 3) + '")')
-  }
-
-  function spriteUrl(name, scale) {
-    var dataUrl = getSpriteDataUrl(name, scale)
-    return dataUrl ? 'url("' + dataUrl + '")' : 'none'
-  }
-
-  function coverRelicUrl(palette) {
-    return palette.relic ? 'url("' + rootPath('img/pixel-relics/' + palette.relic) + '")' : spriteUrl(palette.sprite, 6)
-  }
-
-  function ensureSprite(el, className, palette) {
-    if (!getSpriteDataUrl(palette.sprite, 3) || el.querySelector('.' + className)) return
-    var sprite = document.createElement('span')
-    sprite.className = className
-    sprite.setAttribute('aria-hidden', 'true')
-    el.insertBefore(sprite, el.firstChild)
-  }
-
-  function colorTags() {
-    var tags = document.querySelectorAll('.card-tag-cloud a, a.tag, .article-meta__tags, .post-meta__tags')
-    tags.forEach(function(el, i) {
-      // 容器级早退：调色 + 5 次 setProperty 是确定性的，已处理过的标签无需重跑
-      // （ensureSprite 本就幂等，此处省去重复遍历与样式写入）
-      if (el.dataset.pixelTheme) return
-      var p = paletteForText(el.textContent || '', i)
-      applyPalette(el, p)
-      ensureSprite(el, 'pixel-tag-sprite', p)
-    })
-  }
-
-  function addSpan(el, className, text) {
-    // 用最具体（最后一个）class 去重：prop-a / prop-b 都以 pixel-cover-prop 开头，
-    // 若只看第一个 class，prop-b 会被 prop-a 命中而永不创建。
-    var classes = className.split(' ')
-    if (el.querySelector('.' + classes[classes.length - 1])) return
-    var span = document.createElement('span')
-    span.className = className
-    span.setAttribute('aria-hidden', 'true')
-    if (text != null) span.textContent = text
-    el.appendChild(span)
-  }
-
-  function decorateCover(el, i, compact) {
-    if (el.dataset.pixelCoverReady) return
-
-    var text = [
-      el.dataset.coverCategory || '',
-      el.dataset.coverTag || '',
-      el.dataset.coverTitle || ''
-    ].join(' ').trim()
-    // related / pagination 封面没有 data 属性，从最近的 a[title] 取标题
-    if (!text) {
-      var anchor = el.closest ? el.closest('a[title]') : null
-      if (anchor) text = anchor.getAttribute('title') || ''
-    }
-
-    var p = paletteForText(text, i)
-    applyPalette(el, p)
-    el.style.setProperty('--cover-bg-start', p.cover[0])
-    el.style.setProperty('--cover-bg-end', p.cover[1])
-    el.style.setProperty('--cover-shadow', p.cover[2])
-    el.style.setProperty('--cover-highlight', p.highlight)
-    el.style.setProperty('--cover-sprite', coverRelicUrl(p))
-    el.dataset.coverTheme = p.name
-    el.dataset.coverRelic = p.item
-
-    addSpan(el, 'pixel-cover-sprite')
-
-    if (!compact) {
-      // 完整"关卡牌"场景仅用于首页大封面
-      el.style.setProperty('--cover-prop-a', spriteUrl(p.props[0], 4))
-      el.style.setProperty('--cover-prop-b', spriteUrl(p.props[1], 4))
-      addSpan(el, 'pixel-cover-platform')
-      addSpan(el, 'pixel-cover-slot')
-      addSpan(el, 'pixel-cover-prop pixel-cover-prop-a')
-      addSpan(el, 'pixel-cover-prop pixel-cover-prop-b')
-      addSpan(el, 'pixel-cover-badge', el.dataset.coverCategory || el.dataset.coverTag || 'LV')
-      addSpan(el, 'pixel-cover-relic-label', p.item)
-    }
-
-    el.dataset.pixelCoverReady = '1'
-  }
-
-  function enhanceCovers() {
-    // 首页大封面（完整场景）
-    document.querySelectorAll('.pixel-cover-fallback').forEach(function(el, i) {
-      decorateCover(el, i, el.classList.contains('is-compact'))
-    })
-
-    // 相关文章 / 上下篇缩略封面（紧凑模式，跳过真实图片 <img>）
-    document.querySelectorAll('.relatedPosts .cover, #pagination .cover').forEach(function(el, i) {
-      if (el.tagName === 'IMG') return
-      if (!el.classList.contains('pixel-cover-fallback')) {
-        el.classList.add('pixel-cover-fallback', 'is-compact')
-      }
-      decorateCover(el, i + 997, true)
-    })
-
-    // 侧栏 Recent Post 的非图片 cover 是裸 div background，补成小型像素缩略图。
-    document.querySelectorAll('.card-recent-post .thumbnail > div').forEach(function(el, i) {
-      el.classList.add('pixel-cover-fallback', 'is-compact', 'is-aside-thumb')
-      if (!el.dataset.coverTitle) {
-        var anchor = el.closest ? el.closest('a[title]') : null
-        if (anchor) el.dataset.coverTitle = anchor.getAttribute('title') || ''
-      }
-      decorateCover(el, i + 1499, true)
+  // Colour and gradient thumbnails share the cover sizing rule in toybox-theme.css.
+  function markCoverFallbacks() {
+    document.querySelectorAll('.relatedPosts .cover, #pagination .cover').forEach(function(el) {
+      if (el.tagName !== 'IMG') el.classList.add('pixel-cover-fallback')
     })
   }
 
@@ -271,10 +71,6 @@
 
     clearedPostsCache = posts
     return clearedPostsCache
-  }
-
-  function clearedPostCount() {
-    return Object.keys(readClearedPosts()).length
   }
 
   function internalPathForLink(link) {
@@ -330,18 +126,6 @@
     } else if ((!cleared || !usesCartridgeShell) && badge) {
       badge.remove()
     }
-
-    var progressChip = card.querySelector('.pixel-post-hud-progress')
-    if (progressChip) {
-      bindToyboxText(progressChip, cleared ? 'status.cleared' : 'status.uncleared', null, null, cleared ? '已通关' : '未通关')
-      progressChip.classList.toggle('is-cleared', cleared)
-      var hud = progressChip.closest('.pixel-post-hud')
-      if (hud) {
-        var stage = getText(hud, '.pixel-post-hud-stage')
-        var date = getText(hud, '.pixel-post-hud-date')
-        hud.setAttribute('aria-label', toyboxText(cleared ? 'status.cleared' : 'status.uncleared', null, cleared ? '已通关' : '未通关') + (stage ? ', ' + stage : '') + (date ? ', ' + date : ''))
-      }
-    }
   }
 
   function applyClearedState() {
@@ -351,14 +135,6 @@
       var path = internalPathForLink(card.querySelector('.article-title'))
       syncClearedBadge(card, Boolean(path && posts[path]))
     })
-
-    var savedCount = Object.keys(posts).length
-    var saveSlot = document.querySelector('.toybox-save-progress')
-    if (saveSlot) {
-      var count = saveSlot.querySelector('span')
-      if (count) count.textContent = String(savedCount)
-      bindToyboxText(saveSlot, 'status.localSave', { count: savedCount }, 'aria-label', '本机存档：已读完 ' + savedCount + ' 篇文章')
-    }
 
     var post = document.querySelector('#body-wrap.post #post')
     var status = post && post.querySelector('.pixel-article-status')
@@ -382,42 +158,6 @@
       clearedPostsCache = null
       applyClearedState()
     })
-  }
-
-  function setToyboxCover(cover, sources) {
-    if (!cover || !sources) return
-
-    var sourceList = Array.isArray(sources)
-      ? sources
-      : typeof sources === 'string'
-        ? [sources]
-        : [sources.src || sources.primary, sources.fallback]
-    var primaryAsset = themeAssetUrl(sourceList[0])
-    var fallbackAsset = themeAssetUrl(sourceList[1] || sourceList[0])
-    if (!primaryAsset) return
-    cover.classList.add('toybox-cover')
-
-    if (cover.tagName === 'IMG') {
-      if (primaryAsset !== fallbackAsset) {
-        cover.addEventListener('error', function useFallback() {
-          cover.removeEventListener('error', useFallback)
-          cover.src = fallbackAsset
-        })
-      }
-      cover.src = primaryAsset
-      cover.removeAttribute('data-lazy-src')
-      return
-    }
-
-    var fallbackImage = 'url("' + fallbackAsset + '")'
-    cover.style.setProperty('background-image', fallbackImage, 'important')
-    if (primaryAsset !== fallbackAsset) {
-      var imageSet = 'image-set(url("' + primaryAsset + '") type("image/webp"), ' + fallbackImage + ' type("image/png"))'
-      if (window.CSS && CSS.supports('background-image', imageSet)) {
-        cover.style.setProperty('background-image', imageSet, 'important')
-      }
-    }
-    cover.style.setProperty('background-position', 'center', 'important')
   }
 
   function setCartridgeCardMode(card, featured, currentPage, totalCards) {
@@ -795,183 +535,6 @@
     return chip
   }
 
-  function decoratePostCards() {
-    if (document.body.classList.contains('toybox-home')) return
-    document.querySelectorAll('#recent-posts .recent-post-item:not(.ads-wrap)').forEach(function(card, i) {
-      if (card.dataset.pixelHudReady) return
-
-      var info = card.querySelector('.recent-post-info')
-      if (!info) return
-
-      var title = getText(card, '.article-title')
-      var category = getText(card, '.article-meta__categories')
-      var tag = getText(card, '.article-meta__tags')
-      var date = getText(card, 'time')
-      var stage = category || tag || 'BLOG'
-      var articlePath = internalPathForLink(card.querySelector('.article-title'))
-      var cleared = isClearedPath(articlePath)
-      var p = paletteForText([title, category, tag].join(' '), i)
-
-      card.style.setProperty('--hud-bg-start', p.bg[0])
-      card.style.setProperty('--hud-bg-end', p.bg[1])
-      card.style.setProperty('--hud-shadow', p.shadow)
-      card.style.setProperty('--hud-highlight', p.highlight)
-      card.style.setProperty('--hud-sprite', spriteUrl(p.sprite, 3))
-
-      var hud = document.createElement('div')
-      hud.className = 'pixel-post-hud'
-      hud.setAttribute('aria-label', toyboxText(cleared ? 'status.cleared' : 'status.uncleared') + ', ' + stage + (date ? ', ' + date : ''))
-
-      var icon = document.createElement('span')
-      icon.className = 'pixel-post-hud-icon'
-      hud.appendChild(icon)
-
-      bindToyboxText(addHudChip(hud, 'pixel-post-hud-chip pixel-post-hud-progress' + (cleared ? ' is-cleared' : ''), ''), cleared ? 'status.cleared' : 'status.uncleared')
-      addHudChip(hud, 'pixel-post-hud-chip pixel-post-hud-stage', stage)
-      if (date) addHudChip(hud, 'pixel-post-hud-chip pixel-post-hud-date', date)
-
-      info.insertBefore(hud, info.firstChild)
-      card.dataset.pixelHudReady = '1'
-    })
-  }
-
-  function applySidePalette(el, palette, scale) {
-    el.style.setProperty('--side-bg-start', palette.bg[0])
-    el.style.setProperty('--side-bg-end', palette.bg[1])
-    el.style.setProperty('--side-shadow', palette.shadow)
-    el.style.setProperty('--side-highlight', palette.highlight)
-    el.style.setProperty('--side-sprite', spriteUrl(palette.sprite, scale || 3))
-  }
-
-  function decorateSidebarHud() {
-    var profile = document.querySelector('#aside-content .card-info')
-    if (profile && !profile.dataset.pixelProfileReady) {
-      var profileText = [
-        getText(profile, '.author-info__name'),
-        getText(profile, '.author-info__description')
-      ].join(' ')
-      applySidePalette(profile, paletteForText(profileText, 2), 4)
-
-      var badge = document.createElement('div')
-      badge.className = 'pixel-profile-badge'
-      badge.setAttribute('aria-hidden', 'true')
-
-      var sprite = document.createElement('span')
-      sprite.className = 'pixel-profile-sprite'
-      badge.appendChild(sprite)
-
-      var label = document.createElement('span')
-      label.className = 'pixel-profile-label'
-      bindToyboxText(label, 'page.siteCard', null, null, '站点名片')
-      badge.appendChild(label)
-
-      profile.insertBefore(badge, profile.firstChild)
-      profile.dataset.pixelProfileReady = '1'
-    }
-
-    document.querySelectorAll('#aside-content .card-info-data a').forEach(function(link, i) {
-      var text = getText(link, '.headline') || link.textContent || ''
-      applySidePalette(link, paletteForText(text, i), 3)
-      link.dataset.pixelStat = 'S' + String(i + 1).padStart(2, '0')
-    })
-
-    document.querySelectorAll('#aside-content .card-recent-post .aside-list-item').forEach(function(item, i) {
-      var text = getText(item, '.title')
-      var p = paletteForText(text, i + 4)
-      item.style.setProperty('--quest-bg-start', p.bg[0])
-      item.style.setProperty('--quest-bg-end', p.bg[1])
-      item.style.setProperty('--quest-shadow', p.shadow)
-      bindToyboxDataset(item, 'pixelQuest', 'archive.recent', { index: String(i + 1).padStart(2, '0') })
-    })
-
-    document.querySelectorAll('#aside-content .card-category-list-link, #aside-content .card-archive-list-link').forEach(function(link, i) {
-      var text = link.textContent || ''
-      var p = paletteForText(text, i + 8)
-      link.style.setProperty('--list-bg-start', p.bg[0])
-      link.style.setProperty('--list-bg-end', p.bg[1])
-      link.style.setProperty('--list-shadow', p.shadow)
-    })
-
-    document.querySelectorAll('#aside-content .webinfo-item').forEach(function(item, i) {
-      var p = PALETTES[(i + 1) % PALETTES.length]
-      item.style.setProperty('--info-bg-start', p.bg[0])
-      item.style.setProperty('--info-bg-end', p.bg[1])
-      item.style.setProperty('--info-shadow', p.shadow)
-      item.dataset.pixelInfo = 'I' + String(i + 1).padStart(2, '0')
-    })
-  }
-
-  function decoratePagination() {
-    document.querySelectorAll('#pagination:not(.pagination-post) .page-number, #pagination:not(.pagination-post) .extend').forEach(function(el) {
-      if (el.dataset.pixelPageReady) return
-
-      var label = (el.textContent || '').replace(/\s+/g, ' ').trim()
-      if (el.classList.contains('prev')) bindToyboxDataset(el, 'pixelPage', 'common.previousPage')
-      else if (el.classList.contains('next')) bindToyboxDataset(el, 'pixelPage', 'common.nextPage')
-      else if (/^\d+$/.test(label)) bindToyboxDataset(el, 'pixelPage', 'common.page', { page: String(parseInt(label, 10)).padStart(2, '0') })
-      else bindToyboxDataset(el, 'pixelPage', 'common.catalog')
-      el.dataset.pixelPageReady = '1'
-    })
-  }
-
-  function decorateArticleWidgets() {
-    var article = document.querySelector('#article-container')
-    if (!article) return
-
-    article.querySelectorAll('.tabs').forEach(function(tabs) {
-      if (tabs.dataset.pixelTabsReady) return
-      tabs.dataset.pixelPanel = 'ITEM MENU'
-      tabs.querySelectorAll('.nav-tabs > .tab').forEach(function(tab, i) {
-        var button = tab.querySelector('button')
-        if (button) button.dataset.pixelSlot = 'SLOT ' + String(i + 1).padStart(2, '0')
-      })
-      tabs.dataset.pixelTabsReady = '1'
-    })
-
-    article.querySelectorAll('.timeline').forEach(function(timeline) {
-      if (timeline.dataset.pixelTimelineReady) return
-      bindToyboxDataset(timeline, 'pixelTimeline', 'archive.timeline')
-      var itemIndex = 0
-      timeline.querySelectorAll('.timeline-item').forEach(function(item) {
-        if (item.classList.contains('headline')) {
-          item.dataset.pixelLog = 'START'
-          return
-        }
-        itemIndex += 1
-        item.dataset.pixelLog = 'LOG ' + String(itemIndex).padStart(2, '0')
-      })
-      timeline.dataset.pixelTimelineReady = '1'
-    })
-
-    article.querySelectorAll('.hide-inline, .hide-block, .toggle').forEach(function(box, i) {
-      if (box.dataset.pixelSecretReady) return
-      box.dataset.pixelSecret = box.classList.contains('toggle') ? 'DROP' : 'SECRET'
-      var trigger = box.querySelector('.hide-button, .toggle-button')
-      if (trigger) trigger.dataset.pixelKey = 'KEY ' + String(i + 1).padStart(2, '0')
-      box.dataset.pixelSecretReady = '1'
-    })
-
-    article.querySelectorAll('figure.gallery-group').forEach(function(group, i) {
-      if (group.dataset.pixelAlbumReady) return
-      group.dataset.pixelAlbum = 'ALBUM ' + String(i + 1).padStart(2, '0')
-      group.dataset.pixelAlbumReady = '1'
-    })
-
-    article.querySelectorAll('.gallery').forEach(function(gallery) {
-      if (gallery.dataset.pixelGalleryReady) return
-      gallery.dataset.pixelGallery = 'GALLERY'
-      var button = gallery.querySelector('.gallery-load-more')
-      if (button) button.dataset.pixelAction = 'LOAD'
-      gallery.dataset.pixelGalleryReady = '1'
-    })
-
-    article.querySelectorAll('.mermaid-wrap').forEach(function(diagram) {
-      if (diagram.dataset.pixelDiagramReady) return
-      diagram.dataset.pixelDiagram = 'DIAGRAM'
-      diagram.dataset.pixelDiagramReady = '1'
-    })
-  }
-
   function markMediaFrame(el, label) {
     if (!el || el.dataset.pixelMediaReady) return
     el.classList.add('pixel-media-frame')
@@ -1037,80 +600,26 @@
     })
   }
 
-  function decoratePostPage() {
+  function setupReadingProgress() {
     var post = document.querySelector('#body-wrap.post #post')
     var article = post && post.querySelector('#article-container')
-    if (!post || !article || post.dataset.pixelQuestReady) return
-
-    var title = getText(document, '#post-info .post-title') || getText(article, 'h1')
-    var category = getText(document, '#post-meta a.post-meta-categories')
-    var tag = getText(document, '.post-meta__tags')
-    var stage = category || tag || 'BLOG'
-    var headingCount = article.querySelectorAll('h1, h2, h3').length
-    var visualSeed = title.length + headingCount * 7
-    var p = paletteForText([title, category, tag].join(' '), visualSeed)
-
-    post.style.setProperty('--article-quest-bg-start', p.bg[0])
-    post.style.setProperty('--article-quest-bg-end', p.bg[1])
-    post.style.setProperty('--article-quest-shadow', p.shadow)
-    post.style.setProperty('--article-quest-highlight', p.highlight)
-    post.style.setProperty('--article-quest-sprite', spriteUrl(p.sprite, 4))
-    post.style.setProperty('--article-sleeve-relic', 'url("' + rootPath('img/pixel-relics/' + p.relic) + '")')
-    post.classList.add('pixel-article-manual')
-
-    var postInfo = document.querySelector('#post-info')
-    if (postInfo) {
-      postInfo.style.setProperty('--article-quest-bg-start', p.bg[0])
-      postInfo.style.setProperty('--article-quest-bg-end', p.bg[1])
-      postInfo.style.setProperty('--article-quest-shadow', p.shadow)
-      postInfo.style.setProperty('--article-quest-highlight', p.highlight)
-      postInfo.style.setProperty('--article-sleeve-relic', 'url("' + rootPath('img/pixel-relics/' + p.relic) + '")')
-      bindToyboxDataset(postInfo, 'pixelQuestTitle', 'post.cartridge')
-      postInfo.dataset.pixelQuestLevel = stage
-      postInfo.dataset.pixelQuestStage = stage
-
-    }
+    var meter = article && post.querySelector('.pixel-reading-meter')
+    if (!meter || (readingProgressTarget && readingProgressTarget.meter === meter)) return
 
     // The reading layout is rendered by Hexo; only progress is enhanced here.
-    var meter = post.querySelector('.pixel-reading-meter')
-    if (meter) {
-      readingProgressTarget = {
-        article: article,
-        meter: meter,
-        value: meter.querySelector('.pixel-reading-meter-value'),
-        path: normPath(location.pathname)
-      }
-      bindReadingProgress()
-      if (readingProgressObserver) readingProgressObserver.disconnect()
-      if (window.ResizeObserver) {
-        readingProgressObserver = new window.ResizeObserver(scheduleReadingProgress)
-        readingProgressObserver.observe(article)
-      }
-      scheduleReadingProgress()
+    readingProgressTarget = {
+      article: article,
+      meter: meter,
+      value: meter.querySelector('.pixel-reading-meter-value'),
+      path: normPath(location.pathname)
     }
-
-    document.querySelectorAll('.post-copyright > div').forEach(function(row, i) {
-      bindToyboxDataset(row, 'pixelSave', 'post.record', { index: String(i + 1).padStart(2, '0') })
-    })
-
-    var tagShare = document.querySelector('.tag_share')
-    if (tagShare) bindToyboxDataset(tagShare, 'pixelItems', 'post.tagsAndShare')
-
-    document.querySelectorAll('#pagination.pagination-post .prev-post, #pagination.pagination-post .next-post').forEach(function(item) {
-      bindToyboxDataset(item, 'pixelGate', item.classList.contains('prev-post') ? 'post.previous' : 'post.next')
-    })
-
-    document.querySelectorAll('.relatedPosts-list > div').forEach(function(card, i) {
-      var text = getText(card, '.title') || card.textContent || ''
-      var relatedPalette = paletteForText(text, i + 11)
-      card.style.setProperty('--related-bg-start', relatedPalette.bg[0])
-      card.style.setProperty('--related-bg-end', relatedPalette.bg[1])
-      card.style.setProperty('--related-shadow', relatedPalette.shadow)
-      card.style.setProperty('--related-highlight', relatedPalette.highlight)
-      bindToyboxDataset(card, 'pixelRelated', 'post.recommendation', { index: String(i + 1).padStart(2, '0') })
-    })
-
-    post.dataset.pixelQuestReady = '1'
+    bindReadingProgress()
+    if (readingProgressObserver) readingProgressObserver.disconnect()
+    if (window.ResizeObserver) {
+      readingProgressObserver = new window.ResizeObserver(scheduleReadingProgress)
+      readingProgressObserver.observe(article)
+    }
+    scheduleReadingProgress()
   }
 
   function updateReadingProgress() {
@@ -1123,10 +632,13 @@
     var travel = Math.max(1, target.article.scrollHeight - window.innerHeight * 0.55)
     var progress = Math.max(0, Math.min(100, Math.round(((startLine - rect.top) / travel) * 100)))
 
-    target.meter.style.setProperty('--reading-progress', String(progress / 100))
-    target.meter.setAttribute('aria-valuenow', String(progress))
-    target.meter.dataset.pixelState = progress >= 98 ? 'COMPLETE' : 'IN PROGRESS'
-    target.value.textContent = progress + '%'
+    // Unchanged text writes would still replace the text node and wake DOM observers.
+    if (target.lastProgress !== progress) {
+      target.lastProgress = progress
+      target.meter.style.setProperty('--reading-progress', String(progress / 100))
+      target.meter.setAttribute('aria-valuenow', String(progress))
+      target.value.textContent = progress + '%'
+    }
 
     if (progress >= 98 && markClearedPath(target.path)) applyClearedState()
     if (window.ToyboxSave) window.ToyboxSave.update({ article: target.article, path: target.path, progress: progress })
@@ -1144,119 +656,26 @@
     window.addEventListener('resize', scheduleReadingProgress, { passive: true })
   }
 
-  function decorateFlinkPage() {
-    var hub = document.querySelector('#article-container .flink')
-    if (!hub) return
-
-    hub.dataset.pixelHub = 'PORTAL HUB'
-
-    hub.querySelectorAll('h2').forEach(function(title, i) {
-      title.dataset.pixelZone = 'ZONE ' + String(i + 1).padStart(2, '0')
-    })
-
-    hub.querySelectorAll('.flink-desc').forEach(function(desc) {
-      desc.dataset.pixelDesc = 'NPC LOG'
-    })
-
-    hub.querySelectorAll('.flink-list-item').forEach(function(item, i) {
-      if (item.dataset.pixelFlinkReady) return
-
-      var name = getText(item, '.flink-item-name')
-      var desc = getText(item, '.flink-item-desc')
-      var p = paletteForText([name, desc].join(' '), i + 23)
-      item.style.setProperty('--flink-bg-start', p.bg[0])
-      item.style.setProperty('--flink-bg-end', p.bg[1])
-      item.style.setProperty('--flink-shadow', p.shadow)
-      item.style.setProperty('--flink-highlight', p.highlight)
-      item.style.setProperty('--flink-sprite', spriteUrl(p.sprite, 3))
-      item.dataset.pixelPortal = 'PORTAL ' + String(i + 1).padStart(2, '0')
-
-      var anchor = item.querySelector('a')
-      if (anchor && !anchor.querySelector('.pixel-flink-sprite')) {
-        var sprite = document.createElement('span')
-        sprite.className = 'pixel-flink-sprite'
-        sprite.setAttribute('aria-hidden', 'true')
-        anchor.appendChild(sprite)
-      }
-
-      item.dataset.pixelFlinkReady = '1'
-    })
-
-    if (!hub.dataset.pixelObserverReady && window.MutationObserver) {
-      var observer = new MutationObserver(function(mutations) {
-        var hasAddedNode = mutations.some(function(mutation) {
-          return mutation.addedNodes && mutation.addedNodes.length > 0
-        })
-        if (hasAddedNode) {
-          var schedule = window.requestAnimationFrame || function(callback) { window.setTimeout(callback, 0) }
-          schedule(decorateFlinkPage)
-        }
-      })
-      observer.observe(hub, { childList: true, subtree: true })
-      hub.dataset.pixelObserverReady = '1'
-    }
-  }
-
   function decorateErrorPage() {
-    var wrap = document.querySelector('#body-wrap.error404')
-    var content = wrap && wrap.querySelector('.error-content')
-    if (!wrap || !content || content.dataset.pixelErrorReady) return
+    var info = document.querySelector('#body-wrap.error404 .error-content .error-info')
+    if (!info || info.querySelector('.pixel-error-actions')) return
 
-    var p = PALETTES[2]
-    content.style.setProperty('--error-bg-start', p.bg[0])
-    content.style.setProperty('--error-bg-end', p.bg[1])
-    content.style.setProperty('--error-shadow', p.shadow)
-    content.style.setProperty('--error-highlight', p.highlight)
-    content.style.setProperty('--error-sprite', spriteUrl('moon_talisman', 5))
-    content.style.setProperty('--error-prop-a', spriteUrl('hero_sword', 4))
-    content.style.setProperty('--error-prop-b', spriteUrl('chest', 4))
-    content.dataset.pixelError = 'GAME OVER'
+    var actions = document.createElement('div')
+    actions.className = 'pixel-error-actions'
 
-    var image = content.querySelector('.error-img')
-    if (image && !image.querySelector('.pixel-error-scene')) {
-      var scene = document.createElement('div')
-      scene.className = 'pixel-error-scene'
-      scene.setAttribute('aria-hidden', 'true')
-      addSpan(scene, 'pixel-error-sprite')
-      addSpan(scene, 'pixel-error-prop pixel-error-prop-a')
-      addSpan(scene, 'pixel-error-prop pixel-error-prop-b')
-      addSpan(scene, 'pixel-error-ground')
-      image.appendChild(scene)
-    }
+    var home = document.createElement('a')
+    home.href = rootPath('')
+    home.className = 'pixel-error-action is-home'
+    bindToyboxText(home, 'notFound.home', null, null, '返回主页')
+    actions.appendChild(home)
 
-    var info = content.querySelector('.error-info')
-    if (info && !info.querySelector('.pixel-error-actions')) {
-      var actions = document.createElement('div')
-      actions.className = 'pixel-error-actions'
+    var archive = document.createElement('a')
+    archive.href = rootPath('archives/')
+    archive.className = 'pixel-error-action'
+    bindToyboxText(archive, 'notFound.archives', null, null, '查看归档')
+    actions.appendChild(archive)
 
-      var home = document.createElement('a')
-      home.href = rootPath('')
-      home.className = 'pixel-error-action is-home'
-      bindToyboxText(home, 'notFound.home', null, null, '返回主页')
-      home.dataset.pixelAction = 'RESPAWN'
-      actions.appendChild(home)
-
-      var archive = document.createElement('a')
-      archive.href = rootPath('archives/')
-      archive.className = 'pixel-error-action'
-      bindToyboxText(archive, 'notFound.archives', null, null, '查看归档')
-      archive.dataset.pixelAction = 'MAP'
-      actions.appendChild(archive)
-
-      info.appendChild(actions)
-    }
-
-    content.dataset.pixelErrorReady = '1'
-  }
-
-  function syncRightsideTips() {
-    document.querySelectorAll('#rightside button, #rightside a').forEach(function(el) {
-      var tip = el.getAttribute('title') || el.getAttribute('aria-label') || (el.textContent || '').trim()
-      if (!tip) return
-      el.dataset.pixelTip = tip
-      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', tip)
-    })
-
+    info.appendChild(actions)
   }
 
   function syncAnimButtonState(btn, off) {
@@ -1268,7 +687,106 @@
     bindToyboxText(btn, labelKey, null, 'title', label)
     bindToyboxText(btn, actionKey, null, 'aria-label', off ? '开启像素动效' : '关闭像素动效')
     bindToyboxText(btn.querySelector('.toybox-action-label'), labelKey, null, null, label)
-    btn.dataset.pixelTip = label
+  }
+
+  // Built on first open: the 123-cell lab stays out of the homepage DOM until used.
+  function buildSpritePanel() {
+    var panel = document.createElement('section')
+    panel.id = 'pixel-sprite-test-panel'
+    panel.className = 'pixel-sprite-test-panel'
+    panel.hidden = true
+    panel.setAttribute('role', 'dialog')
+    panel.setAttribute('aria-modal', 'false')
+    panel.setAttribute('aria-labelledby', 'pixel-sprite-test-title')
+
+    var cells = []
+    for (var index = 0; index < 123; index++) {
+      var group = index < 30 ? 'retro' : index < 80 ? 'cute' : 'platform'
+      cells.push(
+        '<button class="pixel-sprite-test-cell" type="button" data-sprite-index="' + index + '" data-sprite-group="' + group + '">' +
+          '<span class="pixel-sprite-test-icon" style="--sprite-x:' + ((index % 8) * -32) + 'px;--sprite-y:' + (Math.floor(index / 8) * -32) + 'px" aria-hidden="true"></span>' +
+          '<small>' + String(index).padStart(3, '0') + '</small>' +
+        '</button>'
+      )
+    }
+
+    panel.innerHTML = [
+      '<header class="pixel-sprite-test-header">',
+        '<div><strong id="pixel-sprite-test-title">SPRITE TEST</strong><span></span></div>',
+        '<button class="pixel-sprite-test-close" type="button"><i class="fas fa-times" aria-hidden="true"></i></button>',
+      '</header>',
+      '<div class="pixel-sprite-test-filters" role="group">',
+        '<button type="button" class="is-active" data-sprite-filter="all"></button>',
+        '<button type="button" data-sprite-filter="retro"></button>',
+        '<button type="button" data-sprite-filter="cute"></button>',
+        '<button type="button" data-sprite-filter="platform"></button>',
+      '</div>',
+      '<div class="pixel-sprite-test-status" aria-live="polite"></div>',
+      '<div class="pixel-sprite-test-grid">' + cells.join('') + '</div>'
+    ].join('')
+    document.body.appendChild(panel)
+
+    var closeButton = panel.querySelector('.pixel-sprite-test-close')
+    var filters = panel.querySelector('.pixel-sprite-test-filters')
+    var status = panel.querySelector('.pixel-sprite-test-status')
+    var grid = panel.querySelector('.pixel-sprite-test-grid')
+    bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 }, null, '123 个运行时素材')
+    bindToyboxText(closeButton, 'sprite.close', null, 'aria-label', '关闭 Sprite 测试台')
+    bindToyboxText(closeButton, 'sprite.close', null, 'title', '关闭 Sprite 测试台')
+    bindToyboxText(filters, 'sprite.filterLabel', null, 'aria-label', '筛选素材')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll', null, null, '全部')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro', null, null, '街机')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute', null, null, '可爱')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform', null, null, '平台')
+    bindToyboxText(status, 'sprite.dropHint', null, null, '点击素材可投放到侧边轨道')
+    grid.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
+      bindToyboxText(cell, 'sprite.preview', { index: String(cell.dataset.spriteIndex).padStart(3, '0') }, 'aria-label')
+    })
+
+    closeButton.addEventListener('click', function() {
+      panel.hidden = true
+      var currentButton = document.getElementById('pixel-sprite-test-btn')
+      if (currentButton) {
+        currentButton.classList.remove('is-active')
+        currentButton.setAttribute('aria-expanded', 'false')
+        bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
+        currentButton.focus()
+      }
+    })
+
+    filters.addEventListener('click', function(event) {
+      var filterButton = event.target.closest('[data-sprite-filter]')
+      if (!filterButton) return
+      var filter = filterButton.dataset.spriteFilter
+      filters.querySelectorAll('[data-sprite-filter]').forEach(function(item) {
+        item.classList.toggle('is-active', item === filterButton)
+      })
+      grid.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
+        cell.hidden = filter !== 'all' && cell.dataset.spriteGroup !== filter
+      })
+    })
+
+    grid.addEventListener('click', function(event) {
+      var cell = event.target.closest('.pixel-sprite-test-cell')
+      if (!cell) return
+      var index = Number(cell.dataset.spriteIndex)
+      var groupKeys = { retro: 'sprite.groupRetro', cute: 'sprite.groupCute', platform: 'sprite.groupPlatform' }
+      grid.querySelectorAll('.pixel-sprite-test-cell.is-active').forEach(function(item) {
+        item.classList.remove('is-active')
+      })
+      cell.classList.add('is-active')
+      bindToyboxText(status, 'sprite.previewStatus', {
+        index: String(index).padStart(3, '0'),
+        group: toyboxText(groupKeys[cell.dataset.spriteGroup])
+      })
+      window.dispatchEvent(new CustomEvent('pixel-sprite-preview', { detail: { index: index } }))
+    })
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key !== 'Escape' || panel.hidden) return
+      closeButton.click()
+    })
+    return panel
   }
 
   function setupSpriteTest() {
@@ -1286,129 +804,52 @@
       return
     }
 
-    if (!panel) {
-      panel = document.createElement('section')
-      panel.id = 'pixel-sprite-test-panel'
-      panel.className = 'pixel-sprite-test-panel'
-      panel.hidden = true
-      panel.setAttribute('role', 'dialog')
-      panel.setAttribute('aria-modal', 'false')
-      panel.setAttribute('aria-labelledby', 'pixel-sprite-test-title')
-
-      var cells = []
-      for (var index = 0; index < 123; index++) {
-        var group = index < 30 ? 'retro' : index < 80 ? 'cute' : 'platform'
-        cells.push(
-          '<button class="pixel-sprite-test-cell" type="button" data-sprite-index="' + index + '" data-sprite-group="' + group + '">' +
-            '<span class="pixel-sprite-test-icon" style="--sprite-x:' + ((index % 8) * -32) + 'px;--sprite-y:' + (Math.floor(index / 8) * -32) + 'px" aria-hidden="true"></span>' +
-            '<small>' + String(index).padStart(3, '0') + '</small>' +
-          '</button>'
-        )
-      }
-
-      panel.innerHTML = [
-        '<header class="pixel-sprite-test-header">',
-          '<div><strong id="pixel-sprite-test-title">SPRITE TEST</strong><span></span></div>',
-          '<button class="pixel-sprite-test-close" type="button"><i class="fas fa-times" aria-hidden="true"></i></button>',
-        '</header>',
-        '<div class="pixel-sprite-test-filters" role="group">',
-          '<button type="button" class="is-active" data-sprite-filter="all"></button>',
-          '<button type="button" data-sprite-filter="retro"></button>',
-          '<button type="button" data-sprite-filter="cute"></button>',
-          '<button type="button" data-sprite-filter="platform"></button>',
-        '</div>',
-        '<div class="pixel-sprite-test-status" aria-live="polite"></div>',
-        '<div class="pixel-sprite-test-grid">' + cells.join('') + '</div>'
-      ].join('')
-      document.body.appendChild(panel)
-
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 }, null, '123 个运行时素材')
-      var closeButton = panel.querySelector('.pixel-sprite-test-close')
-      bindToyboxText(closeButton, 'sprite.close', null, 'aria-label', '关闭 Sprite 测试台')
-      bindToyboxText(closeButton, 'sprite.close', null, 'title', '关闭 Sprite 测试台')
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-filters'), 'sprite.filterLabel', null, 'aria-label', '筛选素材')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll', null, null, '全部')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro', null, null, '街机')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute', null, null, '可爱')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform', null, null, '平台')
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-status'), 'sprite.dropHint', null, null, '点击素材可投放到侧边轨道')
-      panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-        bindToyboxText(cell, 'sprite.preview', { index: String(cell.dataset.spriteIndex).padStart(3, '0') }, 'aria-label')
-      })
-
-      panel.querySelector('.pixel-sprite-test-close').addEventListener('click', function() {
-        panel.hidden = true
-        var currentButton = document.getElementById('pixel-sprite-test-btn')
-        if (currentButton) {
-          currentButton.classList.remove('is-active')
-          currentButton.setAttribute('aria-expanded', 'false')
-          bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
-          currentButton.focus()
-        }
-      })
-
-      panel.querySelectorAll('[data-sprite-filter]').forEach(function(filterButton) {
-        filterButton.addEventListener('click', function() {
-          var filter = filterButton.dataset.spriteFilter
-          panel.querySelectorAll('[data-sprite-filter]').forEach(function(item) {
-            item.classList.toggle('is-active', item === filterButton)
-          })
-          panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-            cell.hidden = filter !== 'all' && cell.dataset.spriteGroup !== filter
-          })
-        })
-      })
-
-      panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-          var index = Number(cell.dataset.spriteIndex)
-          var groupKeys = { retro: 'sprite.groupRetro', cute: 'sprite.groupCute', platform: 'sprite.groupPlatform' }
-          panel.querySelectorAll('.pixel-sprite-test-cell.is-active').forEach(function(item) {
-            item.classList.remove('is-active')
-          })
-          cell.classList.add('is-active')
-          bindToyboxText(panel.querySelector('.pixel-sprite-test-status'), 'sprite.previewStatus', {
-            index: String(index).padStart(3, '0'),
-            group: toyboxText(groupKeys[cell.dataset.spriteGroup])
-          })
-          window.dispatchEvent(new CustomEvent('pixel-sprite-preview', { detail: { index: index } }))
-        })
-      })
-
-      document.addEventListener('keydown', function(event) {
-        if (event.key !== 'Escape' || panel.hidden) return
-        panel.querySelector('.pixel-sprite-test-close').click()
-      })
-    }
-
     if (button.dataset.spriteTestBound) return
     button.dataset.spriteTestBound = 'true'
     button.addEventListener('click', function() {
-      var open = panel.hidden
-      panel.hidden = !open
+      var lab = document.getElementById('pixel-sprite-test-panel') || buildSpritePanel()
+      var open = lab.hidden
+      lab.hidden = !open
       button.classList.toggle('is-active', open)
       button.setAttribute('aria-expanded', String(open))
       bindToyboxText(button, open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, 'aria-label')
       bindToyboxText(button.querySelector('.toybox-action-label'), open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, null, open ? '关闭 Sprite 测试台' : 'Sprite 测试台')
-      button.dataset.pixelTip = toyboxText(open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab')
       if (open) {
         if (window.ToyboxSettings && window.ToyboxSettings.closePanel) window.ToyboxSettings.closePanel()
-        panel.querySelector('.pixel-sprite-test-cell:not([hidden])').focus()
+        lab.querySelector('.pixel-sprite-test-cell:not([hidden])').focus()
       }
     })
+  }
+
+  // Storage can be blocked entirely or refuse writes; the toggle then keeps its choice in memory.
+  function readAnimationOff() {
+    if (animationPreference !== null) return animationPreference === 'off'
+    try {
+      return window.localStorage.getItem(ANIMATION_KEY) === 'off'
+    } catch (error) {
+      return false
+    }
+  }
+
+  function writeAnimationPreference(value) {
+    try {
+      window.localStorage.setItem(ANIMATION_KEY, value)
+      animationPreference = null
+    } catch (error) {
+      animationPreference = value
+    }
   }
 
   // ── 同步 rightside 手柄按钮初始状态 ─────────────────────────
   function syncBtn() {
     var b = document.getElementById('pixel-anim-btn')
     if (!b) return
-    var off = localStorage.getItem('pixelAnim') === 'off'
-    syncAnimButtonState(b, off)
+    syncAnimButtonState(b, readAnimationOff())
     if (b.dataset.pixelToggleBound) return
     b.dataset.pixelToggleBound = 'true'
     b.addEventListener('click', function() {
-      var wasOff = localStorage.getItem('pixelAnim') === 'off'
-      localStorage.setItem('pixelAnim', wasOff ? 'on' : 'off')
+      var wasOff = readAnimationOff()
+      writeAnimationPreference(wasOff ? 'on' : 'off')
       syncAnimButtonState(b, !wasOff)
       window.dispatchEvent(new CustomEvent('pixel-animation-toggle', {
         detail: { enabled: wasOff }
@@ -1452,40 +893,19 @@
     bindToyboxText(search, 'search.placeholder', null, 'title', '搜索文章')
   }
 
-  function revealToyboxUi() {
-    var body = document.body
-    if (!body || !body.classList.contains('toybox-ui-pending')) return
-    window.requestAnimationFrame(function() {
-      body.classList.remove('toybox-ui-pending')
-      body.classList.add('toybox-ui-ready')
-      window.setTimeout(function() { body.classList.remove('toybox-ui-ready') }, 320)
-    })
-  }
-
   function enhancePixelUi() {
-    try {
-      enhanceToyboxHome()
-      colorTags()
-      enhanceCovers()
-      decoratePostCards()
-      decorateSidebarHud()
-      decoratePagination()
-      decorateArticleWidgets()
-      decorateArticleMedia()
-      decoratePostPage()
-      decorateFlinkPage()
-      decorateErrorPage()
-      applyClearedState()
-      bindClearedStorage()
-      enhanceSearchButton()
-      syncBtn()
-      setupSpriteTest()
-      syncRightsideTips()
-      markActiveNav()
-      if (window.ToyboxSave) window.ToyboxSave.refresh()
-    } finally {
-      revealToyboxUi()
-    }
+    enhanceToyboxHome()
+    markCoverFallbacks()
+    decorateArticleMedia()
+    setupReadingProgress()
+    decorateErrorPage()
+    applyClearedState()
+    bindClearedStorage()
+    enhanceSearchButton()
+    syncBtn()
+    setupSpriteTest()
+    markActiveNav()
+    if (window.ToyboxSave) window.ToyboxSave.refresh()
   }
 
   if (document.readyState === 'loading') {
@@ -1494,12 +914,8 @@
     enhancePixelUi()
   }
 
-  document.addEventListener('pjax:complete', enhancePixelUi)
-  document.addEventListener('pjax:success', enhancePixelUi)
   document.addEventListener('toybox:locale-change', function() {
-    refreshToyboxDatasets(document)
     applyClearedState()
     syncBtn()
-    syncRightsideTips()
   })
 })()

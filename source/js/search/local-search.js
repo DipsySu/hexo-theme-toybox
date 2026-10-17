@@ -103,10 +103,12 @@ class LocalSearch {
 
   getResultItems (keywords) {
     const resultItems = []
-    this.datas.forEach(({ title, content, url }) => {
+    // Entries carry lower-cased copies, so only the keywords need folding here.
+    const words = keywords.map(word => word.toLowerCase())
+    this.datas.forEach(({ title, content, url, titleLc, contentLc }) => {
       // The number of different keywords included in the article.
-      const [indexOfTitle, keysOfTitle] = this.getIndexByWord(keywords, title)
-      const [indexOfContent, keysOfContent] = this.getIndexByWord(keywords, content)
+      const [indexOfTitle, keysOfTitle] = this.getIndexByWord(words, titleLc, true)
+      const [indexOfContent, keysOfContent] = this.getIndexByWord(words, contentLc, true)
       const includedCount = new Set([...keysOfTitle, ...keysOfContent]).size
 
       // Show search results
@@ -200,10 +202,14 @@ class LocalSearch {
         this.datas = entries.filter(data => data && data.title && data.url).map(data => {
           const url = new URL(data.url, location.origin)
           if (!/^https?:$/.test(url.protocol)) return null
+          const title = escape(String(data.title).trim())
+          const content = escape(String(data.content || '').trim().replace(/<[^>]+>/g, ''))
           return {
-            title: escape(String(data.title).trim()),
-            content: escape(String(data.content || '').trim().replace(/<[^>]+>/g, '')),
-            url: url.href
+            title,
+            content,
+            url: url.href,
+            titleLc: title.toLowerCase(),
+            contentLc: content.toLowerCase()
           }
         }).filter(Boolean)
         this.isfetched = true
@@ -309,7 +315,6 @@ class LocalSearch {
       container.classList.remove('no-result')
       container.innerHTML = `<div class="search-result-list">${resultItems.map(result => result.item).join('')}</div>`
       statsItem.innerHTML = `<hr><div class="search-result-stats">${stats}</div>`
-      window.pjax && window.pjax.refresh(container)
     }
 
     $loadingStatus.textContent = ''
@@ -372,7 +377,12 @@ class LocalSearch {
     }
   }
 
-  input.addEventListener('input', inputEventFunction)
+  // Results are rebuilt from the whole index, so wait for a short typing pause.
+  let inputTimer = 0
+  input.addEventListener('input', () => {
+    clearTimeout(inputTimer)
+    inputTimer = setTimeout(inputEventFunction, 120)
+  })
   document.querySelector('#local-search .search-close-button').addEventListener('click', closeSearch)
   document.getElementById('search-retry').addEventListener('click', () => localSearch.fetchData())
   $searchMask.addEventListener('click', closeSearch)
@@ -392,14 +402,18 @@ class LocalSearch {
     $searchDialog.setAttribute('aria-busy', 'false')
     inputEventFunction()
   })
-  searchClickFn()
-  if (GLOBAL_CONFIG.localSearch.preload) localSearch.fetchData()
-  localSearch.highlightSearchWords(document.getElementById('article-container'))
+  // Warm the index once the page has finished loading and the main thread is idle;
+  // opening the dialog still fetches it on demand.
+  const preloadIndex = () => {
+    if (navigator.connection && navigator.connection.saveData) return
+    if (window.requestIdleCallback) window.requestIdleCallback(() => localSearch.fetchData(), { timeout: 5000 })
+    else setTimeout(() => localSearch.fetchData(), 1500)
+  }
 
-  // pjax
-  window.addEventListener('pjax:complete', () => {
-    !btf.isHidden($searchMask) && closeSearch()
-    localSearch.highlightSearchWords(document.getElementById('article-container'))
-    searchClickFn()
-  })
+  searchClickFn()
+  if (GLOBAL_CONFIG.localSearch.preload) {
+    if (document.readyState === 'complete') preloadIndex()
+    else window.addEventListener('load', preloadIndex, { once: true })
+  }
+  localSearch.highlightSearchWords(document.getElementById('article-container'))
 })()

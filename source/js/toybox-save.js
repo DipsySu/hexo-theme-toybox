@@ -446,7 +446,6 @@
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) flush()
   })
-  document.addEventListener('pjax:send', flush)
 
   window.ToyboxSave = {
     update: update,
