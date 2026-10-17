@@ -1,20 +1,9 @@
 :root
   --global-font-size: $font-size
-  --global-bg: $body-bg
-  --font-color: $font-black
   --hr-border: lighten($theme-hr-color, 50%)
-  --search-bg: $search-bg
-  --search-input-color: $search-input-color
-  --search-a-color: $search-a-color
-  --card-bg: $card-bg
-  --sidebar-bg: $sidebar-background
-  --btn-hover-color: $button-hover-color
-  --btn-color: $button-color
-  --btn-bg: $button-bg
   --text-bg-hover: rgba($text-bg-hover, .7)
   --light-grey: $light-grey
   --white: $white
-  --text-highlight-color: $text-highlight-color
   --blockquote-color: $blockquote-color
   --blockquote-bg: $blockquote-background-color
   --card-box-shadow: 0 3px 8px 6px rgba(7, 17, 27, .05)
@@ -27,11 +16,6 @@
 body
   position: relative
   min-height: 100%
-  background: var(--global-bg)
-  color: var(--font-color)
-  font-size: var(--global-font-size)
-  font-family: $font-family
-  line-height: $text-line-height
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0)
 
   if !hexo-config('copy.enable')
@@ -104,22 +88,13 @@ table
   color: #F7F7F7
 
 button
-  padding: 0
   outline: 0
-  border: none
-  background: none
-  cursor: pointer
   touch-action: manipulation
 
 a
-  color: $a-link-color
-  text-decoration: none
   word-wrap: break-word
   transition: all .2s
   overflow-wrap: break-word
-
-  &:hover
-    color: $light-blue
 
 .is-center
   text-align: center
