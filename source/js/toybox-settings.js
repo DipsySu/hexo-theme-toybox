@@ -31,8 +31,6 @@
       'home.visibleRange': '{{start}}-{{end}} of {{total}} posts',
       'home.jumpPage': 'Jump to page',
       'home.pageOption': 'Page {{current}} of {{total}}',
-      'home.current': 'Selected',
-      'home.pageCurrent': 'Page Pick',
       'home.read': 'Read Article',
       'home.readTitle': 'Read article: {{title}}',
       'home.previous': 'Previous article',
@@ -41,33 +39,22 @@
       'home.articles': 'Posts',
       'home.tags': 'Tags',
       'home.categories': 'Categories',
-      'home.localSave': 'Local Save',
-      'home.saveSlot': 'SAVE SLOT',
-      'home.cartridgePage': 'POST CARTRIDGE {{current}} / {{total}}',
-      'home.previousBox': 'Previous Box',
-      'home.nextBox': 'Next Box',
-      'home.console': 'Site console',
       'home.contentShelf': 'Content shelf',
       'home.articlePosition': 'Post {{current}} / {{total}}',
       'home.selectionStatus': 'Post {{current}} of {{total}} selected',
       'home.selectionEmpty': 'No selectable posts',
       'home.currentArticle': 'Current article: {{title}}',
-      'home.latest': 'Latest posts',
-      'home.carousel': 'Looping post carousel',
       'home.selectIndex': 'Select post {{index}}',
       'home.cartridgePagination': 'Post cartridges, page {{current}} of {{total}}',
       'status.cleared': 'Read',
       'status.uncleared': 'Unread',
       'status.localSave': 'Local save: {{count}} posts read',
-      'post.info': 'Article Info',
-      'post.words': '{{count}} words',
       'post.created': 'Created',
       'post.updated': 'Updated',
       'post.wordcount': 'Word count',
       'post.readingTime': 'Reading time',
       'post.minute': ' min',
       'post.pageViews': 'Post views',
-      'post.comments': 'Comments',
       'post.tagsAndShare': 'Tags and sharing',
       'post.previous': 'Previous post',
       'post.next': 'Next post',
@@ -82,44 +69,13 @@
       'post.copyCode': 'Copy code',
       'post.toggleCode': 'Expand or collapse code',
       'post.related': 'Related Posts',
-      'post.collectionInfo': 'Collection Info',
       'post.cartridge': 'POST CARTRIDGE',
-      'post.body': 'ARTICLE BODY',
-      'page.archive': 'Archive Box',
-      'page.tags': 'Tag Drawer',
-      'page.categories': 'Category Map',
-      'page.links': 'Link Port',
-      'page.gallery': 'Screenshot Cartridge',
-      'page.records': '{{count}} records',
-      'page.posts': '{{count}} posts',
-      'page.tagCount': '{{count}} tags',
-      'page.categoryCount': '{{count}} categories',
       'page.profile': 'Player profile',
       'page.friends': 'Linked friend sites',
       'page.screenshots': 'Game screenshot collection',
       'page.lost': 'Return to the last save point',
       'page.siteCard': 'Site card',
-      'aside.announcement': 'Announcement',
-      'aside.siteInfo': 'Site Info',
-      'aside.archives': 'Archives',
-      'aside.categories': 'Categories',
-      'aside.tags': 'Tags',
-      'aside.siteArticles': 'Posts:',
-      'aside.runtime': 'Uptime:',
-      'aside.wordcount': 'Total words:',
-      'aside.visitors': 'Visitors:',
-      'aside.views': 'Total views:',
-      'aside.lastUpdate': 'Last updated:',
       'archive.recent': 'Recent {{index}}',
-      'archive.title': 'Post Archive',
-      'archive.categoryTitle': 'Category Index',
-      'archive.tagTitle': 'Tag Index',
-      'archive.overview': 'Overview',
-      'archive.category': 'Category',
-      'archive.tag': 'Tag',
-      'archive.year': 'Year',
-      'archive.entry': 'Entry {{index}}',
-      'archive.categoryEntry': 'Category {{index}}',
       'archive.timeline': 'Reading history',
       'search.title': 'Search',
       'search.close': 'Close search',
@@ -143,7 +99,6 @@
       'rightside.exitReadMode': 'Exit reading mode',
       'rightside.hideAside': 'Toggle sidebar',
       'rightside.toc': 'Table of contents',
-      'rightside.collapseSettings': 'Collapse settings',
       'sprite.close': 'Close Sprite Lab',
       'sprite.runtimeCount': '{{count}} runtime sprites',
       'sprite.filterAll': 'All',
@@ -235,8 +190,6 @@
       'home.visibleRange': '{{start}}-{{end}} / {{total}} 篇文章',
       'home.jumpPage': '跳转到指定页',
       'home.pageOption': '第 {{current}} 页 / 共 {{total}} 页',
-      'home.current': '当前选择',
-      'home.pageCurrent': '本页选择',
       'home.read': '阅读文章',
       'home.readTitle': '阅读文章：{{title}}',
       'home.previous': '选择上一篇',
@@ -245,33 +198,22 @@
       'home.articles': '文章',
       'home.tags': '标签',
       'home.categories': '分类',
-      'home.localSave': '本机存档',
-      'home.saveSlot': '存档槽',
-      'home.cartridgePage': '文章卡带 {{current}} / {{total}}',
-      'home.previousBox': '上一盒',
-      'home.nextBox': '下一盒',
-      'home.console': '站点控制台',
       'home.contentShelf': '内容收藏架',
       'home.articlePosition': '文章 {{current}} / {{total}}',
       'home.selectionStatus': '已选择第 {{current}} 篇，共 {{total}} 篇',
       'home.selectionEmpty': '没有可选择的文章',
       'home.currentArticle': '当前文章：{{title}}',
-      'home.latest': '最新文章',
-      'home.carousel': '循环文章列表',
       'home.selectIndex': '选择第 {{index}} 篇',
       'home.cartridgePagination': '文章卡带分页，第 {{current}} 页，共 {{total}} 页',
       'status.cleared': '已读',
       'status.uncleared': '未读',
       'status.localSave': '本机存档：已读完 {{count}} 篇文章',
-      'post.info': '文章信息',
-      'post.words': '字数 {{count}}',
       'post.created': '发表于',
       'post.updated': '更新于',
       'post.wordcount': '字数总计',
       'post.readingTime': '阅读时长',
       'post.minute': '分钟',
       'post.pageViews': '阅读量',
-      'post.comments': '评论数',
       'post.tagsAndShare': '标签与分享',
       'post.previous': '上一篇',
       'post.next': '下一篇',
@@ -286,44 +228,13 @@
       'post.copyCode': '复制代码',
       'post.toggleCode': '展开或收起代码',
       'post.related': '相关推荐',
-      'post.collectionInfo': '收藏信息',
       'post.cartridge': '文章卡带',
-      'post.body': '正文区域',
-      'page.archive': '资料盒',
-      'page.tags': '标签抽屉',
-      'page.categories': '分类地图',
-      'page.links': '联机端口',
-      'page.gallery': '截图卡带',
-      'page.records': '{{count}} 篇记录',
-      'page.posts': '{{count}} 篇文章',
-      'page.tagCount': '{{count}} 个标签',
-      'page.categoryCount': '{{count}} 个分类',
       'page.profile': '个人资料页',
       'page.friends': '好友联机站点',
       'page.screenshots': '游戏截图收藏',
       'page.lost': '返回存档点继续',
       'page.siteCard': '站点名片',
-      'aside.announcement': '公告',
-      'aside.siteInfo': '网站资讯',
-      'aside.archives': '归档',
-      'aside.categories': '分类',
-      'aside.tags': '标签',
-      'aside.siteArticles': '文章数目：',
-      'aside.runtime': '已运行时间：',
-      'aside.wordcount': '本站总字数：',
-      'aside.visitors': '本站访客数：',
-      'aside.views': '本站总访问量：',
-      'aside.lastUpdate': '最后更新时间：',
       'archive.recent': '最近 {{index}}',
-      'archive.title': '文章归档',
-      'archive.categoryTitle': '分类索引',
-      'archive.tagTitle': '标签索引',
-      'archive.overview': '总览',
-      'archive.category': '分类',
-      'archive.tag': '标签',
-      'archive.year': '年份',
-      'archive.entry': '条目 {{index}}',
-      'archive.categoryEntry': '分类 {{index}}',
       'archive.timeline': '阅读记录',
       'search.title': '搜索',
       'search.close': '关闭搜索',
@@ -347,7 +258,6 @@
       'rightside.exitReadMode': '退出阅读模式',
       'rightside.hideAside': '单栏和双栏切换',
       'rightside.toc': '目录',
-      'rightside.collapseSettings': '收起设置',
       'sprite.close': '关闭 Sprite 测试台',
       'sprite.runtimeCount': '{{count}} 个运行时素材',
       'sprite.filterAll': '全部',
@@ -439,8 +349,6 @@
       'home.visibleRange': '{{start}}-{{end}} / {{total}} 篇文章',
       'home.jumpPage': '跳轉到指定頁',
       'home.pageOption': '第 {{current}} 頁 / 共 {{total}} 頁',
-      'home.current': '目前選擇',
-      'home.pageCurrent': '本頁選擇',
       'home.read': '閱讀文章',
       'home.readTitle': '閱讀文章：{{title}}',
       'home.previous': '選擇上一篇',
@@ -449,33 +357,22 @@
       'home.articles': '文章',
       'home.tags': '標籤',
       'home.categories': '分類',
-      'home.localSave': '本機存檔',
-      'home.saveSlot': '存檔槽',
-      'home.cartridgePage': '文章卡帶 {{current}} / {{total}}',
-      'home.previousBox': '上一盒',
-      'home.nextBox': '下一盒',
-      'home.console': '站點控制台',
       'home.contentShelf': '內容收藏架',
       'home.articlePosition': '文章 {{current}} / {{total}}',
       'home.selectionStatus': '已選擇第 {{current}} 篇，共 {{total}} 篇',
       'home.selectionEmpty': '沒有可選擇的文章',
       'home.currentArticle': '目前文章：{{title}}',
-      'home.latest': '最新文章',
-      'home.carousel': '循環文章列表',
       'home.selectIndex': '選擇第 {{index}} 篇',
       'home.cartridgePagination': '文章卡帶分頁，第 {{current}} 頁，共 {{total}} 頁',
       'status.cleared': '已讀',
       'status.uncleared': '未讀',
       'status.localSave': '本機存檔：已讀完 {{count}} 篇文章',
-      'post.info': '文章資訊',
-      'post.words': '字數 {{count}}',
       'post.created': '發表於',
       'post.updated': '更新於',
       'post.wordcount': '字數總計',
       'post.readingTime': '閱讀時長',
       'post.minute': '分鐘',
       'post.pageViews': '閱讀量',
-      'post.comments': '評論數',
       'post.tagsAndShare': '標籤與分享',
       'post.previous': '上一篇',
       'post.next': '下一篇',
@@ -490,44 +387,13 @@
       'post.copyCode': '複製程式碼',
       'post.toggleCode': '展開或收起程式碼',
       'post.related': '相關推薦',
-      'post.collectionInfo': '收藏資訊',
       'post.cartridge': '文章卡帶',
-      'post.body': '正文區域',
-      'page.archive': '資料盒',
-      'page.tags': '標籤抽屜',
-      'page.categories': '分類地圖',
-      'page.links': '聯機連接埠',
-      'page.gallery': '截圖卡帶',
-      'page.records': '{{count}} 篇記錄',
-      'page.posts': '{{count}} 篇文章',
-      'page.tagCount': '{{count}} 個標籤',
-      'page.categoryCount': '{{count}} 個分類',
       'page.profile': '個人資料頁',
       'page.friends': '好友聯機站點',
       'page.screenshots': '遊戲截圖收藏',
       'page.lost': '返回存檔點繼續',
       'page.siteCard': '站點名片',
-      'aside.announcement': '公告',
-      'aside.siteInfo': '網站資訊',
-      'aside.archives': '歸檔',
-      'aside.categories': '分類',
-      'aside.tags': '標籤',
-      'aside.siteArticles': '文章數目：',
-      'aside.runtime': '已運行時間：',
-      'aside.wordcount': '本站總字數：',
-      'aside.visitors': '本站訪客數：',
-      'aside.views': '本站總瀏覽量：',
-      'aside.lastUpdate': '最後更新時間：',
       'archive.recent': '最近 {{index}}',
-      'archive.title': '文章歸檔',
-      'archive.categoryTitle': '分類索引',
-      'archive.tagTitle': '標籤索引',
-      'archive.overview': '總覽',
-      'archive.category': '分類',
-      'archive.tag': '標籤',
-      'archive.year': '年份',
-      'archive.entry': '條目 {{index}}',
-      'archive.categoryEntry': '分類 {{index}}',
       'archive.timeline': '閱讀記錄',
       'search.title': '搜尋',
       'search.close': '關閉搜尋',
@@ -551,7 +417,6 @@
       'rightside.exitReadMode': '離開閱讀模式',
       'rightside.hideAside': '單欄和雙欄切換',
       'rightside.toc': '目錄',
-      'rightside.collapseSettings': '收起設定',
       'sprite.close': '關閉 Sprite 測試台',
       'sprite.runtimeCount': '{{count}} 個運行時素材',
       'sprite.filterAll': '全部',
@@ -629,7 +494,6 @@
 
   function readStorage (key) {
     try {
-      if (window.saveToLocal) return window.saveToLocal.get(key)
       return window.localStorage.getItem(key) || undefined
     } catch (error) {
       return undefined
@@ -638,8 +502,7 @@
 
   function writeStorage (key, value) {
     try {
-      if (window.saveToLocal) window.saveToLocal.set(key, value, 3650)
-      else window.localStorage.setItem(key, value)
+      window.localStorage.setItem(key, value)
     } catch (error) {}
   }
 
@@ -763,8 +626,6 @@
     bind(document.getElementById('toybox-preferences-close'), 'settings.close', null, 'aria-label')
     bind(document.getElementById('go-up'), 'rightside.backTop', null, 'title')
     bind(document.getElementById('go-up'), 'rightside.backTop', null, 'aria-label')
-    bind(document.getElementById('rightside_config'), 'rightside.settings', null, 'title')
-    bind(document.getElementById('rightside_config'), 'rightside.settings', null, 'aria-label')
     bind(document.getElementById('readmode'), 'rightside.readMode', null, 'title')
     bind(document.getElementById('readmode'), 'rightside.readMode', null, 'aria-label')
     bind(document.getElementById('hide-aside-btn'), 'rightside.hideAside', null, 'title')
@@ -773,29 +634,7 @@
     if (asideButton) asideButton.setAttribute('aria-pressed', String(document.documentElement.classList.contains('hide-aside')))
     bind(document.getElementById('mobile-toc-button'), 'rightside.toc', null, 'title')
     bind(document.getElementById('mobile-toc-button'), 'rightside.toc', null, 'aria-label')
-    bind(document.querySelector('.card-archives .item-headline span'), 'aside.archives')
-    bind(document.querySelector('.card-categories .item-headline span'), 'aside.categories')
-    bind(document.querySelector('.card-tags .item-headline span'), 'aside.tags')
     bind(document.querySelector('.relatedPosts > .headline span'), 'post.related')
-  }
-
-  function updateCssLabels () {
-    var root = document.documentElement
-    var labels = {
-      '--toybox-i18n-save-slot': 'home.saveSlot',
-      '--toybox-i18n-related': 'post.related',
-      '--toybox-i18n-collection-info': 'post.collectionInfo',
-      '--toybox-i18n-page-archive': 'page.archive',
-      '--toybox-i18n-page-tags': 'page.tags',
-      '--toybox-i18n-page-categories': 'page.categories',
-      '--toybox-i18n-page-links': 'page.links',
-      '--toybox-i18n-page-gallery': 'page.gallery',
-      '--toybox-i18n-post-cartridge': 'post.cartridge',
-      '--toybox-i18n-post-body': 'post.body'
-    }
-    Object.keys(labels).forEach(function (property) {
-      root.style.setProperty(property, JSON.stringify(t(labels[property])))
-    })
   }
 
   function updateLocaleButtons () {
@@ -813,20 +652,12 @@
     if (persist !== false) writeStorage('toybox-locale', currentLocale)
     translateBound(document)
     translateChrome()
-    updateCssLabels()
     updateLocaleButtons()
     document.dispatchEvent(new CustomEvent('toybox:locale-change', { detail: { locale: currentLocale } }))
   }
 
   function resolvedMode (mode) {
     return mode === 'auto' ? (mediaQuery.matches ? 'dark' : 'light') : mode
-  }
-
-  function notifyThemeIntegrations (mode) {
-    if (!window.themeChange) return
-    Object.keys(window.themeChange).forEach(function (key) {
-      try { window.themeChange[key](mode) } catch (error) {}
-    })
   }
 
   function updateModeButtons () {
@@ -842,15 +673,12 @@
     var resolved = resolvedMode(currentMode)
     document.documentElement.dataset.toyboxColorMode = currentMode
     document.documentElement.setAttribute('data-theme', resolved)
-    if (resolved === 'dark' && window.activateDarkMode) window.activateDarkMode()
-    if (resolved === 'light' && window.activateLightMode) window.activateLightMode()
     if (persist !== false) {
       writeStorage('toybox-color-mode', currentMode)
       if (currentMode === 'auto') removeStorage('theme')
       else writeStorage('theme', currentMode)
     }
     updateModeButtons()
-    notifyThemeIntegrations(resolved)
     document.dispatchEvent(new CustomEvent('toybox:color-mode-change', { detail: { mode: currentMode, resolved: resolved } }))
   }
 
@@ -884,8 +712,7 @@
     var panel = document.getElementById('toybox-preferences-panel')
     var openButton = document.getElementById('toybox-preferences-btn')
     var closeButton = document.getElementById('toybox-preferences-close')
-    if (!panel || !openButton || panel.dataset.toyboxBound) return
-    panel.dataset.toyboxBound = 'true'
+    if (!panel || !openButton) return
     openButton.addEventListener('click', function () { setPanelOpen(panel.hidden) })
     closeButton.addEventListener('click', function () { setPanelOpen(false) })
     panel.querySelectorAll('[data-toybox-color-mode]').forEach(function (button) {
@@ -942,13 +769,6 @@
 
   mediaQuery.addEventListener('change', function () {
     if (currentMode === 'auto') applyColorMode('auto', false)
-  })
-  document.addEventListener('pjax:complete', function () {
-    window.requestAnimationFrame(function () {
-      setupPanel()
-      applyLocale(currentLocale, false)
-      updateModeButtons()
-    })
   })
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true })
