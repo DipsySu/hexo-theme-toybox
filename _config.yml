@@ -78,12 +78,11 @@ anchor:
 copy:
   enable: true
 
+# Article table of contents (pages never render one).
 toc:
   post: true
-  page: false
   number: true
   expand: false
-  style_simple: false
   scroll_percent: true
 
 post_copyright:
