@@ -42,8 +42,6 @@ Existing raster artwork is reused without altering the original assets.
 and red/cyan/yellow/green accents for light and dark modes.
 `toybox-theme.css` owns shared chrome and secondary pages; `home-toybox.css`
 owns the rack; `toybox-settings.css` owns the preferences popover.
-The three old pixel layout sheets have been removed, so there are no
-conflicting layers of overrides.
 
 Body text and the site name use system Chinese/Latin fonts; the Basic Latin
 subset of Fusion Pixel is used for slot numbers, page digits, and numeric
@@ -61,7 +59,3 @@ the initial layout. Cover assignment happens during generation (the
 `toybox_cover` helper) and is shared by home, archives, article headers,
 recommendations, and social previews (`og:image`, `twitter:image`, share image).
 The visible home stage covers load with the page; other theme images stay lazy.
-
-Default installation needs no personal site configuration or copied artwork.
-The existing demo remains an isolated test fixture, not an alternative source
-of installed theme templates.

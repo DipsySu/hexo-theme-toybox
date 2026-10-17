@@ -146,24 +146,8 @@ Toybox 不内置评论系统、聊天、广告、播放器、数学公式、PWA 
 
 ## 开发
 
-```bash
-npm install
-npm test
-npm pack --dry-run
-```
-
-完整页面需要将本仓库放到 Hexo 站点的 `themes/toybox` 后运行站点构建。
-提交改动前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-仓库内置了一套不含个人内容的 Pages 示例站：
-
-```bash
-npm ci --prefix demo
-npm run build --prefix demo
-```
-
-构建结果位于 `demo/public`。`main` 分支更新后，GitHub Actions 会自动重新部署
-在线 Demo。
+测试、内置 Pages 示例站与提交约定见 [CONTRIBUTING.md](CONTRIBUTING.md)。`main`
+分支更新后，GitHub Actions 会自动重新部署在线 Demo。
 
 ## 许可与致谢
 
