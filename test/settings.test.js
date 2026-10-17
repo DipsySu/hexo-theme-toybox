@@ -12,6 +12,7 @@ const settingsSource = fs.readFileSync(
   path.join(root, 'source/js/toybox-settings.js'),
   'utf8'
 )
+const BOUND_SELECTOR = '[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]'
 
 function createStorage(seed) {
   const values = new Map(Object.entries(seed || {}))
@@ -23,10 +24,30 @@ function createStorage(seed) {
   }
 }
 
+function boundElement(dataset, children, text) {
+  const attributes = {}
+  return {
+    nodeType: 1,
+    isConnected: true,
+    dataset,
+    attributes,
+    textContent: text || '',
+    matches(selector) { return selector === BOUND_SELECTOR && Object.keys(dataset).some(key => key.startsWith('toyboxI18n')) },
+    querySelectorAll(selector) { return selector === BOUND_SELECTOR ? children || [] : [] },
+    getAttribute(key) { return key in attributes ? attributes[key] : null },
+    setAttribute(key, value) { attributes[key] = String(value) }
+  }
+}
+
 function createRuntime(options) {
   const storage = createStorage(options && options.storage)
   const attributes = Object.assign({}, options && options.attributes)
   const events = []
+  const frames = []
+  const lookups = []
+  const queries = []
+  const observers = []
+  const bound = (options && options.bound) || []
   const media = {
     matches: Boolean(options && options.prefersDark),
     listener: null,
@@ -48,15 +69,22 @@ function createRuntime(options) {
     readyState: 'complete',
     body: {},
     documentElement: root,
-    getElementById() { return null },
-    querySelector() { return null },
-    querySelectorAll() { return [] },
+    getElementById(id) { lookups.push(id); return null },
+    querySelector(selector) { lookups.push(selector); return null },
+    querySelectorAll(selector) { queries.push(selector); return selector === BOUND_SELECTOR ? bound : [] },
     addEventListener() {},
     dispatchEvent(event) { events.push(event) }
   }
   class MutationObserver {
+    constructor(callback) {
+      this.callback = callback
+      observers.push(this)
+    }
     disconnect() {}
-    observe() {}
+    observe(target, init) {
+      this.target = target
+      this.init = init
+    }
   }
   class CustomEvent {
     constructor(type, init) {
@@ -81,9 +109,9 @@ function createRuntime(options) {
     }
   }
   context.matchMedia = () => media
-  context.requestAnimationFrame = callback => callback()
+  context.requestAnimationFrame = options && options.manualFrames ? callback => frames.push(callback) : callback => callback()
   vm.runInNewContext(settingsSource, context, { filename: 'toybox-settings.js' })
-  return { attributes, context, events, media, root, storage }
+  return { attributes, context, events, frames, lookups, media, observers, queries, root, storage }
 }
 
 test('switches between all supported locales at runtime', () => {
@@ -154,6 +182,59 @@ test('still honors the legacy theme preference key', () => {
 
   assert.equal(runtime.context.ToyboxSettings.getColorMode(), 'dark')
   assert.equal(runtime.attributes['data-theme'], 'dark')
+})
+
+test('dynamic UI translation only visits newly added elements', () => {
+  const runtime = createRuntime({ manualFrames: true, defaultLocale: 'en' })
+  const observer = runtime.observers[0]
+  assert.equal(runtime.observers.length, 1)
+  // One deferred chrome pass after the other DOMContentLoaded handlers, then nothing.
+  assert.equal(runtime.frames.length, 1)
+  runtime.lookups.length = 0
+  runtime.frames.shift()()
+  assert.ok(runtime.lookups.includes('go-up'))
+  assert.equal(observer.target, runtime.context.document.body)
+  assert.equal(observer.init.childList, true)
+  assert.equal(observer.init.subtree, true)
+  runtime.queries.length = 0
+  runtime.lookups.length = 0
+
+  // A reading-meter or TOC percent write swaps a Text node; that must not rescan anything.
+  const text = { nodeType: 3, isConnected: true }
+  observer.callback([
+    { type: 'characterData', target: text, addedNodes: [] },
+    { type: 'childList', target: {}, addedNodes: [text] }
+  ])
+  assert.equal(runtime.frames.length, 0)
+
+  const child = boundElement({ toyboxI18nAria: 'search.close' })
+  const added = boundElement({ toyboxI18n: 'nav.home' }, [child], '主页')
+  const detached = boundElement({ toyboxI18n: 'nav.archives' }, null, '归档')
+  detached.isConnected = false
+  observer.callback([{ type: 'childList', addedNodes: [text, added] }])
+  observer.callback([{ type: 'childList', addedNodes: [added, detached] }])
+  assert.equal(runtime.frames.length, 1)
+  runtime.frames.shift()()
+
+  assert.equal(added.textContent, 'Home')
+  assert.equal(child.attributes['aria-label'], 'Close search')
+  assert.equal(detached.textContent, '归档')
+  assert.deepEqual(runtime.queries, [])
+  assert.deepEqual(runtime.lookups, [])
+})
+
+test('switching locale still re-translates every bound element', () => {
+  const heading = boundElement({ toyboxI18n: 'nav.archives' }, null, '归档')
+  const runtime = createRuntime({ bound: [heading] })
+  runtime.queries.length = 0
+
+  runtime.context.ToyboxSettings.applyLocale('en', false)
+  assert.equal(heading.textContent, 'Archives')
+  assert.ok(runtime.queries.includes(BOUND_SELECTOR))
+  assert.ok(runtime.lookups.includes('go-up'))
+
+  runtime.context.ToyboxSettings.applyLocale('zh-TW', false)
+  assert.equal(heading.textContent, '歸檔')
 })
 
 test('keeps the three locale dictionaries in sync', () => {

@@ -489,8 +489,7 @@
   var currentMode = 'auto'
   var currentLocale = 'zh-CN'
   var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  var observer
-  var queued = false
+  var pendingRoots = []
 
   function readStorage (key) {
     try {
@@ -729,22 +728,26 @@
     })
   }
 
-  function queueTranslation () {
-    if (queued) return
-    queued = true
-    window.requestAnimationFrame(function () {
-      queued = false
-      translateBound(document)
-      translateChrome()
+  function translatePendingRoots () {
+    var roots = pendingRoots
+    pendingRoots = []
+    roots.forEach(function (root) {
+      if (root.isConnected) translateBound(root)
     })
   }
 
+  // Only element subtrees inserted after init need translating: text-node swaps
+  // (reading meter, TOC percent, search stats) must not trigger a document scan.
   function observeDynamicUi () {
-    if (observer) observer.disconnect()
-    observer = new MutationObserver(function (records) {
-      if (records.some(function (record) { return record.addedNodes.length })) queueTranslation()
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
+    new MutationObserver(function (records) {
+      var queued = pendingRoots.length > 0
+      records.forEach(function (record) {
+        record.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1 && pendingRoots.indexOf(node) === -1) pendingRoots.push(node)
+        })
+      })
+      if (!queued && pendingRoots.length) window.requestAnimationFrame(translatePendingRoots)
+    }).observe(document.body, { childList: true, subtree: true })
   }
 
   function initialize () {
@@ -754,6 +757,9 @@
     applyColorMode(currentMode, false)
     applyLocale(currentLocale, false)
     observeDynamicUi()
+    // Later DOMContentLoaded handlers (pixel-anim-toggle's search button) re-bind some
+    // chrome; restore the chrome labels once after they have run.
+    window.requestAnimationFrame(translateChrome)
   }
 
   window.ToyboxSettings = {
