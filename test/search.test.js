@@ -59,3 +59,17 @@ test('search escapes index content and rejects script URLs', async () => {
   assert.equal(search.datas.length, 1)
   assert.equal(search.datas[0].title, '&lt;img src=x&gt;')
 })
+
+test('search matches any letter case and highlights the original text', async () => {
+  const { search } = searchFixture(async () => ({ ok: true, text: async () => JSON.stringify([
+    { title: 'Flutter Gradient', content: 'Build a LinearGradient in Flutter', url: '/flutter/' },
+    { title: 'Go', content: 'Goroutines', url: '/go/' }
+  ]) }))
+  await search.fetchData()
+  assert.equal(search.datas[0].titleLc, 'flutter gradient')
+  const results = search.getResultItems(['GRADIENT'])
+  assert.equal(results.length, 1)
+  assert.match(results[0].item, /<mark class="search-keyword">Gradient<\/mark>/)
+  assert.match(results[0].item, /Linear<mark class="search-keyword">Gradient<\/mark>/)
+  assert.equal(results[0].includedCount, 1)
+})

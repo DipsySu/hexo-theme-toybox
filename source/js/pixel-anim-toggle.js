@@ -632,9 +632,13 @@
     var travel = Math.max(1, target.article.scrollHeight - window.innerHeight * 0.55)
     var progress = Math.max(0, Math.min(100, Math.round(((startLine - rect.top) / travel) * 100)))
 
-    target.meter.style.setProperty('--reading-progress', String(progress / 100))
-    target.meter.setAttribute('aria-valuenow', String(progress))
-    target.value.textContent = progress + '%'
+    // Unchanged text writes would still replace the text node and wake DOM observers.
+    if (target.lastProgress !== progress) {
+      target.lastProgress = progress
+      target.meter.style.setProperty('--reading-progress', String(progress / 100))
+      target.meter.setAttribute('aria-valuenow', String(progress))
+      target.value.textContent = progress + '%'
+    }
 
     if (progress >= 98 && markClearedPath(target.path)) applyClearedState()
     if (window.ToyboxSave) window.ToyboxSave.update({ article: target.article, path: target.path, progress: progress })
@@ -685,6 +689,106 @@
     bindToyboxText(btn.querySelector('.toybox-action-label'), labelKey, null, null, label)
   }
 
+  // Built on first open: the 123-cell lab stays out of the homepage DOM until used.
+  function buildSpritePanel() {
+    var panel = document.createElement('section')
+    panel.id = 'pixel-sprite-test-panel'
+    panel.className = 'pixel-sprite-test-panel'
+    panel.hidden = true
+    panel.setAttribute('role', 'dialog')
+    panel.setAttribute('aria-modal', 'false')
+    panel.setAttribute('aria-labelledby', 'pixel-sprite-test-title')
+
+    var cells = []
+    for (var index = 0; index < 123; index++) {
+      var group = index < 30 ? 'retro' : index < 80 ? 'cute' : 'platform'
+      cells.push(
+        '<button class="pixel-sprite-test-cell" type="button" data-sprite-index="' + index + '" data-sprite-group="' + group + '">' +
+          '<span class="pixel-sprite-test-icon" style="--sprite-x:' + ((index % 8) * -32) + 'px;--sprite-y:' + (Math.floor(index / 8) * -32) + 'px" aria-hidden="true"></span>' +
+          '<small>' + String(index).padStart(3, '0') + '</small>' +
+        '</button>'
+      )
+    }
+
+    panel.innerHTML = [
+      '<header class="pixel-sprite-test-header">',
+        '<div><strong id="pixel-sprite-test-title">SPRITE TEST</strong><span></span></div>',
+        '<button class="pixel-sprite-test-close" type="button"><i class="fas fa-times" aria-hidden="true"></i></button>',
+      '</header>',
+      '<div class="pixel-sprite-test-filters" role="group">',
+        '<button type="button" class="is-active" data-sprite-filter="all"></button>',
+        '<button type="button" data-sprite-filter="retro"></button>',
+        '<button type="button" data-sprite-filter="cute"></button>',
+        '<button type="button" data-sprite-filter="platform"></button>',
+      '</div>',
+      '<div class="pixel-sprite-test-status" aria-live="polite"></div>',
+      '<div class="pixel-sprite-test-grid">' + cells.join('') + '</div>'
+    ].join('')
+    document.body.appendChild(panel)
+
+    var closeButton = panel.querySelector('.pixel-sprite-test-close')
+    var filters = panel.querySelector('.pixel-sprite-test-filters')
+    var status = panel.querySelector('.pixel-sprite-test-status')
+    var grid = panel.querySelector('.pixel-sprite-test-grid')
+    bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 }, null, '123 个运行时素材')
+    bindToyboxText(closeButton, 'sprite.close', null, 'aria-label', '关闭 Sprite 测试台')
+    bindToyboxText(closeButton, 'sprite.close', null, 'title', '关闭 Sprite 测试台')
+    bindToyboxText(filters, 'sprite.filterLabel', null, 'aria-label', '筛选素材')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll', null, null, '全部')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro', null, null, '街机')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute', null, null, '可爱')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform', null, null, '平台')
+    bindToyboxText(status, 'sprite.dropHint', null, null, '点击素材可投放到侧边轨道')
+    grid.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
+      bindToyboxText(cell, 'sprite.preview', { index: String(cell.dataset.spriteIndex).padStart(3, '0') }, 'aria-label')
+    })
+
+    closeButton.addEventListener('click', function() {
+      panel.hidden = true
+      var currentButton = document.getElementById('pixel-sprite-test-btn')
+      if (currentButton) {
+        currentButton.classList.remove('is-active')
+        currentButton.setAttribute('aria-expanded', 'false')
+        bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
+        currentButton.focus()
+      }
+    })
+
+    filters.addEventListener('click', function(event) {
+      var filterButton = event.target.closest('[data-sprite-filter]')
+      if (!filterButton) return
+      var filter = filterButton.dataset.spriteFilter
+      filters.querySelectorAll('[data-sprite-filter]').forEach(function(item) {
+        item.classList.toggle('is-active', item === filterButton)
+      })
+      grid.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
+        cell.hidden = filter !== 'all' && cell.dataset.spriteGroup !== filter
+      })
+    })
+
+    grid.addEventListener('click', function(event) {
+      var cell = event.target.closest('.pixel-sprite-test-cell')
+      if (!cell) return
+      var index = Number(cell.dataset.spriteIndex)
+      var groupKeys = { retro: 'sprite.groupRetro', cute: 'sprite.groupCute', platform: 'sprite.groupPlatform' }
+      grid.querySelectorAll('.pixel-sprite-test-cell.is-active').forEach(function(item) {
+        item.classList.remove('is-active')
+      })
+      cell.classList.add('is-active')
+      bindToyboxText(status, 'sprite.previewStatus', {
+        index: String(index).padStart(3, '0'),
+        group: toyboxText(groupKeys[cell.dataset.spriteGroup])
+      })
+      window.dispatchEvent(new CustomEvent('pixel-sprite-preview', { detail: { index: index } }))
+    })
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key !== 'Escape' || panel.hidden) return
+      closeButton.click()
+    })
+    return panel
+  }
+
   function setupSpriteTest() {
     var button = document.getElementById('pixel-sprite-test-btn')
     var panel = document.getElementById('pixel-sprite-test-panel')
@@ -700,113 +804,19 @@
       return
     }
 
-    if (!panel) {
-      panel = document.createElement('section')
-      panel.id = 'pixel-sprite-test-panel'
-      panel.className = 'pixel-sprite-test-panel'
-      panel.hidden = true
-      panel.setAttribute('role', 'dialog')
-      panel.setAttribute('aria-modal', 'false')
-      panel.setAttribute('aria-labelledby', 'pixel-sprite-test-title')
-
-      var cells = []
-      for (var index = 0; index < 123; index++) {
-        var group = index < 30 ? 'retro' : index < 80 ? 'cute' : 'platform'
-        cells.push(
-          '<button class="pixel-sprite-test-cell" type="button" data-sprite-index="' + index + '" data-sprite-group="' + group + '">' +
-            '<span class="pixel-sprite-test-icon" style="--sprite-x:' + ((index % 8) * -32) + 'px;--sprite-y:' + (Math.floor(index / 8) * -32) + 'px" aria-hidden="true"></span>' +
-            '<small>' + String(index).padStart(3, '0') + '</small>' +
-          '</button>'
-        )
-      }
-
-      panel.innerHTML = [
-        '<header class="pixel-sprite-test-header">',
-          '<div><strong id="pixel-sprite-test-title">SPRITE TEST</strong><span></span></div>',
-          '<button class="pixel-sprite-test-close" type="button"><i class="fas fa-times" aria-hidden="true"></i></button>',
-        '</header>',
-        '<div class="pixel-sprite-test-filters" role="group">',
-          '<button type="button" class="is-active" data-sprite-filter="all"></button>',
-          '<button type="button" data-sprite-filter="retro"></button>',
-          '<button type="button" data-sprite-filter="cute"></button>',
-          '<button type="button" data-sprite-filter="platform"></button>',
-        '</div>',
-        '<div class="pixel-sprite-test-status" aria-live="polite"></div>',
-        '<div class="pixel-sprite-test-grid">' + cells.join('') + '</div>'
-      ].join('')
-      document.body.appendChild(panel)
-
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 }, null, '123 个运行时素材')
-      var closeButton = panel.querySelector('.pixel-sprite-test-close')
-      bindToyboxText(closeButton, 'sprite.close', null, 'aria-label', '关闭 Sprite 测试台')
-      bindToyboxText(closeButton, 'sprite.close', null, 'title', '关闭 Sprite 测试台')
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-filters'), 'sprite.filterLabel', null, 'aria-label', '筛选素材')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll', null, null, '全部')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro', null, null, '街机')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute', null, null, '可爱')
-      bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform', null, null, '平台')
-      bindToyboxText(panel.querySelector('.pixel-sprite-test-status'), 'sprite.dropHint', null, null, '点击素材可投放到侧边轨道')
-      panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-        bindToyboxText(cell, 'sprite.preview', { index: String(cell.dataset.spriteIndex).padStart(3, '0') }, 'aria-label')
-      })
-
-      panel.querySelector('.pixel-sprite-test-close').addEventListener('click', function() {
-        panel.hidden = true
-        var currentButton = document.getElementById('pixel-sprite-test-btn')
-        if (currentButton) {
-          currentButton.classList.remove('is-active')
-          currentButton.setAttribute('aria-expanded', 'false')
-          bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
-          currentButton.focus()
-        }
-      })
-
-      panel.querySelectorAll('[data-sprite-filter]').forEach(function(filterButton) {
-        filterButton.addEventListener('click', function() {
-          var filter = filterButton.dataset.spriteFilter
-          panel.querySelectorAll('[data-sprite-filter]').forEach(function(item) {
-            item.classList.toggle('is-active', item === filterButton)
-          })
-          panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-            cell.hidden = filter !== 'all' && cell.dataset.spriteGroup !== filter
-          })
-        })
-      })
-
-      panel.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
-        cell.addEventListener('click', function() {
-          var index = Number(cell.dataset.spriteIndex)
-          var groupKeys = { retro: 'sprite.groupRetro', cute: 'sprite.groupCute', platform: 'sprite.groupPlatform' }
-          panel.querySelectorAll('.pixel-sprite-test-cell.is-active').forEach(function(item) {
-            item.classList.remove('is-active')
-          })
-          cell.classList.add('is-active')
-          bindToyboxText(panel.querySelector('.pixel-sprite-test-status'), 'sprite.previewStatus', {
-            index: String(index).padStart(3, '0'),
-            group: toyboxText(groupKeys[cell.dataset.spriteGroup])
-          })
-          window.dispatchEvent(new CustomEvent('pixel-sprite-preview', { detail: { index: index } }))
-        })
-      })
-
-      document.addEventListener('keydown', function(event) {
-        if (event.key !== 'Escape' || panel.hidden) return
-        panel.querySelector('.pixel-sprite-test-close').click()
-      })
-    }
-
     if (button.dataset.spriteTestBound) return
     button.dataset.spriteTestBound = 'true'
     button.addEventListener('click', function() {
-      var open = panel.hidden
-      panel.hidden = !open
+      var lab = document.getElementById('pixel-sprite-test-panel') || buildSpritePanel()
+      var open = lab.hidden
+      lab.hidden = !open
       button.classList.toggle('is-active', open)
       button.setAttribute('aria-expanded', String(open))
       bindToyboxText(button, open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, 'aria-label')
       bindToyboxText(button.querySelector('.toybox-action-label'), open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, null, open ? '关闭 Sprite 测试台' : 'Sprite 测试台')
       if (open) {
         if (window.ToyboxSettings && window.ToyboxSettings.closePanel) window.ToyboxSettings.closePanel()
-        panel.querySelector('.pixel-sprite-test-cell:not([hidden])').focus()
+        lab.querySelector('.pixel-sprite-test-cell:not([hidden])').focus()
       }
     })
   }

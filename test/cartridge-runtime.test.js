@@ -143,3 +143,26 @@ test('the motion toggle keeps working when browser storage is blocked', () => {
   assert.deepEqual(toggle.states, [true, false])
   assert.equal(values.get('pixelAnim'), 'on')
 })
+
+test('reading progress skips meter writes while the percentage is unchanged', () => {
+  const source = runtime.slice(runtime.indexOf('  function updateReadingProgress()'), runtime.indexOf('  function scheduleReadingProgress()'))
+  let top = 600
+  let writes = 0
+  const saves = []
+  const target = {
+    article: { isConnected: true, scrollHeight: 2000, getBoundingClientRect: () => ({ top }) },
+    meter: { isConnected: true, style: { setProperty: () => { writes++ } }, setAttribute: () => { writes++ } },
+    value: { set textContent(_) { writes++ } },
+    path: '/post/'
+  }
+  const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave: { update: detail => saves.push(detail.progress) } }, markClearedPath: () => false, applyClearedState() {} }
+  vm.runInNewContext(source + '\nthis.update = updateReadingProgress', context)
+  context.update()
+  context.update()
+  assert.equal(writes, 3)
+  top = -445
+  context.update()
+  context.update()
+  assert.equal(writes, 6)
+  assert.deepEqual(saves, [0, 0, 50, 50])
+})
