@@ -1,5 +1,4 @@
 - var htmlClassHideAside = theme.aside.enable && theme.aside.hide ? 'hide-aside' : ''
-- page.aside = is_archive() ? theme.aside.display.archive: is_category() ? theme.aside.display.category : is_tag() ? theme.aside.display.tag : page.aside
 - var suppressToyboxAside = !is_home() && !is_post()
 - var hideAside = !theme.aside.enable || page.aside === false || suppressToyboxAside ? 'hide-aside' : ''
 //- Only the article reader renders a table of contents. Compute it once so the

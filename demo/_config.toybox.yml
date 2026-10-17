@@ -13,7 +13,6 @@ menu:
 cover:
   index_enable: true
   archives_enable: true
-  position: both
   default_cover:
     - /img/home-toybox/card-aqua-scene.jpg
     - /img/home-toybox/card-coral-scene.jpg
