@@ -1,4 +1,4 @@
-- const coverVal = page.cover_type === 'img' ? page.cover : theme.avatar.img
+- const coverVal = page.cover_type === 'img' ? toybox_cover(page) : theme.avatar.img
 .social-share(data-image=url_for(coverVal) data-sites= theme.sharejs.sites)
 link(rel='stylesheet' href=toybox_asset(theme.asset.sharejs_css) media="print" onload="this.media='all'")
 script(src=toybox_asset(theme.asset.sharejs) defer)

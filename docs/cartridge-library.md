@@ -56,8 +56,10 @@ five cartridges into illegible phone-width columns.
 
 The initial rack and links are Pug output. Runtime code only binds selection,
 page replacement, reading state, and optional decoration; it does not assemble
-the initial layout. Cover assignment happens during generation and is shared
-by home, archives, article headers, and recommendations.
+the initial layout. Cover assignment happens during generation (the
+`toybox_cover` helper) and is shared by home, archives, article headers,
+recommendations, and social previews (`og:image`, `twitter:image`, share image).
+The visible home stage covers load with the page; other theme images stay lazy.
 
 Default installation needs no personal site configuration or copied artwork.
 The existing demo remains an isolated test fixture, not an alternative source

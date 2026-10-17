@@ -2,6 +2,11 @@
 - page.aside = is_archive() ? theme.aside.display.archive: is_category() ? theme.aside.display.category : is_tag() ? theme.aside.display.tag : page.aside
 - var suppressToyboxAside = !is_home() && !is_post()
 - var hideAside = !theme.aside.enable || page.aside === false || suppressToyboxAside ? 'hide-aside' : ''
+//- Only the article reader renders a table of contents. Compute it once so the
+//- runtime flag, the reader and the mobile button always agree.
+- var tocEnabled = is_post() && theme.aside.enable && page.aside !== false && (page.toc === true || page.toc === false ? page.toc : theme.toc.post)
+- var tocHtml = tocEnabled ? toc(page.content, { list_number: page.toc_number !== undefined ? page.toc_number : theme.toc.number }) : ''
+- var showToc = tocHtml !== ''
 - var pageType = is_post() ? 'post' : 'page'
 - var toyboxViewClass = is_home() ? 'toybox-home' : is_post() ? 'toybox-post' : (is_archive() || is_tag() || is_category()) ? 'toybox-collection' : 'toybox-page'
 - var toyboxIndexType = page.type === 'tags' || page.type === 'categories' ? page.type : (page.tags && !page.tag && !is_post() && !is_page() && !is_home() && !is_archive() && !is_category() ? 'tags' : '')
@@ -15,24 +20,21 @@ html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside
   body(class=`toybox-theme ${toyboxViewClass}${toyboxCollectionView ? ' toybox-collection-view' : ''}`)
     !=partial('includes/sidebar', {}, {cache: true})
 
-    if page.type !== '404'
-      #body-wrap(class=pageType)
-        include ./header/index.pug
+    #body-wrap(class=page.type === '404' ? 'error404' : pageType)
+      include ./header/index.pug
 
+      if page.type === '404'
+        include ./404.pug
+      else
         main#content-inner.layout(class=hideAside)
           if body
             div!= body
           else
             block content
-            if theme.aside.enable && page.aside !== false && !suppressToyboxAside && !is_post()
-              include widget/index.pug
 
         if toyboxViewClass !== 'toybox-home'
           footer#footer
             !=partial('includes/footer', {}, {cache: true})
-
-    else
-      include ./404.pug
 
     include ./rightside.pug
     include ./additional-js.pug

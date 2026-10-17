@@ -42,6 +42,7 @@ error_img:
 error_404:
   enable: true
   subtitle: Page not found
+  background: # 404 image; defaults to error_img.post_page
 
 post_meta:
   page:
@@ -78,12 +79,11 @@ anchor:
 copy:
   enable: true
 
+# Article table of contents (pages never render one).
 toc:
   post: true
-  page: false
   number: true
   expand: false
-  style_simple: false
   scroll_percent: true
 
 post_copyright:
@@ -166,8 +166,6 @@ readmode: true
 display_mode: light
 rightside_scroll_percent: false
 rightside-bottom: 40px
-rightside_item_order:
-  show: toc
 
 # Collection results: leave blank for compact rows, or use index for excerpts.
 category_ui:
@@ -193,7 +191,6 @@ toybox:
   home:
     fallback_covers:
       - src: /img/home-toybox/featured-island.webp
-        fallback: /img/home-toybox/featured-island.png
       - src: /img/home-toybox/card-aqua-scene.jpg
       - src: /img/home-toybox/card-yellow-scene.jpg
       - src: /img/home-toybox/card-coral-scene.jpg

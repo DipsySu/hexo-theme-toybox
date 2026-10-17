@@ -1,5 +1,11 @@
 extends includes/layout.pug
 
+//- Hexo falls back to this layout for archives, tags and categories.
 block content
-  - var collectionExcerpt = false
-  include ./includes/collection/results.pug
+  if page.archive || page.tag || page.category
+    //- tag_ui / category_ui: index keeps the shared ledger and adds post excerpts.
+    - var collectionExcerpt = page.tag ? theme.tag_ui == 'index' : page.category ? theme.category_ui == 'index' : false
+    include ./includes/collection/results.pug
+  else
+    #page.toybox-page--tags(data-toybox-page='tags')
+      include ./includes/page/tags.pug

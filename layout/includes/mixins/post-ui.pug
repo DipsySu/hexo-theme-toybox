@@ -1,5 +1,5 @@
 mixin postUI(posts)
-  each article , index in page.posts.data
+  each article , index in posts
     .recent-post-item(class=index === 0 ? 'toybox-featured' : 'toybox-cartridge-card' data-toybox-slot=index data-toybox-number=index + 1 data-toybox-tone=['coral', 'aqua', 'yellow', 'green', 'aqua'][index % 5] role='listitem')
       -
         let link = article.link || article.path
@@ -13,12 +13,16 @@ mixin postUI(posts)
         let coverSource = article.toybox_cover_source || (post_cover ? 'explicit' : 'none')
         let primaryCategory = article.categories && article.categories.data.length > 0 ? article.categories.data[0].name : ''
         let primaryTag = article.tags && article.tags.data.length > 0 ? article.tags.data[0].name : ''
+        // The home stage shows five cartridges at desktop widths: load those
+        // covers with the HTML (the first one is the LCP image) and leave the
+        // rest to the browser's native lazy loading.
+        let eagerCover = is_home() && index < 5
       -
       if post_cover && theme.cover.index_enable
         .post_cover(class=leftOrRight)
           a(href=url_for(link) title=title tabindex='-1' aria-hidden='true')
             if article.cover_type === 'img'
-              img.post-bg(src=url_for(post_cover) width='480' height='480' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt='' data-toybox-cover-source=coverSource)
+              img.post-bg(src=url_for(post_cover) width='480' height='480' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt='' data-toybox-cover-source=coverSource loading=eagerCover ? 'eager' : 'lazy' fetchpriority=eagerCover && index === 0 ? 'high' : false decoding=eagerCover && index === 0 ? false : 'async')
             else
               div.post-bg.pixel-cover-fallback(style=`background: ${post_cover}` data-cover-title=title data-cover-category=primaryCategory data-cover-tag=primaryTag data-toybox-cover-source=coverSource aria-hidden="true")
             if is_home()
@@ -66,25 +70,21 @@ mixin postUI(posts)
                 a(href=url_for(item.path)).article-meta__tags #[=item.name]
                 if (index < article.tags.data.length - 1)
                   span.article-meta-link #[='•']
-        //- Display the article introduction on homepage
-        case theme.index_post_content.method
-          when false
-            - break
-          when 1
-            .content!= article.description
-          when 2
-            if article.description
-              .content!= article.description
-            else
-              - const content = strip_html(article.content)
-              - let expert = content.substring(0, theme.index_post_content.length) 
-              - content.length > theme.index_post_content.length ? expert += ' ...' : ''
-              .content!= expert
-          default
-            - const content = strip_html(article.content)
-            - let expert = content.substring(0, theme.index_post_content.length) 
-            - content.length > theme.index_post_content.length ? expert += ' ...' : ''
-            .content!= expert
+        //- Article introduction: 1 = description, 2 = description or excerpt, 3 = excerpt, false = none.
+        - const excerptMethod = theme.index_post_content.method
+        if excerptMethod !== false
+          -
+            let excerpt = article.description
+            if (excerptMethod !== 1 && !(excerptMethod === 2 && excerpt)) {
+              const text = strip_html(article.content)
+              let end = theme.index_post_content.length
+              // strip_html keeps entities: finish one the cut lands in instead of splitting it.
+              const cut = /&[#a-z0-9]*$/i.exec(text.substring(0, end))
+              const entity = cut && /^&[#a-z0-9]+;/i.exec(text.substring(cut.index))
+              if (entity) end = cut.index + entity[0].length
+              excerpt = text.length > end ? text.substring(0, end) + ' ...' : text
+            }
+          .content!= excerpt
         if is_home()
           a.toybox-open-button(href=url_for(link) aria-label=title)
             span.toybox-open-key(aria-hidden='true') A

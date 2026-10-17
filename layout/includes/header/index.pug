@@ -55,20 +55,9 @@ header#page-header(class=`${isHomeClass+isFixedClass}` style=bg_img)
   if is_post()
     if top_img !== false
       include ./post-info.pug
-  else if is_home()
-    if top_img !== false
-      #site-info
-        h1#site-title=site_title
-        if theme.subtitle.enable
-          - var loadSubJs = true
-          #site-subtitle
-            span#subtitle
-        if(theme.social)
-          #site_social_icons
-            !=fragment_cache('social', function(){return partial('includes/header/social')})
   else if toyboxCollectionView
     include ../collection/heading.pug
-  else
+  else if !is_home()
     #page-site-info(data-toybox-section=toybox_section)
       span.toybox-page-kicker=toybox_section
       h1#site-title(data-toybox-i18n=page.type === '404' ? 'notFound.title' : false)=site_title

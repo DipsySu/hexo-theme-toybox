@@ -42,3 +42,18 @@ test('post-only lazy loading leaves the site filter unchanged', () => {
   assert.equal(filters['after_render:html'](source), undefined)
   assert.match(filters.after_post_render({ content: source }).content, /data-lazy-src="\/article.png"/)
 })
+
+test('images that choose native loading or opt out keep their real src', () => {
+  const filter = createFilter()['after_render:html']
+  const native = '<img src="/ledger.jpg" alt="" loading="lazy" decoding="async">'
+  const eager = '<img class="post-bg" src="/cover.jpg" loading=\'eager\' fetchpriority="high">'
+  const optOut = '<img class="site-icon" src="/logo.png" data-no-lazy="data-no-lazy"/><img src="/avatar.png" data-no-lazy>'
+  assert.equal(filter(native + eager + optOut), native + eager + optOut)
+})
+
+test('opt-out markers inside quoted values or longer attribute names do not count', () => {
+  const filter = createFilter()['after_render:html']
+  const result = filter('<img alt="loading=lazy data-no-lazy" src="/a.jpg"><img data-loading="x" data-no-lazy-later src="/b.jpg">')
+  assert.match(result, /data-lazy-src="\/a.jpg"/)
+  assert.match(result, /data-lazy-src="\/b.jpg"/)
+})

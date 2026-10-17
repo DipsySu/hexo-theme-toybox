@@ -2,9 +2,9 @@ nav#nav
   span#blog-info
     a.site-brand(href=url_for('/') title=config.title)
       if theme.nav.logo
-        img.site-icon(src=url_for(theme.nav.logo))
+        img.site-icon(src=url_for(theme.nav.logo) data-no-lazy)
       else
-        img.site-icon(src=url_for('/img/avatar-pixel.png'))
+        img.site-icon(src=url_for('/img/avatar-pixel.png') data-no-lazy)
       span.site-brand-copy
         if theme.nav.display_title
           span.site-name=config.title
