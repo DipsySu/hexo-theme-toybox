@@ -22,7 +22,8 @@ include ./head/Open_Graph.pug
 link(rel='canonical' href=urlNoIndex(null, config.pretty_urls.trailing_index, config.pretty_urls.trailing_html))
 include ./head/preconnect.pug
 
-link(rel='preload' as='font' type='font/woff2' href=url_for('/fonts/fusion-pixel-12px-monospaced-zh_hans/d040daf63fc0e9c4ed95a6c00d92c125.woff2') crossorigin='anonymous')
+if is_home() || toyboxCollectionView
+  link(rel='preload' as='font' type='font/woff2' href=url_for('/fonts/fusion-pixel-12px-monospaced-zh_hans/d040daf63fc0e9c4ed95a6c00d92c125.woff2') crossorigin='anonymous')
 link(rel='stylesheet' href=toybox_asset(theme.asset.main_css))
 if theme.fancybox
   link(rel='stylesheet' href=toybox_asset(theme.asset.fancybox_css) media='print' onload="this.media='all'")
@@ -33,9 +34,6 @@ link(rel='stylesheet' href=toybox_asset('/css/home-toybox.css'))
 link(rel='stylesheet' href=toybox_asset('/css/cartridge-tilt.css'))
 link(rel='stylesheet' href=toybox_asset('/css/toybox-settings.css'))
 link(rel='stylesheet' href=toybox_asset('/css/sprite-lab.css'))
-link(rel='stylesheet' href=toybox_asset('/css/fusion-pixel-fonts.css') media='print' onload="this.media='all'")
-noscript
-  link(rel='stylesheet' href=toybox_asset('/css/fusion-pixel-fonts.css'))
 
 include ./head/config.pug
 include ./head/config_site.pug

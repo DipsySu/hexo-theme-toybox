@@ -1,4 +1,16 @@
 /* Shared materials for the cartridge library and its reading views. */
+/* Fusion Pixel (OFL-1.1, TakWolf): only the Basic Latin subset is rendered by the theme (slot numbers,
+   page digits, counters). The full CJK set stays opt-in via fusion-pixel-fonts.css. */
+@font-face {
+  font-family: 'Fusion Pixel 12px M zh_hans';
+  src:
+    local('Fusion Pixel 12px M zh_hans'),
+    url('../fonts/fusion-pixel-12px-monospaced-zh_hans/d040daf63fc0e9c4ed95a6c00d92c125.woff2') format('woff2');
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  unicode-range: U+20-7E;
+}
 body.toybox-theme {
   --color-desk: #f4f7fa;
   --color-surface: #ffffff;
@@ -35,6 +47,7 @@ body.toybox-theme {
   --control-min-size: 44px;
   --content-max: 1440px;
   --reading-max: 780px;
+  --font-pixel: 'Fusion Pixel 12px M zh_hans', ui-monospace, monospace;
   --toy-ink: var(--color-ink);
   --toy-muted: var(--color-muted);
   --toy-paper: var(--color-surface);
