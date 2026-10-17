@@ -117,6 +117,7 @@ html:not(.toybox-js) .toybox-collection-toolbar, html:not(.toybox-js) .toybox-ra
 /* Collection pages render no digit overlay, so their native select is the visible control. */
 .toybox-collection-pager .toybox-page-picker select { display: block; width: 100%; height: 100%; padding: 0 32px 0 12px; appearance: none; border: 0; background: transparent; color: var(--color-ink); font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; }
 .toybox-collection-pager .toybox-page-picker select:focus-visible { outline: none; }
+.toybox-collection-pager .toybox-page-picker select option { background-color: var(--color-surface); color: var(--color-ink); }
 .toybox-collection-view .toybox-collection-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 8px; }
 .toybox-collection-view .toybox-field { display: grid; gap: 6px; min-width: 0; }
 .toybox-collection-view .toybox-field label { color: var(--color-muted); font-size: 12px; font-weight: 600; }

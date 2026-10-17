@@ -128,3 +128,32 @@ test('external CDN and data URLs are not rewritten', () => {
     assert.equal(assets.url(url), url)
   }
 })
+
+test('rendered Stylus entries are versioned by their output and stale copies are dropped', async () => {
+  const dirs = site()
+  const assets = fixture(dirs)
+  const md5 = text => require('node:crypto').createHash('md5').update(text).digest('hex').slice(0, 10)
+  let output = 'body{color:red}'
+  assets.hexo.render = { render: async () => output }
+  assets.hexo.public_dir = path.join(dirs.source_dir, '../public')
+  const published = path.join(assets.hexo.public_dir, 'css/index.css')
+  write(published, 'body{color:blue}')
+  await assets.regenerate()
+  assert.equal(version(assets.url('/css/index.css')), md5(output))
+  assert.equal(fs.existsSync(published), false, 'a stale render is removed so Hexo rewrites it')
+
+  output = 'body{color:green}'
+  write(published, output)
+  await assets.regenerate()
+  assert.equal(version(assets.url('/css/index.css')), md5(output))
+  assert.equal(fs.readFileSync(published, 'utf8'), output, 'an up-to-date render is left alone')
+})
+
+test('symlinked folders in the theme source are fingerprinted instead of crashing', { skip: process.platform === 'win32' }, () => {
+  const dirs = site()
+  const vendor = path.join(dirs.source_dir, '../vendor')
+  write(path.join(vendor, 'x.css'), 'a{}')
+  fs.symlinkSync(vendor, dirs.file('css/vendor'))
+  fs.symlinkSync(path.join(vendor, 'missing'), dirs.file('css/dangling.css'))
+  assert.match(fixture(dirs).url('/css/bundle.css'), /\?v=[a-f0-9]{10}$/)
+})

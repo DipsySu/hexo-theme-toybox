@@ -45,8 +45,9 @@ owns the rack; `toybox-settings.css` owns the preferences popover.
 The three old pixel layout sheets have been removed, so there are no
 conflicting layers of overrides.
 
-Body text uses system Chinese/Latin fonts; Fusion Pixel is reserved for the
-brand, slot numbers, and compact console counters. Text sizes are fixed at
+Body text and the site name use system Chinese/Latin fonts; the Basic Latin
+subset of Fusion Pixel is used for slot numbers, page digits, and numeric
+console counters. Text sizes are fixed at
 breakpoints, not scaled continuously with width.
 Controls use visible focus rings, fixed dimensions, and reduced-motion support.
 The main card track scrolls horizontally below 1180px; it does not compress

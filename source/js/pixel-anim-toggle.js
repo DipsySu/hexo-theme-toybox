@@ -749,6 +749,7 @@
       if (currentButton) {
         currentButton.classList.remove('is-active')
         currentButton.setAttribute('aria-expanded', 'false')
+        bindToyboxText(currentButton, 'rightside.spriteLab', null, 'aria-label')
         bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
         currentButton.focus()
       }
@@ -886,13 +887,6 @@
     })
   }
 
-  function enhanceSearchButton() {
-    var search = document.querySelector('#search-button .search')
-    if (!search) return
-    bindToyboxText(search, 'search.placeholder', null, 'aria-label', '搜索文章')
-    bindToyboxText(search, 'search.placeholder', null, 'title', '搜索文章')
-  }
-
   function enhancePixelUi() {
     enhanceToyboxHome()
     markCoverFallbacks()
@@ -901,7 +895,6 @@
     decorateErrorPage()
     applyClearedState()
     bindClearedStorage()
-    enhanceSearchButton()
     syncBtn()
     setupSpriteTest()
     markActiveNav()

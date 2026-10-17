@@ -74,6 +74,13 @@ toybox:
 
 头像、站点图标和菜单可以通过 `avatar`、`favicon`、`nav` 与 `menu` 配置覆盖。
 
+主题不再加载 Font Awesome，所有图标都是 `source/css/pixel-icons.css` 中的像素蒙版。
+`menu` 里的图标仍写作 `fas fa-<名称>` / `fab fa-<名称>`，但只支持已绘制的类名：
+`fa-home`、`fa-archive`、`fa-tag`、`fa-tags`、`fa-folder`、`fa-folder-open`、`fa-github`、
+`fa-envelope`、`fa-search`、`fa-book-open`、`fa-bookmark`、`fa-gamepad`、`fa-inbox`、
+`fa-history`、`fa-clock`、`fa-calendar-alt`、`fa-file-alt`、`fa-list-ul`、`fa-th`、
+`fa-eye`、`fa-cog`、`fa-bars` 等（完整列表见该文件）。其他类名会显示为空白占位。
+
 首页推荐在站点 `_config.yml` 中设置 `per_page: 5`。默认封面优先使用
 `cover.default_cover`，未设置时使用主题自带的 `toybox.home.fallback_covers`。
 后备图片按文章时间排序循环分配；新增文章可能改变分配（包括社交平台缓存的分享图）。
@@ -116,7 +123,9 @@ npx hexo generate
 避免本地开发示例站覆盖实际站点的模板。
 
 以下旧配置已不再生效，可以从 `_config.toybox.yml` 中删除：`toc.page`、
-`toc.style_simple`、`rightside_item_order`，以及首页隐藏标题区使用的 `subtitle`
+`toc.style_simple`、`rightside_item_order`、`css_prefix`（不再输出旧浏览器前缀）、
+`anchor.button.icon` 与 `beautify.title-prefix-icon`（改用像素图标）、
+`asset.fontawesome` 与 `asset.typed`，以及首页隐藏标题区使用的 `subtitle`
 与 `social`（站点副标题仍由站点 `_config.yml` 的 `subtitle` 显示在导航中）。
 
 ## 功能边界

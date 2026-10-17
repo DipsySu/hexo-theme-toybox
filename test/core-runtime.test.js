@@ -13,6 +13,7 @@ const main = fs.readFileSync(path.join(root, 'source/js/main.js'), 'utf8')
 
 function createUtils(globals = {}) {
   const appended = []
+  const listeners = {}
   const element = tagName => ({
     tagName: tagName.toUpperCase(),
     attributes: {},
@@ -26,12 +27,12 @@ function createUtils(globals = {}) {
     head: { appendChild: ele => appended.push(ele) },
     createElement: element,
     querySelectorAll: () => [],
-    addEventListener() {}
+    addEventListener(type, listener) { (listeners[type] = listeners[type] || []).push(listener) }
   }
   const context = Object.assign({ document, GLOBAL_CONFIG: {} }, globals)
   context.window = context
   vm.runInNewContext(utilsSource + '\nthis.btf = btf', context)
-  return { appended, btf: context.btf, context, element }
+  return { appended, btf: context.btf, context, element, listeners }
 }
 
 test('loadScript and loadCSS fetch each URL once and settle instead of throwing', async () => {
@@ -87,6 +88,36 @@ test('lightbox loads Fancybox only for pages with images and binds it once', asy
   await btf.lightboxReady
   assert.equal(binds.length, 1)
   assert.equal(binds[0][0], '[data-fancybox]')
+})
+
+test('an image clicked while Fancybox is loading opens in the lightbox once it is ready', async () => {
+  const lightbox = { css: 'https://cdn.example/fancybox.css', js: 'https://cdn.example/fancybox.js' }
+  const { appended, btf, element, listeners } = createUtils({ GLOBAL_CONFIG: { lightbox }, Fancybox: { bind() {} } })
+  const images = lightboxImages(element, 1)
+  btf.loadLightbox(images)
+  const link = images[0].parentNode
+  const opened = []
+  link.click = () => opened.push(link.attributes.href)
+  let prevented = 0
+  const click = (extra = {}) => listeners.click.forEach(listener => listener(Object.assign({
+    button: 0,
+    target: { closest: selector => selector === 'a[data-fancybox]' ? link : null },
+    preventDefault() { prevented++ }
+  }, extra)))
+
+  click({ metaKey: true })
+  assert.equal(prevented, 0, 'modified clicks keep their browser behaviour')
+  click()
+  assert.equal(prevented, 1, 'an early click does not leave the article')
+  assert.deepEqual(opened, [])
+
+  appended.forEach(ele => ele.onload())
+  await btf.lightboxReady
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(opened, ['/img/0.png'], 'the held click is replayed into Fancybox')
+
+  click()
+  assert.equal(prevented, 1, 'clicks pass straight to Fancybox once it is bound')
 })
 
 test('lightbox degrades to plain image links when Fancybox cannot load', async () => {

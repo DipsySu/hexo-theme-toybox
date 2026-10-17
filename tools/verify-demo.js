@@ -43,8 +43,9 @@ htmlFiles.forEach(file => {
 
 cssFiles.forEach(file => {
   const css = fs.readFileSync(file, 'utf8')
-  for (const match of css.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
-    const reference = match[1]
+  // Match quoted values whole so references inside data: URIs are skipped too.
+  for (const match of css.matchAll(/url\(\s*(["']?)(.*?)\1\s*\)/g)) {
+    const reference = match[2]
     if (/^(?:data:|https?:|#)/.test(reference)) continue
     const target = path.resolve(path.dirname(file), reference.split('?')[0])
     if (!fs.existsSync(target)) missing.push(path.relative(publicDirectory, target))

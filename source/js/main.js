@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const $article = document.getElementById('article-container')
     const $cardTocLayout = document.getElementById('card-toc')
     const $cardToc = $cardTocLayout && $cardTocLayout.querySelector('.toc-content')
-    // isToc can be on for a page that renders no #card-toc (e.g. toc.page with no reader)
+    // Defensive: a custom layout can set isToc without rendering #card-toc
     const isToc = GLOBAL_CONFIG_SITE.isToc && !!$cardToc
 
     if (!($article && (isToc || isAnchor))) return

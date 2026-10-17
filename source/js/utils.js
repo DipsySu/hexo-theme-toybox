@@ -207,9 +207,20 @@ const btf = {
       }
     })
 
-    // Fancybox is only fetched on pages with images. If it cannot load,
-    // the wrapping links still open the full-size image.
-    btf.lightboxReady = btf.lightboxReady || Promise.all([btf.loadCSS(source.css), btf.loadScript(source.js)])
+    if (btf.lightboxReady) return
+
+    // Fancybox is only fetched on pages with images. While it loads, hold
+    // clicks on the wrapped images and replay them once it is bound; if it
+    // cannot load, the links simply open the full-size image.
+    let pending = true
+    document.addEventListener('click', e => {
+      const link = pending && e.target.closest && e.target.closest('a[data-fancybox]')
+      if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      e.preventDefault()
+      btf.lightboxReady.then(() => typeof Fancybox === 'undefined' ? window.location.assign(link.href) : link.click())
+    }, true)
+
+    btf.lightboxReady = Promise.all([btf.loadCSS(source.css), btf.loadScript(source.js)])
       .then(() => {
         Fancybox.bind('[data-fancybox]', {
           Hash: false,
@@ -242,6 +253,7 @@ const btf = {
         })
       })
       .catch(() => {})
+      .then(() => { pending = false })
   },
 
   updateAnchor: (anchor) => {

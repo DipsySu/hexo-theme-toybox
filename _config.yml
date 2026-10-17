@@ -6,6 +6,8 @@ nav:
   display_title: true
   fixed: false
 
+# Icons are pixel masks from source/css/pixel-icons.css (Font Awesome is not
+# loaded); fa-* names without a mask there render as an empty slot.
 menu:
   主页: / || fas fa-home
   归档: /archives/ || fas fa-archive
@@ -48,7 +50,6 @@ post_meta:
     date_format: date
     categories: true
     tags: false
-    label: true
   post:
     date_type: both
     date_format: date
@@ -113,7 +114,6 @@ aside:
   enable: true
   hide: false
   button: true
-  mobile: true
   position: left
   display:
     archive: false

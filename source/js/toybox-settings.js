@@ -748,8 +748,8 @@
     applyColorMode(currentMode, false)
     applyLocale(currentLocale, false)
     observeDynamicUi()
-    // Later DOMContentLoaded handlers (pixel-anim-toggle's search button) re-bind some
-    // chrome; restore the chrome labels once after they have run.
+    // Re-sync chrome labels and pressed states once the other DOMContentLoaded
+    // handlers (e.g. main.js restoring the hide-aside layout) have run.
     window.requestAnimationFrame(translateChrome)
   }
 
