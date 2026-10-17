@@ -227,9 +227,14 @@ test('inline GLOBAL_CONFIG survives quotes, backslashes and closing script tags'
       rightside_scroll_percent: false,
       highlight_copy: true,
       highlight_lang: true,
-      highlight_height_limit: false
+      highlight_height_limit: false,
+      highlight_shrink: false
     },
     config: { root: '/blog/', search: { path: 'search.json' }, highlight: { enable: true } },
+    page: {},
+    pageTitle: hostile,
+    showToc: true,
+    is_post: () => false,
     _p: () => hostile,
     toybox_asset: value => value
   })
@@ -247,6 +252,7 @@ test('inline GLOBAL_CONFIG survives quotes, backslashes and closing script tags'
   assert.deepEqual({ ...config.lightbox }, { css: 'https://cdn.example/fancybox.css', js: 'https://cdn.example/fancybox.js' })
   assert.equal(config.highlight.plugin, 'highlightjs')
   for (const key of ['Snackbar', 'copyright', 'noticeOutdate', 'runtime', 'source', 'autoDarkmode']) assert.equal(key in config, false, key)
+  assert.deepEqual({ ...context.GLOBAL_CONFIG_SITE }, { title: hostile, isPost: false, isHighlightShrink: false, isToc: true })
 })
 
 test('third-party scripts never block theme init and home-only scripts stay on home', () => {
