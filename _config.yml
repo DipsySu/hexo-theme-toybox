@@ -204,6 +204,8 @@ toybox:
       default: auto
     locale:
       default: zh-CN
+  # paper is the experimental cut-paper skin; cartridge keeps the original UI.
+  appearance: paper
 
 # Runtime assets are explicit and version-pinned. No build-time CDN resolver is used.
 asset:

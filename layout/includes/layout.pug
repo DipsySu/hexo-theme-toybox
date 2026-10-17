@@ -7,12 +7,13 @@
 - var toyboxIndexType = page.type === 'tags' || page.type === 'categories' ? page.type : (page.tags && !page.tag && !is_post() && !is_page() && !is_home() && !is_archive() && !is_category() ? 'tags' : '')
 - var toyboxCollection = is_archive() || is_tag() || is_category() ? toybox_collection_view() : null
 - var toyboxCollectionView = Boolean(toyboxCollection || toyboxIndexType)
+- var toyboxPaper = theme.toybox && theme.toybox.appearance === 'paper'
 
 doctype html
 html(lang=config.language data-theme=theme.display_mode class=htmlClassHideAside)
   head
     include ./head.pug
-  body(class=`toybox-theme ${toyboxViewClass}${toyboxCollectionView ? ' toybox-collection-view' : ''}`)
+  body(class=`toybox-theme ${toyboxViewClass}${toyboxCollectionView ? ' toybox-collection-view' : ''}${toyboxPaper ? ' toybox-paper' : ''}`)
     !=partial('includes/sidebar', {}, {cache: true})
 
     if page.type !== '404'

@@ -12,6 +12,10 @@ Toybox 是一个独立维护的 Hexo 像素卡带主题。它把首页做成桌�
 
 [打开在线 Demo](https://dipsysu.github.io/hexo-theme-toybox/)
 
+本分支正在试作 **Pixel Paper Stage**：将像素文章卡片放进纸片舞台，保留原有
+切换、分页与阅读功能。线上 Demo 仍为 `main` 版本。试作说明与素材来源见
+[纸片舞台说明](docs/paper-stage.md)。
+
 主题所需的布局、样式、脚本、字体、光标和图片都包含在仓库中，不需要向站点
 `source` 目录复制额外文件。
 
@@ -60,6 +64,7 @@ wordcount:
   enable: true
 
 toybox:
+  appearance: paper # paper / cartridge，切回 cartridge 可恢复原版外观
   home:
     fallback_covers:
       - src: /img/home-toybox/featured-island.webp
