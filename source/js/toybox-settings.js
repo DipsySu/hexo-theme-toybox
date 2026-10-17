@@ -637,7 +637,7 @@
   }
 
   function updateLocaleButtons () {
-    document.querySelectorAll('[data-toybox-locale]').forEach(function (button) {
+    document.querySelectorAll('button[data-toybox-locale]').forEach(function (button) {
       var selected = button.dataset.toyboxLocale === currentLocale
       button.classList.toggle('is-active', selected)
       button.setAttribute('aria-pressed', String(selected))
@@ -660,7 +660,7 @@
   }
 
   function updateModeButtons () {
-    document.querySelectorAll('[data-toybox-color-mode]').forEach(function (button) {
+    document.querySelectorAll('button[data-toybox-color-mode]').forEach(function (button) {
       var selected = button.dataset.toyboxColorMode === currentMode
       button.classList.toggle('is-active', selected)
       button.setAttribute('aria-pressed', String(selected))

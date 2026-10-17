@@ -24,6 +24,31 @@ function createStorage(seed) {
   }
 }
 
+function classList() {
+  const names = new Set()
+  return {
+    toggle(name, force) { if (force) names.add(name); else names.delete(name) },
+    contains(name) { return names.has(name) }
+  }
+}
+
+// Enough of a selector engine for `tag[data-a][data-b], [data-c]` lookups.
+function matchesSimple(el, selector) {
+  return selector.split(/\s*,\s*/).some(part => {
+    const match = part.match(/^([a-z]*)((?:\[[\w-]+\])+)$/)
+    if (!match || (match[1] && match[1].toUpperCase() !== el.tagName)) return false
+    return match[2].slice(1, -1).split('][').every(name => {
+      const key = name.replace(/^data-/, '').replace(/-(\w)/g, (_, letter) => letter.toUpperCase())
+      return key in el.dataset
+    })
+  })
+}
+
+function preferenceButton(dataset) {
+  const attributes = {}
+  return { tagName: 'BUTTON', dataset, attributes, classList: classList(), setAttribute(key, value) { attributes[key] = String(value) } }
+}
+
 function boundElement(dataset, children, text) {
   const attributes = {}
   return {
@@ -48,6 +73,7 @@ function createRuntime(options) {
   const queries = []
   const observers = []
   const bound = (options && options.bound) || []
+  const elements = (options && options.elements) || []
   const media = {
     matches: Boolean(options && options.prefersDark),
     listener: null,
@@ -57,6 +83,8 @@ function createRuntime(options) {
   }
   const root = {
     nodeType: 1,
+    tagName: 'HTML',
+    classList: classList(),
     dataset: {},
     lang: 'zh-CN',
     matches() { return false },
@@ -71,7 +99,10 @@ function createRuntime(options) {
     documentElement: root,
     getElementById(id) { lookups.push(id); return null },
     querySelector(selector) { lookups.push(selector); return null },
-    querySelectorAll(selector) { queries.push(selector); return selector === BOUND_SELECTOR ? bound : [] },
+    querySelectorAll(selector) {
+      queries.push(selector)
+      return selector === BOUND_SELECTOR ? bound : [root].concat(elements).filter(el => matchesSimple(el, selector))
+    },
     addEventListener() {},
     dispatchEvent(event) { events.push(event) }
   }
@@ -175,6 +206,27 @@ test('restores persisted visitor preferences', () => {
   assert.equal(runtime.context.ToyboxSettings.getLocale(), 'en')
   assert.equal(runtime.attributes['data-theme'], 'dark')
   assert.equal(runtime.root.lang, 'en')
+})
+
+test('marks only the preference buttons as pressed, never the root element', () => {
+  const english = preferenceButton({ toyboxLocale: 'en' })
+  const chinese = preferenceButton({ toyboxLocale: 'zh-CN' })
+  const dark = preferenceButton({ toyboxColorMode: 'dark' })
+  const auto = preferenceButton({ toyboxColorMode: 'auto' })
+  const runtime = createRuntime({ elements: [english, chinese, dark, auto] })
+  const settings = runtime.context.ToyboxSettings
+
+  settings.applyLocale('en', false)
+  settings.applyColorMode('dark', false)
+  assert.equal(english.classList.contains('is-active'), true)
+  assert.equal(english.attributes['aria-pressed'], 'true')
+  assert.equal(chinese.attributes['aria-pressed'], 'false')
+  assert.equal(dark.attributes['aria-pressed'], 'true')
+  assert.equal(auto.classList.contains('is-active'), false)
+  assert.equal(runtime.root.dataset.toyboxLocale, 'en')
+  assert.equal(runtime.root.dataset.toyboxColorMode, 'dark')
+  assert.equal(runtime.root.classList.contains('is-active'), false)
+  assert.equal(runtime.attributes['aria-pressed'], undefined)
 })
 
 test('still honors the legacy theme preference key', () => {
