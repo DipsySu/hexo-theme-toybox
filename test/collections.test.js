@@ -235,7 +235,7 @@ test('category boxes nest children as separate escaped links', () => {
 test('server collection strings come from the runtime dictionaries for the page language', () => {
   const textFor = (page, config, key, params) => helpers.toybox_text.call({ page, config, _p: name => 'yml:' + name }, key, params)
   assert.equal(text('collection.posts', { count: 3 }), 'Posts: 3')
-  assert.equal(textFor({ lang: 'zh-TW' }, { language: 'zh-CN' }, 'collection.posts', { count: 3 }), '3 篇文章')
+  assert.equal(textFor({ lang: 'zh-TW' }, { language: 'zh-CN' }, 'collection.tags'), '標籤', 'page.lang wins over config.language')
   assert.equal(textFor({ lang: 'fr' }, { language: ['fr', 'zh-CN'] }, 'collection.tags'), '标签')
   assert.equal(textFor({ lang: 'fr' }, { language: 'fr' }, 'footer.theme'), 'Theme')
   assert.equal(textFor({}, {}, 'copy.success'), 'yml:copy.success', 'keys the dictionaries lack still go through _p')
