@@ -24,7 +24,6 @@ include ./head/preconnect.pug
 
 link(rel='preload' as='font' type='font/woff2' href=url_for('/fonts/fusion-pixel-12px-monospaced-zh_hans/d040daf63fc0e9c4ed95a6c00d92c125.woff2') crossorigin='anonymous')
 link(rel='stylesheet' href=toybox_asset(theme.asset.main_css))
-link(rel='stylesheet' href=toybox_asset(theme.asset.fontawesome) media='print' onload="this.media='all'")
 if theme.fancybox
   link(rel='stylesheet' href=toybox_asset(theme.asset.fancybox_css) media='print' onload="this.media='all'")
 link(rel='stylesheet' href=toybox_asset('/css/pixel-icons.css'))
