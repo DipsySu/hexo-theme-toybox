@@ -1,24 +1,15 @@
+include ../mixins/page-step.pug
 - var pager = toyboxCollection.pager
 if pager.totalPages > 1
   - var rangeParams = { start: pager.start, end: pager.end, total: pager.total }
   nav.toybox-collection-pager(aria-label=toybox_text('collection.pagination') data-toybox-i18n-aria='collection.pagination')
     p.toybox-pager-range(data-toybox-i18n='collection.range' data-toybox-i18n-params=JSON.stringify(rangeParams))= toybox_text('collection.range', rangeParams)
     .toybox-page-controls
-      if pager.prev
-        a.toybox-page-step.prev(href=pager.prev rel='prev' aria-label=toybox_text('collection.previousPage') title=toybox_text('collection.previousPage') data-toybox-i18n-aria='collection.previousPage' data-toybox-i18n-title='collection.previousPage')
-          i.fas.fa-chevron-left(aria-hidden='true')
-      else
-        button.toybox-page-step.prev(type='button' disabled aria-label=toybox_text('collection.previousPage') data-toybox-i18n-aria='collection.previousPage')
-          i.fas.fa-chevron-left(aria-hidden='true')
+      +pageStep('prev', pager.prev, toybox_text('collection.previousPage'), 'collection.previousPage', 'prev')
       .toybox-page-picker
         select#toybox-collection-page(aria-label=toybox_text('collection.jumpPage') data-toybox-i18n-aria='collection.jumpPage' data-toybox-destination disabled)
           each item in pager.pages
             - var optionParams = { current: item.number, total: pager.totalPages }
             option(value=item.url selected=item.current data-toybox-i18n='collection.pageOption' data-toybox-i18n-params=JSON.stringify(optionParams))= toybox_text('collection.pageOption', optionParams)
         i.fas.fa-chevron-down(aria-hidden='true')
-      if pager.next
-        a.toybox-page-step.next(href=pager.next rel='next' aria-label=toybox_text('collection.nextPage') title=toybox_text('collection.nextPage') data-toybox-i18n-aria='collection.nextPage' data-toybox-i18n-title='collection.nextPage')
-          i.fas.fa-chevron-right(aria-hidden='true')
-      else
-        button.toybox-page-step.next(type='button' disabled aria-label=toybox_text('collection.nextPage') data-toybox-i18n-aria='collection.nextPage')
-          i.fas.fa-chevron-right(aria-hidden='true')
+      +pageStep('next', pager.next, toybox_text('collection.nextPage'), 'collection.nextPage', 'next')

@@ -1,23 +1,13 @@
 -
   var site_title = page.type === '404' ? '页面走丢了' : page.title || page.tag || page.category || config.title
-  var toybox_section = 'PLAYER FILE'
-  var toybox_hint = '个人资料页'
-  var toybox_hint_key = 'page.profile'
-  var toybox_hint_params = ''
-
-  if (page.type === 'link') {
-    toybox_section = 'LINK PORT'
-    toybox_hint = '好友联机站点'
-    toybox_hint_key = 'page.friends'
-  } else if (page.type === 'gallery') {
-    toybox_section = 'PHOTO ALBUM'
-    toybox_hint = '游戏截图收藏'
-    toybox_hint_key = 'page.screenshots'
-  } else if (page.type === '404') {
-    toybox_section = 'LOST CARTRIDGE'
-    toybox_hint = '返回存档点继续'
-    toybox_hint_key = 'page.lost'
-  }
+  // [kicker, hint, hint i18n key] of the plain page header, by page type
+  // (a Map, so only these exact strings match).
+  var pageHeads = new Map([
+    ['link', ['LINK PORT', '好友联机站点', 'page.friends']],
+    ['gallery', ['PHOTO ALBUM', '游戏截图收藏', 'page.screenshots']],
+    ['404', ['LOST CARTRIDGE', '返回存档点继续', 'page.lost']]
+  ])
+  var [toybox_section, toybox_hint, toybox_hint_key] = pageHeads.get(page.type) || ['PLAYER FILE', '个人资料页', 'page.profile']
 
 if !theme.disable_top_img && page.top_img !== false
   if is_post()
@@ -61,4 +51,4 @@ header#page-header(class=`${isHomeClass+isFixedClass}` style=bg_img)
     #page-site-info(data-toybox-section=toybox_section)
       span.toybox-page-kicker=toybox_section
       h1#site-title(data-toybox-i18n=page.type === '404' ? 'notFound.title' : false)=site_title
-      span.toybox-page-hint(data-toybox-i18n=toybox_hint_key data-toybox-i18n-params=toybox_hint_params)=toybox_hint
+      span.toybox-page-hint(data-toybox-i18n=toybox_hint_key data-toybox-i18n-params='')=toybox_hint

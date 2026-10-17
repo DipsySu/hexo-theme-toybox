@@ -1,0 +1,8 @@
+//- Pager arrow: a link to the neighbouring page, else a disabled button.
+mixin pageStep(dir, href, label, key, rel, number)
+  if href
+    a.toybox-page-step(class=dir href=href rel=rel data-toybox-page=number aria-label=label title=label data-toybox-i18n-aria=key data-toybox-i18n-title=key)
+      i(class=dir === 'prev' ? 'fas fa-chevron-left' : 'fas fa-chevron-right' aria-hidden='true')
+  else
+    button.toybox-page-step(class=dir type='button' disabled aria-label=label data-toybox-i18n-aria=key)
+      i(class=dir === 'prev' ? 'fas fa-chevron-left' : 'fas fa-chevron-right' aria-hidden='true')
