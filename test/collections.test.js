@@ -6,7 +6,6 @@ const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
 const pug = require('pug')
-const yaml = require('js-yaml')
 
 const root = path.join(__dirname, '..')
 const helpers = {}
@@ -14,13 +13,7 @@ globalThis.hexo = { extend: { helper: { register: (name, callback) => { helpers[
 require('../scripts/helpers/collections.js')
 delete globalThis.hexo
 
-function ymlStrings (file) {
-  const strings = yaml.load(fs.readFileSync(path.join(root, 'languages', file), 'utf8')).collection
-  return Object.fromEntries(Object.entries(strings).map(([key, value]) => ['collection.' + key, value]))
-}
-
-const english = ymlStrings('en.yml')
-const text = (key, params) => helpers.toybox_text.call({ _p: name => english[name] || name }, key, params)
+const text = (key, params) => helpers.toybox_text.call({ page: { lang: 'en' }, config: {}, _p: name => name }, key, params)
 const url = value => '/blog/' + String(value).replace(/^\//, '')
 
 function day (value) {
@@ -64,7 +57,7 @@ function context (page, config = {}) {
     theme: { cover: { archives_enable: true, default_cover: ['/img/fallback.jpg'] } },
     url_for: url,
     toybox_cover: article => article.cover,
-    _p: key => english[key] || key
+    _p: key => key
   }
 }
 
@@ -244,31 +237,13 @@ test('category boxes nest children as separate escaped links', () => {
   assert.match(renderCategories(locals(null, {}, { toybox_category_tree: () => [] })), /No categories yet\./)
 })
 
-test('collection strings exist in every locale file and match the runtime dictionaries', () => {
-  const runtime = { document: { readyState: 'loading', addEventListener () {} } }
-  runtime.window = runtime
-  runtime.matchMedia = () => ({ matches: false, addEventListener () {} })
-  vm.runInNewContext(fs.readFileSync(path.join(root, 'source/js/toybox-settings.js'), 'utf8'), runtime)
-  const dictionaries = runtime.ToyboxSettings.dictionaries
-  const files = { 'en.yml': 'en', 'default.yml': 'en', 'zh-CN.yml': 'zh-CN', 'zh-TW.yml': 'zh-TW' }
-
-  const sources = []
-  const collect = directory => fs.readdirSync(directory, { withFileTypes: true }).forEach(entry => {
-    const absolute = path.join(directory, entry.name)
-    if (entry.isDirectory()) collect(absolute)
-    else if (entry.name.endsWith('.pug')) sources.push(fs.readFileSync(absolute, 'utf8'))
-  })
-  collect(path.join(root, 'layout'))
-  sources.push(fs.readFileSync(path.join(root, 'scripts/helpers/collections.js'), 'utf8'))
-  sources.push(fs.readFileSync(path.join(root, 'source/js/collection-ui.js'), 'utf8'))
-  const used = new Set(sources.flatMap(source => [...source.matchAll(/'(collection\.\w+)'/g)].map(match => match[1])))
-  assert.ok(used.size > 20)
-
-  Object.entries(files).forEach(([file, locale]) => {
-    const strings = ymlStrings(file)
-    used.forEach(key => assert.ok(strings[key], `${file} is missing ${key}`))
-    Object.entries(strings).forEach(([key, value]) => assert.equal(dictionaries[locale][key], value, `${locale} ${key}`))
-  })
+test('server collection strings come from the runtime dictionaries for the page language', () => {
+  const textFor = (page, config, key, params) => helpers.toybox_text.call({ page, config, _p: name => 'yml:' + name }, key, params)
+  assert.equal(text('collection.posts', { count: 3 }), 'Posts: 3')
+  assert.equal(textFor({ lang: 'zh-TW' }, { language: 'zh-CN' }, 'collection.posts', { count: 3 }), '3 篇文章')
+  assert.equal(textFor({ lang: 'fr' }, { language: ['fr', 'zh-CN'] }, 'collection.tags'), '标签')
+  assert.equal(textFor({ lang: 'fr' }, { language: 'fr' }, 'footer.theme'), 'Theme')
+  assert.equal(textFor({}, {}, 'copy.success'), 'yml:copy.success', 'keys the dictionaries lack still go through _p')
 })
 
 test('tag filtering and sorting work over the full SSR index and keep focus', () => {

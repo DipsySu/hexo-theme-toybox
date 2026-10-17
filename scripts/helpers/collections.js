@@ -3,6 +3,9 @@
 // View models for archives, tags, and categories. Templates render the
 // returned plain data with escaped Pug interpolation.
 
+const fs = require('node:fs')
+const path = require('node:path')
+const vm = require('node:vm')
 const { fnv1a, fallbackCovers, pickCover } = require('../../lib/covers')
 
 const TONES = ['coral', 'aqua', 'yellow', 'green']
@@ -296,8 +299,30 @@ function pager (context, view) {
   }
 }
 
+// toybox-settings.js holds the one copy of the UI strings the browser swaps in
+// on a locale change, so server output reads the same dictionaries. Reloaded
+// when the file changes, so `hexo server` picks up edits.
+const SETTINGS = path.join(__dirname, '../../source/js/toybox-settings.js')
+let dictionaries
+let dictionariesTime
+function dictionaryFor (languages) {
+  const time = fs.statSync(SETTINGS).mtimeMs
+  if (time !== dictionariesTime) {
+    const sandbox = { document: { readyState: 'loading', addEventListener () {} }, matchMedia: () => ({ matches: false, addEventListener () {} }) }
+    sandbox.window = sandbox
+    vm.runInNewContext(fs.readFileSync(SETTINGS, 'utf8'), sandbox)
+    dictionaries = sandbox.ToyboxSettings.dictionaries
+    dictionariesTime = time
+  }
+  const lang = languages.find(name => Object.prototype.hasOwnProperty.call(dictionaries, name))
+  return dictionaries[lang || 'en']
+}
+
+// Hexo's _p chain (page.lang, then config.language, then English); keys the
+// dictionaries lack still come from languages/*.yml.
 hexo.extend.helper.register('toybox_text', function (key, params) {
-  return String(this._p(key)).replace(/\{\{(\w+)\}\}/g, (_, name) => {
+  const text = dictionaryFor([].concat(this.page && this.page.lang, this.config && this.config.language))[key]
+  return String(text === undefined ? this._p(key) : text).replace(/\{\{(\w+)\}\}/g, (_, name) => {
     return params && params[name] !== undefined && params[name] !== null ? params[name] : ''
   })
 })

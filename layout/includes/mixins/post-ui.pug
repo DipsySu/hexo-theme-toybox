@@ -39,17 +39,17 @@ mixin postUI(posts)
             span.post-meta-date
               if (theme.post_meta.page.date_type === 'both')
                 i.far.fa-calendar-alt
-                span.article-meta-label(data-toybox-i18n='post.created')=_p('post.created')
-                time.post-meta-date-created(datetime=date_xml(article.date) title=_p('post.created') + ' ' + full_date(article.date))=date(article.date, config.date_format)
+                span.article-meta-label(data-toybox-i18n='post.created')=toybox_text('post.created')
+                time.post-meta-date-created(datetime=date_xml(article.date) title=toybox_text('post.created') + ' ' + full_date(article.date))=date(article.date, config.date_format)
                 span.article-meta-separator |
                 i.fas.fa-history
-                span.article-meta-label(data-toybox-i18n='post.updated')=_p('post.updated')
-                time.post-meta-date-updated(datetime=date_xml(article.updated) title=_p('post.updated') + ' ' + full_date(article.updated))=date(article.updated, config.date_format)
+                span.article-meta-label(data-toybox-i18n='post.updated')=toybox_text('post.updated')
+                time.post-meta-date-updated(datetime=date_xml(article.updated) title=toybox_text('post.updated') + ' ' + full_date(article.updated))=date(article.updated, config.date_format)
               else
                 - let data_type_updated = theme.post_meta.page.date_type === 'updated'
                 - let date_type = data_type_updated ? 'updated' : 'date'
                 - let date_icon = data_type_updated ? 'fas fa-history' :'far fa-calendar-alt'
-                - let date_title = data_type_updated ? _p('post.updated') : _p('post.created')
+                - let date_title = data_type_updated ? toybox_text('post.updated') : toybox_text('post.created')
                 - let date_i18n = data_type_updated ? 'post.updated' : 'post.created'
                 i(class=date_icon)
                 span.article-meta-label(data-toybox-i18n=date_i18n)=date_title

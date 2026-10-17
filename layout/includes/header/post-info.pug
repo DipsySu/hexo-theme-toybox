@@ -15,17 +15,17 @@
         span.post-meta-date
           if (theme.post_meta.post.date_type === 'both')
             i.far.fa-calendar-alt.fa-fw.post-meta-icon
-            span.post-meta-label(data-toybox-i18n="post.created")= _p('post.created')
-            time.post-meta-date-created(datetime=date_xml(page.date) title=_p('post.created') + ' ' + full_date(page.date))=date(page.date, config.date_format)
+            span.post-meta-label(data-toybox-i18n="post.created")= toybox_text('post.created')
+            time.post-meta-date-created(datetime=date_xml(page.date) title=toybox_text('post.created') + ' ' + full_date(page.date))=date(page.date, config.date_format)
             span.post-meta-separator |
             i.fas.fa-history.fa-fw.post-meta-icon
-            span.post-meta-label(data-toybox-i18n="post.updated")= _p('post.updated')
-            time.post-meta-date-updated(datetime=date_xml(page.updated) title=_p('post.updated') + ' ' + full_date(page.updated))=date(page.updated, config.date_format)
+            span.post-meta-label(data-toybox-i18n="post.updated")= toybox_text('post.updated')
+            time.post-meta-date-updated(datetime=date_xml(page.updated) title=toybox_text('post.updated') + ' ' + full_date(page.updated))=date(page.updated, config.date_format)
           else
             - let data_type_update = theme.post_meta.post.date_type === 'updated'
             - let date_type = data_type_update ? 'updated' : 'date'
             - let date_icon = data_type_update ? 'fas fa-history' :'far fa-calendar-alt'
-            - let date_title = data_type_update ? _p('post.updated') : _p('post.created')
+            - let date_title = data_type_update ? toybox_text('post.updated') : toybox_text('post.created')
             - let date_i18n = data_type_update ? 'post.updated' : 'post.created'
             i.fa-fw.post-meta-icon(class=date_icon)
             span.post-meta-label(data-toybox-i18n=date_i18n)= date_title
@@ -48,7 +48,7 @@
         span.post-meta-wordcount
           if theme.wordcount.post_wordcount
             i.far.fa-file-word.fa-fw.post-meta-icon
-            span.post-meta-label(data-toybox-i18n="post.wordcount")= _p('post.wordcount')
+            span.post-meta-label(data-toybox-i18n="post.wordcount")= toybox_text('post.wordcount')
             span=':'
             span.word-count= wordcount(page.content)
             if theme.wordcount.min2read
