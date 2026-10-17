@@ -10,7 +10,6 @@
 }
 
 .pixel-sprite-test-panel {
-  box-sizing: border-box;
   position: fixed;
   right: 72px;
   bottom: 72px;
@@ -24,7 +23,6 @@
   border-radius: var(--radius-control);
   background: var(--color-surface);
   box-shadow: 8px 8px 0 rgba(54, 55, 52, 0.22);
-  color: var(--color-ink);
 }
 
 .pixel-sprite-test-header {
@@ -55,11 +53,6 @@
 
 .pixel-sprite-test-close {
   width: var(--control-min-size);
-  height: var(--control-min-size);
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-soft);
-  color: var(--color-ink);
 }
 
 .pixel-sprite-test-filters {
@@ -67,16 +60,6 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   padding: 10px 12px 6px;
-}
-
-.pixel-sprite-test-filters button {
-  min-height: 36px;
-  border: 2px solid var(--color-ink);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--color-ink);
-  box-shadow: 0 3px 0 var(--color-border-strong);
-  font-size: 12px;
 }
 
 .pixel-sprite-test-filters button.is-active {
@@ -106,11 +89,6 @@
   place-items: center;
   align-content: center;
   gap: 1px;
-  padding: 2px;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-chip);
-  background: var(--color-surface);
-  color: var(--color-muted);
 }
 
 .pixel-sprite-test-cell:hover,
@@ -122,7 +100,6 @@
 }
 
 .pixel-sprite-test-icon {
-  display: block;
   width: 32px;
   height: 32px;
   background-image: url('../img/toybox-sprites/atlas.png?v=platform-1');
@@ -140,7 +117,6 @@
   .pixel-sprite-test-panel {
     top: 12px;
     right: 12px;
-    bottom: 72px;
     width: calc(100vw - 24px);
     max-height: none;
   }
