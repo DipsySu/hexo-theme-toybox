@@ -47,19 +47,14 @@
       'home.selectIndex': 'Select post {{index}}',
       'home.cartridgePagination': 'Post cartridges, page {{current}} of {{total}}',
       'status.cleared': 'Read',
-      'status.uncleared': 'Unread',
-      'status.localSave': 'Local save: {{count}} posts read',
       'post.created': 'Created',
       'post.updated': 'Updated',
       'post.wordcount': 'Word count',
       'post.readingTime': 'Reading time',
       'post.minute': ' min',
       'post.pageViews': 'Post views',
-      'post.tagsAndShare': 'Tags and sharing',
       'post.previous': 'Previous post',
       'post.next': 'Next post',
-      'post.record': 'Record {{index}}',
-      'post.recommendation': 'Pick {{index}}',
       'post.copyrightAuthor': 'Author:',
       'post.copyrightLink': 'Permalink:',
       'post.copyrightNotice': 'Copyright:',
@@ -69,7 +64,6 @@
       'post.copyCode': 'Copy code',
       'post.toggleCode': 'Expand or collapse code',
       'post.related': 'Related Posts',
-      'post.cartridge': 'POST CARTRIDGE',
       'page.profile': 'Player profile',
       'page.friends': 'Linked friend sites',
       'page.screenshots': 'Game screenshot collection',
@@ -116,8 +110,6 @@
       'empty.hint': 'Waiting for the next cartridge',
       'common.previousPage': 'Previous page',
       'common.nextPage': 'Next page',
-      'common.page': 'Page {{page}}',
-      'common.catalog': 'Catalog',
       'collection.home': 'Home',
       'collection.archives': 'Archives',
       'collection.tags': 'Tags',
@@ -203,19 +195,14 @@
       'home.selectIndex': '选择第 {{index}} 篇',
       'home.cartridgePagination': '文章卡带分页，第 {{current}} 页，共 {{total}} 页',
       'status.cleared': '已读',
-      'status.uncleared': '未读',
-      'status.localSave': '本机存档：已读完 {{count}} 篇文章',
       'post.created': '发表于',
       'post.updated': '更新于',
       'post.wordcount': '字数总计',
       'post.readingTime': '阅读时长',
       'post.minute': '分钟',
       'post.pageViews': '阅读量',
-      'post.tagsAndShare': '标签与分享',
       'post.previous': '上一篇',
       'post.next': '下一篇',
-      'post.record': '资料 {{index}}',
-      'post.recommendation': '推荐 {{index}}',
       'post.copyrightAuthor': '文章作者：',
       'post.copyrightLink': '文章链接：',
       'post.copyrightNotice': '版权声明：',
@@ -225,7 +212,6 @@
       'post.copyCode': '复制代码',
       'post.toggleCode': '展开或收起代码',
       'post.related': '相关推荐',
-      'post.cartridge': '文章卡带',
       'page.profile': '个人资料页',
       'page.friends': '好友联机站点',
       'page.screenshots': '游戏截图收藏',
@@ -272,8 +258,6 @@
       'empty.hint': '等待下一张卡带',
       'common.previousPage': '上一页',
       'common.nextPage': '下一页',
-      'common.page': '第 {{page}} 页',
-      'common.catalog': '目录',
       'collection.home': '主页',
       'collection.archives': '归档',
       'collection.tags': '标签',
@@ -359,19 +343,14 @@
       'home.selectIndex': '選擇第 {{index}} 篇',
       'home.cartridgePagination': '文章卡帶分頁，第 {{current}} 頁，共 {{total}} 頁',
       'status.cleared': '已讀',
-      'status.uncleared': '未讀',
-      'status.localSave': '本機存檔：已讀完 {{count}} 篇文章',
       'post.created': '發表於',
       'post.updated': '更新於',
       'post.wordcount': '字數總計',
       'post.readingTime': '閱讀時長',
       'post.minute': '分鐘',
       'post.pageViews': '閱讀量',
-      'post.tagsAndShare': '標籤與分享',
       'post.previous': '上一篇',
       'post.next': '下一篇',
-      'post.record': '資料 {{index}}',
-      'post.recommendation': '推薦 {{index}}',
       'post.copyrightAuthor': '文章作者：',
       'post.copyrightLink': '文章連結：',
       'post.copyrightNotice': '版權聲明：',
@@ -381,7 +360,6 @@
       'post.copyCode': '複製程式碼',
       'post.toggleCode': '展開或收起程式碼',
       'post.related': '相關推薦',
-      'post.cartridge': '文章卡帶',
       'page.profile': '個人資料頁',
       'page.friends': '好友聯機站點',
       'page.screenshots': '遊戲截圖收藏',
@@ -428,8 +406,6 @@
       'empty.hint': '等待下一張卡帶',
       'common.previousPage': '上一頁',
       'common.nextPage': '下一頁',
-      'common.page': '第 {{page}} 頁',
-      'common.catalog': '目錄',
       'collection.home': '主頁',
       'collection.archives': '歸檔',
       'collection.tags': '標籤',
@@ -482,23 +458,10 @@
   var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
   var pendingRoots = []
 
-  function readStorage (key) {
+  // Storage may be blocked; every access degrades to "nothing saved".
+  function storage (method, key, value) {
     try {
-      return window.localStorage.getItem(key) || undefined
-    } catch (error) {
-      return undefined
-    }
-  }
-
-  function writeStorage (key, value) {
-    try {
-      window.localStorage.setItem(key, value)
-    } catch (error) {}
-  }
-
-  function removeStorage (key) {
-    try {
-      window.localStorage.removeItem(key)
+      return window.localStorage[method](key, value) || undefined
     } catch (error) {}
   }
 
@@ -532,38 +495,32 @@
     }
   }
 
+  // translated attribute -> dataset suffix of its key ('' is the text content)
+  var BOUND_SUFFIX = { '': '', title: 'Title', 'aria-label': 'Aria', placeholder: 'Placeholder' }
+  var BOUND_SELECTOR = '[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]'
+
+  // Unchanged values are skipped so a re-translation never mutates the DOM.
   function translateBoundElement (el) {
     var params = readParams(el)
-    if (el.dataset.toyboxI18n) {
-      var text = t(el.dataset.toyboxI18n, params)
-      if (el.textContent !== text) el.textContent = text
-    }
-    if (el.dataset.toyboxI18nTitle) {
-      var title = t(el.dataset.toyboxI18nTitle, params)
-      if (el.getAttribute('title') !== title) el.setAttribute('title', title)
-    }
-    if (el.dataset.toyboxI18nAria) {
-      var aria = t(el.dataset.toyboxI18nAria, params)
-      if (el.getAttribute('aria-label') !== aria) el.setAttribute('aria-label', aria)
-    }
-    if (el.dataset.toyboxI18nPlaceholder) {
-      var placeholder = t(el.dataset.toyboxI18nPlaceholder, params)
-      if (el.getAttribute('placeholder') !== placeholder) el.setAttribute('placeholder', placeholder)
-    }
+    Object.keys(BOUND_SUFFIX).forEach(function (attribute) {
+      var key = el.dataset['toyboxI18n' + BOUND_SUFFIX[attribute]]
+      if (!key) return
+      var value = t(key, params)
+      if (!attribute) {
+        if (el.textContent !== value) el.textContent = value
+      } else if (el.getAttribute(attribute) !== value) el.setAttribute(attribute, value)
+    })
   }
 
   function translateBound (root) {
     if (!root || root.nodeType !== 1 && root.nodeType !== 9) return
-    if (root.nodeType === 1 && root.matches('[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]')) {
-      translateBoundElement(root)
-    }
-    root.querySelectorAll('[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]').forEach(translateBoundElement)
+    if (root.nodeType === 1 && root.matches(BOUND_SELECTOR)) translateBoundElement(root)
+    root.querySelectorAll(BOUND_SELECTOR).forEach(translateBoundElement)
   }
 
   function bind (el, key, params, attribute) {
     if (!el) return el
-    var suffix = attribute === 'title' ? 'Title' : attribute === 'aria-label' ? 'Aria' : attribute === 'placeholder' ? 'Placeholder' : ''
-    el.dataset['toyboxI18n' + suffix] = key
+    el.dataset['toyboxI18n' + BOUND_SUFFIX[attribute || '']] = key
     if (params) el.dataset.toyboxI18nParams = JSON.stringify(params)
     translateBoundElement(el)
     return el
@@ -590,17 +547,18 @@
       if (key) bind(span, key)
     })
     bind(document.querySelector('#search-button .search span'), 'nav.search')
-    bind(document.querySelector('#search-button .search'), 'nav.search', null, 'aria-label')
-    bind(document.querySelector('#search-button .search'), 'nav.search', null, 'title')
+    bindLabel(document.querySelector('#search-button .search'), 'nav.search')
   }
 
+  // Icon buttons carry the same text as their tooltip and accessible name.
+  function bindLabel (el, key) {
+    bind(el, key, null, 'title')
+    bind(el, key, null, 'aria-label')
+  }
+
+  // The dialog title, input and loading text are declared in local-search.pug.
   function translateSearch () {
-    bind(document.querySelector('#local-search .search-dialog-title'), 'search.title')
-    bind(document.querySelector('#local-search-input input'), 'search.placeholder', null, 'placeholder')
-    bind(document.querySelector('#local-search .search-close-button'), 'search.close', null, 'title')
-    bind(document.querySelector('#local-search .search-close-button'), 'search.close', null, 'aria-label')
-    var loading = document.querySelector('#loading-database span')
-    if (loading) bind(loading, 'search.loading')
+    bindLabel(document.querySelector('#local-search .search-close-button'), 'search.close')
     if (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.localSearch && window.GLOBAL_CONFIG.localSearch.languages) {
       window.GLOBAL_CONFIG.localSearch.languages.hits_empty = t('search.empty', { query: '${query}' })
       window.GLOBAL_CONFIG.localSearch.languages.hits_stats = t('search.stats', { hits: '${hits}' })
@@ -610,26 +568,20 @@
   function translateChrome () {
     translateMenus()
     translateSearch()
-    bind(document.getElementById('toybox-preferences-btn'), 'settings.open', null, 'title')
-    bind(document.getElementById('toybox-preferences-btn'), 'settings.open', null, 'aria-label')
-    bind(document.getElementById('toybox-preferences-close'), 'settings.close', null, 'title')
-    bind(document.getElementById('toybox-preferences-close'), 'settings.close', null, 'aria-label')
-    bind(document.getElementById('go-up'), 'rightside.backTop', null, 'title')
-    bind(document.getElementById('go-up'), 'rightside.backTop', null, 'aria-label')
-    bind(document.getElementById('readmode'), 'rightside.readMode', null, 'title')
-    bind(document.getElementById('readmode'), 'rightside.readMode', null, 'aria-label')
-    bind(document.getElementById('hide-aside-btn'), 'rightside.hideAside', null, 'title')
-    bind(document.getElementById('hide-aside-btn'), 'rightside.hideAside', null, 'aria-label')
+    bindLabel(document.getElementById('toybox-preferences-btn'), 'settings.open')
+    bindLabel(document.getElementById('toybox-preferences-close'), 'settings.close')
+    bindLabel(document.getElementById('go-up'), 'rightside.backTop')
+    bindLabel(document.getElementById('readmode'), 'rightside.readMode')
     var asideButton = document.getElementById('hide-aside-btn')
+    bindLabel(asideButton, 'rightside.hideAside')
     if (asideButton) asideButton.setAttribute('aria-pressed', String(document.documentElement.classList.contains('hide-aside')))
-    bind(document.getElementById('mobile-toc-button'), 'rightside.toc', null, 'title')
-    bind(document.getElementById('mobile-toc-button'), 'rightside.toc', null, 'aria-label')
+    bindLabel(document.getElementById('mobile-toc-button'), 'rightside.toc')
     bind(document.querySelector('.relatedPosts > .headline span'), 'post.related')
   }
 
-  function updateLocaleButtons () {
-    document.querySelectorAll('button[data-toybox-locale]').forEach(function (button) {
-      var selected = button.dataset.toyboxLocale === currentLocale
+  function markPressed (selector, name, current) {
+    document.querySelectorAll(selector).forEach(function (button) {
+      var selected = button.dataset[name] === current
       button.classList.toggle('is-active', selected)
       button.setAttribute('aria-pressed', String(selected))
     })
@@ -639,23 +591,15 @@
     currentLocale = normalizeLocale(locale)
     document.documentElement.lang = currentLocale
     document.documentElement.dataset.toyboxLocale = currentLocale
-    if (persist !== false) writeStorage('toybox-locale', currentLocale)
+    if (persist !== false) storage('setItem', 'toybox-locale', currentLocale)
     translateBound(document)
     translateChrome()
-    updateLocaleButtons()
+    markPressed('button[data-toybox-locale]', 'toyboxLocale', currentLocale)
     document.dispatchEvent(new CustomEvent('toybox:locale-change', { detail: { locale: currentLocale } }))
   }
 
   function resolvedMode (mode) {
     return mode === 'auto' ? (mediaQuery.matches ? 'dark' : 'light') : mode
-  }
-
-  function updateModeButtons () {
-    document.querySelectorAll('button[data-toybox-color-mode]').forEach(function (button) {
-      var selected = button.dataset.toyboxColorMode === currentMode
-      button.classList.toggle('is-active', selected)
-      button.setAttribute('aria-pressed', String(selected))
-    })
   }
 
   function applyColorMode (mode, persist) {
@@ -664,11 +608,11 @@
     document.documentElement.dataset.toyboxColorMode = currentMode
     document.documentElement.setAttribute('data-theme', resolved)
     if (persist !== false) {
-      writeStorage('toybox-color-mode', currentMode)
-      if (currentMode === 'auto') removeStorage('theme')
-      else writeStorage('theme', currentMode)
+      storage('setItem', 'toybox-color-mode', currentMode)
+      if (currentMode === 'auto') storage('removeItem', 'theme')
+      else storage('setItem', 'theme', currentMode)
     }
-    updateModeButtons()
+    markPressed('button[data-toybox-color-mode]', 'toyboxColorMode', currentMode)
     document.dispatchEvent(new CustomEvent('toybox:color-mode-change', { detail: { mode: currentMode, resolved: resolved } }))
   }
 
@@ -742,14 +686,14 @@
   }
 
   function initialize () {
-    currentLocale = normalizeLocale(readStorage('toybox-locale') || defaultLocale)
-    currentMode = normalizeMode(readStorage('toybox-color-mode') || readStorage('theme') || defaultMode)
+    currentLocale = normalizeLocale(storage('getItem', 'toybox-locale') || defaultLocale)
+    currentMode = normalizeMode(storage('getItem', 'toybox-color-mode') || storage('getItem', 'theme') || defaultMode)
     setupPanel()
     applyColorMode(currentMode, false)
     applyLocale(currentLocale, false)
     observeDynamicUi()
     // Re-sync chrome labels and pressed states once the other DOMContentLoaded
-    // handlers (e.g. main.js restoring the hide-aside layout) have run.
+    // handlers have run.
     window.requestAnimationFrame(translateChrome)
   }
 
