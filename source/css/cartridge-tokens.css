@@ -62,14 +62,9 @@ body.toybox-theme {
   --toy-yellow-soft: #fff3d4;
   --toy-green: var(--accent-success);
   --toy-shadow: #20344824;
-  --global-bg: var(--color-desk);
-  --card-bg: var(--color-surface);
   --sidebar-bg: var(--color-surface);
   --font-color: var(--color-ink);
   --text-highlight-color: var(--color-ink);
-  --search-bg: var(--color-surface);
-  --search-input-color: var(--color-ink);
-  --search-a-color: var(--color-ink);
 }
 [data-theme='dark'] body.toybox-theme {
   --color-desk: #181c21;

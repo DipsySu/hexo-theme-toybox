@@ -1,6 +1,5 @@
 /* The rack is rendered by Pug; JavaScript only selects and paginates. */
-body.toybox-home #content-inner { display: block; width: calc(100% - 80px); max-width: var(--content-max); padding: 0; margin: 0 auto; }
-body.toybox-home #recent-posts { width: 100%; }
+body.toybox-home #content-inner { width: calc(100% - 80px); max-width: var(--content-max); padding: 0; }
 body.toybox-home #rightside { display: none; }
 .toybox-stage { padding: 20px 0 16px; }
 .toybox-recent-deck { outline-offset: 8px; }
@@ -95,7 +94,6 @@ body.toybox-home .toybox-selection-frame::after { content: ''; position: absolut
 .toybox-collection-dock span { font-weight: 700; }
 .toybox-collection-dock small { color: var(--color-muted); font-size: 12px; }
 body.toybox-home #footer { grid-column: 1 / -1; margin: 0; padding: 0; }
-body.toybox-home #footer-wrap { justify-content: center; font-size: 12px; }
 body.toybox-home #pagination { justify-self: end; margin: 0; }
 body.toybox-home .toybox-library-pagination { display: flex; align-items: center; gap: 20px; }
 .toybox-library-summary { display: flex; flex-direction: column; gap: 3px; white-space: nowrap; }

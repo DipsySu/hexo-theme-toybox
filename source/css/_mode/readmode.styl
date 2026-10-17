@@ -1,70 +1,32 @@
 if hexo-config('readmode')
   .read-mode
     --font-color: #4c4948
-    --readmode-light-color: #fff
     --white: #4c4948
     --light-grey: #4c4948
     --gray: #d6dbdf
     --hr-border: #d6dbdf
     --highlight-bg: #f7f7f7
-    --exit-btn-bg: #C0C0C0
-    --exit-btn-color: #fff
     --exit-btn-hover: darken(#C0C0C0, 20)
     --pseudo-hover: none
 
   [data-theme='dark']
     .read-mode
       --font-color: rgba(255, 255, 255, .7)
-      --readmode-light-color: #0d0d0d
       --white: rgba(255, 255, 255, .9)
       --light-grey: rgba(255, 255, 255, .7)
       --gray: rgba(255, 255, 255, .7)
       --hr-border: rgba(255, 255, 255, .5)
       --highlight-bg: #171717
-      --exit-btn-bg: #1f1f1f
-      --exit-btn-color: rgba(255, 255, 255, .9)
       --exit-btn-hover: lighten(#1f1f1f, 20)
 
   .read-mode
-    background: var(--readmode-light-color)
-
     .exit-readmode
-      position: fixed
-      top: 30px
-      right: 30px
-      z-index: 100
-      width: 40px
-      height: 40px
       border-radius: 8px
-      background: var(--exit-btn-bg)
-      color: var(--exit-btn-color)
       font-size: 16px
       transition: background .3s
 
-      +maxWidth768()
-        top: initial
-        bottom: 30px
-
       &:hover
         background: var(--exit-btn-hover)
-
-    #page-header.post-bg
-      background-color: transparent
-      background-image: none !important
-
-      &:before
-        opacity: 0
-
-      & > #post-info
-        text-align: center
-
-    #post
-      margin: 0 auto
-      background: transparent
-      box-shadow: none
-
-      &:hover
-        box-shadow: none
 
     & > canvas
       display: none !important
@@ -72,15 +34,10 @@ if hexo-config('readmode')
     .highlight-tools,
     #footer,
     #post > *:not(#post-info):not(.post-content):not(.pixel-manual-body),
-    #nav,
-    #rightside,
-    .not-top-img
+    #rightside
       display: none !important
 
     #article-container
-      a
-        color: #99a9bf
-
       pre,
       .highlight:not(.js-file-line-container)
         background: var(--highlight-bg) !important
@@ -137,7 +94,6 @@ if hexo-config('readmode')
 
       blockquote
         border-color: var(--gray)
-        background-color: var(--readmode-light-color)
 
       kbd
         border: 1px solid var(--gray)

@@ -1,6 +1,5 @@
 #rightside
   position: fixed
-  right: -48px
   bottom: $rightside-bottom
   z-index: 100
   opacity: 0
@@ -8,25 +7,8 @@
 
   & > div
     & > button
-      display: block
-      margin-bottom: 5px
-      width: w = 35px
-      height: w
-      border-radius: 5px
-      background-color: var(--btn-bg)
-      color: var(--btn-color)
-      text-align: center
       font-size: 16px
-      line-height: w
-
-      &:hover
-        background-color: var(--btn-hover-color)
-
-  #mobile-toc-button
-    display: none
-
-    +maxWidth900()
-      display: block
+      line-height: 35px
 
   if hexo-config('rightside_scroll_percent')
     #go-up
