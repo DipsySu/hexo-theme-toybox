@@ -42,8 +42,8 @@ Existing raster artwork is reused without altering the original assets.
 and red/cyan/yellow/green accents for light and dark modes.
 `toybox-theme.css` owns shared chrome and secondary pages; `home-toybox.css`
 owns the rack; `toybox-settings.css` owns the preferences popover.
-The three old pixel layout sheets remain available in the repository but are
-not loaded by the new theme head, avoiding conflicting layers of overrides.
+The three old pixel layout sheets have been removed, so there are no
+conflicting layers of overrides.
 
 Body text uses system Chinese/Latin fonts; Fusion Pixel is reserved for the
 brand, slot numbers, and compact console counters. Text sizes are fixed at
