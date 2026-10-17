@@ -453,7 +453,6 @@
   document.addEventListener('toybox:color-mode-change', syncMotion)
   document.addEventListener('toybox:page-arrived', handlePageArrived)
   document.addEventListener('toybox:reading-complete', handleReadingComplete)
-  document.addEventListener('pjax:complete', setup)
   if (motionQuery) {
     if (motionQuery.addEventListener) motionQuery.addEventListener('change', handleReducedMotionChange)
     else if (motionQuery.addListener) motionQuery.addListener(handleReducedMotionChange)

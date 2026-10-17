@@ -309,7 +309,6 @@ class LocalSearch {
       container.classList.remove('no-result')
       container.innerHTML = `<div class="search-result-list">${resultItems.map(result => result.item).join('')}</div>`
       statsItem.innerHTML = `<hr><div class="search-result-stats">${stats}</div>`
-      window.pjax && window.pjax.refresh(container)
     }
 
     $loadingStatus.textContent = ''
@@ -395,11 +394,4 @@ class LocalSearch {
   searchClickFn()
   if (GLOBAL_CONFIG.localSearch.preload) localSearch.fetchData()
   localSearch.highlightSearchWords(document.getElementById('article-container'))
-
-  // pjax
-  window.addEventListener('pjax:complete', () => {
-    !btf.isHidden($searchMask) && closeSearch()
-    localSearch.highlightSearchWords(document.getElementById('article-container'))
-    searchClickFn()
-  })
 })()
