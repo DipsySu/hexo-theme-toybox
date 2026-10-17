@@ -10,56 +10,36 @@ if (GLOBAL_CONFIG.islazyload) {
 document.addEventListener('DOMContentLoaded', function () {
   let headerContentWidth, $nav
   let mobileSidebarOpen = false
-  try {
-    const savedAside = window.localStorage.getItem('toybox-aside')
-    if (savedAside) document.documentElement.classList.toggle('hide-aside', savedAside === 'hide')
-  } catch (error) {}
 
   const adjustMenu = init => {
-    const getAllWidth = ele => {
-      let width = 0
-      ele.length && Array.from(ele).forEach(i => { width += i.offsetWidth })
-      return width
-    }
-
     if (init) {
-      const blogInfoWidth = getAllWidth(document.querySelector('#blog-info > a').children)
-      const menusWidth = getAllWidth(document.getElementById('menus').children)
-      headerContentWidth = blogInfoWidth + menusWidth
+      const childrenWidth = ele => Array.from(ele.children).reduce((width, child) => width + child.offsetWidth, 0)
+      headerContentWidth = childrenWidth(document.querySelector('#blog-info > a')) + childrenWidth(document.getElementById('menus'))
       $nav = document.getElementById('nav')
     }
-
-    let hideMenuIndex = ''
-    if (window.innerWidth <= 768) hideMenuIndex = true
-    else hideMenuIndex = headerContentWidth > $nav.offsetWidth - 120
-
-    if (hideMenuIndex) {
-      $nav.classList.add('hide-menu')
-    } else {
-      $nav.classList.remove('hide-menu')
-    }
-  }
-
-  // 初始化header
-  const initAdjust = () => {
-    adjustMenu(true)
-    $nav.classList.add('show')
+    $nav.classList.toggle('hide-menu', window.innerWidth <= 768 || headerContentWidth > $nav.offsetWidth - 120)
   }
 
   // sidebar menus
   const sidebarFn = {
     open: () => {
-      btf.sidebarPaddingR()
-      document.body.style.overflow = 'hidden'
-      btf.animateIn(document.getElementById('menu-mask'), 'to_show 0.5s')
+      const $body = document.body
+      const $mask = document.getElementById('menu-mask')
+      const scrollbar = window.innerWidth - $body.clientWidth
+      if (scrollbar) $body.style.paddingRight = scrollbar + 'px'
+      $body.style.overflow = 'hidden'
+      $mask.style.display = 'block'
+      $mask.style.animation = 'to_show 0.5s'
       document.getElementById('sidebar-menus').classList.add('open')
       mobileSidebarOpen = true
     },
     close: () => {
       const $body = document.body
+      const $mask = document.getElementById('menu-mask')
       $body.style.overflow = ''
       $body.style.paddingRight = ''
-      btf.animateOut(document.getElementById('menu-mask'), 'to_hide 0.5s')
+      $mask.addEventListener('animationend', () => { $mask.style.display = ''; $mask.style.animation = '' }, { once: true })
+      $mask.style.animation = 'to_hide 0.5s'
       document.getElementById('sidebar-menus').classList.remove('open')
       mobileSidebarOpen = false
     }
@@ -85,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const highlightShrinkEle = isHighlightShrink !== undefined ? `<button type="button" class="fas fa-angle-down expand ${highlightShrinkClass}" aria-label="展开或收起代码" title="展开或收起代码" data-toybox-i18n-title="post.toggleCode" data-toybox-i18n-aria="post.toggleCode" aria-expanded="${isHighlightShrink !== true}"></button>` : ''
     const highlightCopyEle = highlightCopy ? '<div class="copy-notice" role="status"></div><button type="button" class="fas fa-copy copy-button" aria-label="复制代码" title="复制代码" data-toybox-i18n-title="post.copyCode" data-toybox-i18n-aria="post.copyCode"></button>' : ''
 
-    const copy = (text, ctx) => {
+    const copy = ctx => {
       if (document.queryCommandSupported && document.queryCommandSupported('copy')) {
         document.execCommand('copy')
         const prevEle = ctx.previousElementSibling
@@ -107,8 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
       range.selectNodeContents($buttonParent.querySelectorAll(`${preCodeSelector}`)[0])
       selection.removeAllRanges()
       selection.addRange(range)
-      const text = selection.toString()
-      copy(text, ele.lastChild)
+      copy(ele.lastChild)
       selection.removeAllRanges()
       $buttonParent.classList.remove('copy-true')
     }
@@ -160,30 +139,12 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    if (isPrismjs) {
-      $figureHighlight.forEach(item => {
-        if (highlightLang) {
-          const langName = item.getAttribute('data-language') || 'Code'
-          const highlightLangEle = `<div class="code-lang">${langName}</div>`
-          btf.wrap(item, 'figure', { class: 'highlight' })
-          createEle(highlightLangEle, item)
-        } else {
-          btf.wrap(item, 'figure', { class: 'highlight' })
-          createEle('', item)
-        }
-      })
-    } else {
-      $figureHighlight.forEach(function (item) {
-        if (highlightLang) {
-          let langName = item.getAttribute('class').split(' ')[1]
-          if (langName === 'plain' || langName === undefined) langName = 'Code'
-          const highlightLangEle = `<div class="code-lang">${langName}</div>`
-          createEle(highlightLangEle, item, 'hl')
-        } else {
-          createEle('', item, 'hl')
-        }
-      })
-    }
+    $figureHighlight.forEach(item => {
+      let langName = isPrismjs ? item.getAttribute('data-language') || 'Code' : item.getAttribute('class').split(' ')[1]
+      if (!isPrismjs && (langName === 'plain' || langName === undefined)) langName = 'Code'
+      if (isPrismjs) btf.wrap(item, 'figure', { class: 'highlight' })
+      createEle(highlightLang ? `<div class="code-lang">${langName}</div>` : '', item, isPrismjs ? undefined : 'hl')
+    })
   }
 
   /**
@@ -199,13 +160,6 @@ document.addEventListener('DOMContentLoaded', function () {
         item.parentNode.insertBefore(ele, item.nextSibling)
       }
     })
-  }
-
-  /**
-   * Lightbox
-   */
-  const runLightbox = () => {
-    btf.loadLightbox(document.querySelectorAll('#article-container img:not(.no-lightbox)'))
   }
 
   /**
@@ -279,9 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (isShort) showRightside()
     }, 200)
 
-    window.scrollCollect = scrollTask
-
-    window.addEventListener('scroll', scrollCollect)
+    window.addEventListener('scroll', scrollTask)
   }
 
   /**
@@ -500,67 +452,47 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   /**
-   * menu
-   * 側邊欄sub-menu 展開/收縮
-   */
-  const clickFnOfSubMenu = () => {
-    document.querySelectorAll('#sidebar-menus .site-page.group').forEach(function (item) {
-      item.addEventListener('click', function () {
-        this.classList.toggle('hide')
-      })
-    })
-  }
-
-  /**
    * table overflow
    */
   const addTableWrap = () => {
-    const $table = document.querySelectorAll('#article-container :not(.highlight) > table, #article-container > table')
-    if ($table.length) {
-      $table.forEach(item => {
-        btf.wrap(item, 'div', { class: 'table-wrap' })
-      })
-    }
+    document.querySelectorAll('#article-container :not(.highlight) > table, #article-container > table').forEach(item => {
+      btf.wrap(item, 'div', { class: 'table-wrap' })
+    })
   }
 
   const relativeDate = function (selector) {
     selector.forEach(item => {
       const timeVal = item.getAttribute('datetime')
-      item.textContent = btf.diffDate(timeVal, true)
+      item.textContent = btf.diffDate(timeVal)
       item.style.display = 'inline'
     })
   }
 
-  const unRefreshFn = function () {
-    window.addEventListener('resize', () => {
-      adjustMenu(false)
-      btf.isHidden(document.getElementById('toggle-menu')) && mobileSidebarOpen && sidebarFn.close()
-    })
+  adjustMenu(true)
+  $nav.classList.add('show')
 
-    document.getElementById('menu-mask').addEventListener('click', e => { sidebarFn.close() })
-
-    clickFnOfSubMenu()
+  if (GLOBAL_CONFIG_SITE.isPost) {
+    document.querySelectorAll('.toybox-reader-toolbar button[hidden]').forEach(button => { button.hidden = false })
+    GLOBAL_CONFIG.relativeDate.post && relativeDate(document.querySelectorAll('#post-meta time'))
+  } else {
+    GLOBAL_CONFIG.relativeDate.homepage && relativeDate(document.querySelectorAll('#recent-posts time'))
   }
 
-  window.refreshFn = function () {
-    initAdjust()
+  scrollFnToDo()
+  addHighlightTool()
+  GLOBAL_CONFIG.isPhotoFigcaption && addPhotoFigcaption()
+  scrollFn()
+  btf.loadLightbox(document.querySelectorAll('#article-container img:not(.no-lightbox)'))
+  addTableWrap()
+  document.getElementById('toggle-menu').addEventListener('click', () => { sidebarFn.open() })
 
-    if (GLOBAL_CONFIG_SITE.isPost) {
-      document.querySelectorAll('.toybox-reader-toolbar button[hidden]').forEach(button => { button.hidden = false })
-      GLOBAL_CONFIG.relativeDate.post && relativeDate(document.querySelectorAll('#post-meta time'))
-    } else {
-      GLOBAL_CONFIG.relativeDate.homepage && relativeDate(document.querySelectorAll('#recent-posts time'))
-    }
-
-    scrollFnToDo()
-    addHighlightTool()
-    GLOBAL_CONFIG.isPhotoFigcaption && addPhotoFigcaption()
-    scrollFn()
-    runLightbox()
-    addTableWrap()
-    document.getElementById('toggle-menu').addEventListener('click', () => { sidebarFn.open() })
-  }
-
-  refreshFn()
-  unRefreshFn()
+  window.addEventListener('resize', () => {
+    adjustMenu(false)
+    btf.isHidden(document.getElementById('toggle-menu')) && mobileSidebarOpen && sidebarFn.close()
+  })
+  document.getElementById('menu-mask').addEventListener('click', () => { sidebarFn.close() })
+  // Sidebar sub-menu groups expand and collapse.
+  document.querySelectorAll('#sidebar-menus .site-page.group').forEach(item => {
+    item.addEventListener('click', () => { item.classList.toggle('hide') })
+  })
 })

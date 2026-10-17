@@ -58,13 +58,14 @@ test('the article contents card prints the precomputed list', () => {
 })
 
 test('the inline page config is valid script for any title', () => {
-  const render = pug.compileFile(path.join(root, 'layout/includes/head/config_site.pug'))
+  const render = pug.compileFile(path.join(root, 'layout/includes/head/config.pug'))
   const title = 'It\'s "quoted" \\ </script><script>alert(1)</script> next'
-  const html = render({ pageTitle: title, showToc: false, page: {}, theme: { highlight_shrink: false }, is_post: () => true, is_home: () => false })
-  const script = html.match(/<script id="config-diff">([\s\S]*)<\/script>/)[1]
+  const theme = { highlight_shrink: false, local_search: {}, post_meta: { page: {}, post: {} }, lazyload: {}, anchor: {}, toc: {} }
+  const html = render({ pageTitle: title, showToc: false, page: {}, theme, config: {}, _p: key => key, is_post: () => true, is_home: () => false })
+  const script = html.match(/<script>([\s\S]*)<\/script>/)[1]
   assert.doesNotMatch(script, /<\/script/i)
   assert.doesNotMatch(script, /postUpdate/)
-  const context = {}
+  const context = { window: {} }
   vm.runInNewContext(script + '\nthis.site = GLOBAL_CONFIG_SITE', context)
   assert.equal(context.site.title, title)
   assert.equal(context.site.isToc, false)

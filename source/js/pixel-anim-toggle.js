@@ -21,25 +21,13 @@
     return root.replace(/\/?$/, '/') + String(path || '').replace(/^\/+/, '')
   }
 
-  function relativePath(path) {
-    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
-    root = root.replace(/\/?$/, '/')
-    if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
-    return path
+  // toybox-settings.js loads first and owns every label; without it labels stay empty.
+  function toyboxText(key, params) {
+    return window.ToyboxSettings ? window.ToyboxSettings.t(key, params) : key
   }
 
-  function toyboxText(key, params, fallback) {
-    if (window.ToyboxSettings) return window.ToyboxSettings.t(key, params)
-    return fallback || key
-  }
-
-  function bindToyboxText(el, key, params, attribute, fallback) {
-    if (!el) return el
-    if (window.ToyboxSettings) return window.ToyboxSettings.bind(el, key, params, attribute)
-    var value = fallback || key
-    if (attribute) el.setAttribute(attribute, value)
-    else el.textContent = value
-    return el
+  function bindToyboxText(el, key, params, attribute) {
+    return window.ToyboxSettings ? window.ToyboxSettings.bind(el, key, params, attribute) : el
   }
 
   // Colour and gradient thumbnails share the cover sizing rule in toybox-theme.css.
@@ -121,7 +109,7 @@
     if (cleared && usesCartridgeShell && !badge) {
       badge = document.createElement('span')
       badge.className = 'toybox-cleared-badge'
-      bindToyboxText(badge, 'status.cleared', null, null, '已通关')
+      bindToyboxText(badge, 'status.cleared')
       card.appendChild(badge)
     } else if ((!cleared || !usesCartridgeShell) && badge) {
       badge.remove()
@@ -143,7 +131,10 @@
     if (status) {
       var chip = status.querySelector('.pixel-article-status-chip.is-cleared')
       if (currentCleared && !chip) {
-        bindToyboxText(addHudChip(status, 'pixel-article-status-chip is-cleared', ''), 'status.cleared', null, null, '已通关')
+        chip = document.createElement('span')
+        chip.className = 'pixel-article-status-chip is-cleared'
+        status.appendChild(chip)
+        bindToyboxText(chip, 'status.cleared')
       } else if (!currentCleared && chip) {
         chip.remove()
       }
@@ -160,7 +151,7 @@
     })
   }
 
-  function setCartridgeCardMode(card, featured, currentPage, totalCards) {
+  function setCartridgeCardMode(card, featured, totalCards) {
     card.classList.toggle('toybox-featured', featured)
     card.classList.toggle('toybox-cartridge-card', !featured)
     if (featured) card.setAttribute('aria-current', 'true')
@@ -183,7 +174,7 @@
     })
   }
 
-  function setupToyboxCarousel(stage, deck, viewport, track, cards, currentPage) {
+  function setupToyboxCarousel(stage, deck, viewport, track, cards) {
     if (toyboxCarouselCleanup) toyboxCarouselCleanup()
 
     var previousButton = deck.querySelector('[data-toybox-direction="previous"]')
@@ -198,13 +189,7 @@
 
     function updateCounter() {
       if (counter) {
-        bindToyboxText(
-          counter,
-          cards.length ? 'home.selectionStatus' : 'home.selectionEmpty',
-          cards.length ? { current: currentIndex + 1, total: cards.length } : null,
-          null,
-          cards.length ? '已选择第 ' + String(currentIndex + 1) + ' 篇，共 ' + String(cards.length) + ' 篇' : '没有可选择的文章'
-        )
+        bindToyboxText(counter, cards.length ? 'home.selectionStatus' : 'home.selectionEmpty', cards.length ? { current: currentIndex + 1, total: cards.length } : null)
       }
       numberButtons.forEach(function(button, index) {
         var current = index === currentIndex
@@ -240,8 +225,8 @@
       currentIndex = (nextIndex + cards.length) % cards.length
       var selectedCard = cards[currentIndex]
 
-      setCartridgeCardMode(previousCard, false, currentPage, cards.length)
-      setCartridgeCardMode(selectedCard, true, currentPage, cards.length)
+      setCartridgeCardMode(previousCard, false, cards.length)
+      setCartridgeCardMode(selectedCard, true, cards.length)
       updateCounter()
       updateSlideState()
       bindToyboxText(stage, 'home.currentArticle', { title: ((selectedCard.querySelector('.article-title') || {}).textContent || '').trim() }, 'aria-label')
@@ -508,12 +493,12 @@
     var currentPage = parseInt(pagination.dataset.currentPage, 10) || 1
     var totalPage = parseInt(pagination.dataset.totalPages, 10) || 1
     cards.forEach(function(card, index) {
-      setCartridgeCardMode(card, index === 0, currentPage, cards.length)
+      setCartridgeCardMode(card, index === 0, cards.length)
     })
     deck.querySelectorAll('[data-toybox-index]').forEach(function(button, index) {
       bindToyboxText(button, 'home.selectIndex', { index: index + 1 }, 'aria-label')
     })
-    setupToyboxCarousel(stage, deck, viewport, track, cards, currentPage)
+    setupToyboxCarousel(stage, deck, viewport, track, cards)
     bindToyboxText(pagination, 'home.cartridgePagination', { current: currentPage, total: totalPage }, 'aria-label')
     pagination.querySelectorAll('.toybox-page-step').forEach(function(link) {
       var key = link.classList.contains('prev') ? 'common.previousPage' : 'common.nextPage'
@@ -527,33 +512,18 @@
     posts.dataset.toyboxReady = '1'
   }
 
-  function addHudChip(root, className, text) {
-    var chip = document.createElement('span')
-    chip.className = className
-    chip.textContent = text
-    root.appendChild(chip)
-    return chip
-  }
-
-  function markMediaFrame(el, label) {
-    if (!el || el.dataset.pixelMediaReady) return
-    el.classList.add('pixel-media-frame')
-    el.dataset.pixelMedia = label
-    el.dataset.pixelMediaReady = '1'
-  }
-
-  function wrapMediaElement(el, label) {
-    if (!el || el.closest('.pixel-media-frame')) return
+  function wrapMediaElement(el) {
     var wrapper = document.createElement('div')
     wrapper.className = 'pixel-media-frame'
-    wrapper.dataset.pixelMedia = label
-    wrapper.dataset.pixelMediaReady = '1'
     el.parentNode.insertBefore(wrapper, el)
     wrapper.appendChild(el)
   }
 
-  function mediaSourceOf(img) {
-    return img.getAttribute('data-lazy-src') || img.getAttribute('src') || ''
+  // Frame article media: the paragraph that holds it, otherwise a new wrapper.
+  function frameMedia(el) {
+    var paragraph = el.parentElement && el.parentElement.tagName === 'P' ? el.parentElement : null
+    if (paragraph) paragraph.classList.add('pixel-media-frame')
+    else wrapMediaElement(el)
   }
 
   function decorateArticleMedia() {
@@ -561,42 +531,17 @@
     if (!article) return
 
     article.querySelectorAll('img').forEach(function(img) {
-      if (
-        img.dataset.pixelMediaReady ||
-        img.closest('.gallery, figure.gallery-group, .flink, .highlight, .avatar-img, .pixel-media-frame')
-      ) return
-
-      var src = mediaSourceOf(img)
-      var label = /\.gif(?:$|\?)/i.test(src) ? 'GIF' : 'SCREEN'
-      var anchor = img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : null
-      var frame = anchor && anchor.parentElement && anchor.parentElement.tagName === 'P'
-        ? anchor.parentElement
-        : (img.parentElement && img.parentElement.tagName === 'P' ? img.parentElement : null)
-
-      if (frame) {
-        markMediaFrame(frame, label)
-      } else {
-        wrapMediaElement(anchor || img, label)
-      }
-      img.dataset.pixelMediaReady = '1'
+      if (img.closest('.gallery, figure.gallery-group, .flink, .highlight, .avatar-img, .pixel-media-frame')) return
+      frameMedia(img.parentElement && img.parentElement.tagName === 'A' ? img.parentElement : img)
     })
-
     article.querySelectorAll('.video-container').forEach(function(video) {
-      markMediaFrame(video, 'VIDEO')
+      video.classList.add('pixel-media-frame')
     })
-
     article.querySelectorAll('iframe').forEach(function(frame) {
-      if (frame.closest('.video-container, .pixel-media-frame')) return
-      if (frame.parentElement && frame.parentElement.tagName === 'P') {
-        markMediaFrame(frame.parentElement, 'IFRAME')
-      } else {
-        wrapMediaElement(frame, 'IFRAME')
-      }
+      if (!frame.closest('.video-container, .pixel-media-frame')) frameMedia(frame)
     })
-
     article.querySelectorAll('video, .aplayer').forEach(function(media) {
-      if (media.closest('.pixel-media-frame')) return
-      wrapMediaElement(media, media.classList.contains('aplayer') ? 'AUDIO' : 'VIDEO')
+      if (!media.closest('.pixel-media-frame')) wrapMediaElement(media)
     })
   }
 
@@ -666,13 +611,13 @@
     var home = document.createElement('a')
     home.href = rootPath('')
     home.className = 'pixel-error-action is-home'
-    bindToyboxText(home, 'notFound.home', null, null, '返回主页')
+    bindToyboxText(home, 'notFound.home')
     actions.appendChild(home)
 
     var archive = document.createElement('a')
     archive.href = rootPath('archives/')
     archive.className = 'pixel-error-action'
-    bindToyboxText(archive, 'notFound.archives', null, null, '查看归档')
+    bindToyboxText(archive, 'notFound.archives')
     actions.appendChild(archive)
 
     info.appendChild(actions)
@@ -680,13 +625,11 @@
 
   function syncAnimButtonState(btn, off) {
     var labelKey = off ? 'rightside.motionOff' : 'rightside.motionOn'
-    var actionKey = off ? 'rightside.enableMotion' : 'rightside.disableMotion'
-    var label = toyboxText(labelKey, null, off ? '动效已关闭' : '动效开启')
     btn.classList.toggle('anim-off', off)
     btn.setAttribute('aria-pressed', String(!off))
-    bindToyboxText(btn, labelKey, null, 'title', label)
-    bindToyboxText(btn, actionKey, null, 'aria-label', off ? '开启像素动效' : '关闭像素动效')
-    bindToyboxText(btn.querySelector('.toybox-action-label'), labelKey, null, null, label)
+    bindToyboxText(btn, labelKey, null, 'title')
+    bindToyboxText(btn, off ? 'rightside.enableMotion' : 'rightside.disableMotion', null, 'aria-label')
+    bindToyboxText(btn.querySelector('.toybox-action-label'), labelKey)
   }
 
   // Built on first open: the 123-cell lab stays out of the homepage DOM until used.
@@ -730,15 +673,15 @@
     var filters = panel.querySelector('.pixel-sprite-test-filters')
     var status = panel.querySelector('.pixel-sprite-test-status')
     var grid = panel.querySelector('.pixel-sprite-test-grid')
-    bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 }, null, '123 个运行时素材')
-    bindToyboxText(closeButton, 'sprite.close', null, 'aria-label', '关闭 Sprite 测试台')
-    bindToyboxText(closeButton, 'sprite.close', null, 'title', '关闭 Sprite 测试台')
-    bindToyboxText(filters, 'sprite.filterLabel', null, 'aria-label', '筛选素材')
-    bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll', null, null, '全部')
-    bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro', null, null, '街机')
-    bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute', null, null, '可爱')
-    bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform', null, null, '平台')
-    bindToyboxText(status, 'sprite.dropHint', null, null, '点击素材可投放到侧边轨道')
+    bindToyboxText(panel.querySelector('.pixel-sprite-test-header span'), 'sprite.runtimeCount', { count: 123 })
+    bindToyboxText(closeButton, 'sprite.close', null, 'aria-label')
+    bindToyboxText(closeButton, 'sprite.close', null, 'title')
+    bindToyboxText(filters, 'sprite.filterLabel', null, 'aria-label')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="all"]'), 'sprite.filterAll')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="retro"]'), 'sprite.filterRetro')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="cute"]'), 'sprite.filterCute')
+    bindToyboxText(panel.querySelector('[data-sprite-filter="platform"]'), 'sprite.filterPlatform')
+    bindToyboxText(status, 'sprite.dropHint')
     grid.querySelectorAll('.pixel-sprite-test-cell').forEach(function(cell) {
       bindToyboxText(cell, 'sprite.preview', { index: String(cell.dataset.spriteIndex).padStart(3, '0') }, 'aria-label')
     })
@@ -750,7 +693,7 @@
         currentButton.classList.remove('is-active')
         currentButton.setAttribute('aria-expanded', 'false')
         bindToyboxText(currentButton, 'rightside.spriteLab', null, 'aria-label')
-        bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab', null, null, 'Sprite 测试台')
+        bindToyboxText(currentButton.querySelector('.toybox-action-label'), 'rightside.spriteLab')
         currentButton.focus()
       }
     })
@@ -814,7 +757,7 @@
       button.classList.toggle('is-active', open)
       button.setAttribute('aria-expanded', String(open))
       bindToyboxText(button, open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, 'aria-label')
-      bindToyboxText(button.querySelector('.toybox-action-label'), open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab', null, null, open ? '关闭 Sprite 测试台' : 'Sprite 测试台')
+      bindToyboxText(button.querySelector('.toybox-action-label'), open ? 'rightside.closeSpriteLab' : 'rightside.spriteLab')
       if (open) {
         if (window.ToyboxSettings && window.ToyboxSettings.closePanel) window.ToyboxSettings.closePanel()
         lab.querySelector('.pixel-sprite-test-cell:not([hidden])').focus()
@@ -870,15 +813,9 @@
     var here = normPath(location.pathname)
     document.querySelectorAll('#nav .site-page, #sidebar-menus .site-page').forEach(function(a) {
       a.classList.remove('pixel-active')
-      var raw = a.getAttribute('href')
-      if (!raw || /^javascript:/i.test(raw)) return
-      var lp
-      try {
-        var u = new URL(raw, location.origin)
-        // 跳过站外链接，避免外站路径误命中本站路径（如外链 /about 撞本站 /about）
-        if (u.origin !== location.origin) return
-        lp = normPath(u.pathname)
-      } catch (e) { return }
+      // 跳过站外链接，避免外站路径误命中本站路径（如外链 /about 撞本站 /about）
+      var lp = internalPathForLink(a)
+      if (!lp) return
       // 精确匹配（含首页），或当前页是该导航项的子路径（如 /archives/page/2 命中 /archives）
       var isPaginatedHome = lp === '/' && /^\/page\/\d+$/.test(here)
       if (lp === here || isPaginatedHome || (lp !== '/' && here.indexOf(lp + '/') === 0)) {

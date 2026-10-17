@@ -1,18 +1,8 @@
 ;(function () {
   'use strict'
 
-  function rootPath(path) {
-    var root = window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/'
-    return root.replace(/\/?$/, '/') + String(path || '').replace(/^\/+/, '')
-  }
-
-  function relativePath(path) {
-    var root = rootPath('')
-    if (root !== '/' && path.indexOf(root) === 0) return '/' + path.slice(root.length)
-    return path
-  }
-
-  var ATLAS_URL = rootPath('img/toybox-sprites/atlas.png?v=platform-1')
+  var ROOT = (window.GLOBAL_CONFIG && window.GLOBAL_CONFIG.root || '/').replace(/\/?$/, '/')
+  var ATLAS_URL = ROOT + 'img/toybox-sprites/atlas.png?v=platform-1'
   var ATLAS_COLUMNS = 8
   var CELL_SIZE = 32
   var FRAME_INTERVAL = 1000 / 30
@@ -93,7 +83,9 @@
   }
 
   function pageKind() {
-    var path = relativePath(window.location.pathname).replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
+    var path = window.location.pathname
+    if (ROOT !== '/' && path.indexOf(ROOT) === 0) path = '/' + path.slice(ROOT.length)
+    path = path.replace(/index\.html?$/i, '').replace(/\/+$/, '') || '/'
     var isHome = (path === '/' || /^\/page\/\d+$/.test(path)) && document.getElementById('recent-posts')
     if (isHome) return 'home'
     if (document.querySelector('#body-wrap.post #post')) return 'post'
@@ -401,22 +393,13 @@
       canvas = document.createElement('canvas')
       canvas.id = 'pixel-particles-canvas'
       canvas.setAttribute('aria-hidden', 'true')
-      canvas.style.cssText = [
-        'position:fixed',
-        'inset:0',
-        'width:100%',
-        'height:100%',
-        'pointer-events:none',
-        'z-index:0',
-        'image-rendering:pixelated'
-      ].join(';')
       document.body.appendChild(canvas)
       ctx = canvas.getContext('2d')
     }
 
-    // home-toybox.css historically suppresses decorative canvases. The
-    // particle runtime now owns this canvas, so make only this instance
-    // visible without changing any homepage layout rule.
+    // Position, stacking and pixel rendering come from #pixel-particles-canvas
+    // in toybox-theme.css. On home the inline !important display keeps the
+    // canvas shown over every stylesheet display rule, the print one included.
     if (kind === 'home') canvas.style.setProperty('display', 'block', 'important')
     else canvas.style.removeProperty('display')
 

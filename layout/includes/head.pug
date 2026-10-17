@@ -19,7 +19,7 @@ script document.documentElement.classList.add('toybox-js')
 -
   var toyboxColorSettings = ((theme.toybox || {}).settings || {}).color_mode || {}
   var toyboxColorDefault = ['light', 'dark', 'auto'].indexOf(toyboxColorSettings.default) !== -1 ? toyboxColorSettings.default : 'auto'
-//- Pre-paint mirror of toybox-settings.js initialize()/applyColorMode() and main.js's saved aside layout; both still run later.
+//- Pre-paint mirror of toybox-settings.js initialize()/applyColorMode(), which still runs later; the only restore of the saved aside layout.
 script.
   (function () {
     var root = document.documentElement
@@ -49,5 +49,4 @@ if toyboxPaper
   link(rel='stylesheet' href=toybox_asset('/css/paper-stage.css'))
 
 include ./head/config.pug
-include ./head/config_site.pug
 include ./head/noscript.pug

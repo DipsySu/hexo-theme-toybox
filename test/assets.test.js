@@ -55,7 +55,7 @@ test('supports deployment below a project site root', () => {
   runtimeFiles.forEach(runtime => assert.match(runtime, /GLOBAL_CONFIG\.root/))
 
   const homeRuntime = runtimeFiles[0]
-  assert.match(homeRuntime, /function relativePath\(path\)/)
+  assert.match(homeRuntime, /function rootPath\(path\)/)
   assert.match(homeRuntime, /posts\.querySelector\('\.toybox-stage'\)/)
 
   const sidebar = fs.readFileSync(path.join(themeRoot, 'layout/includes/sidebar.pug'), 'utf8')

@@ -17,13 +17,11 @@
     }
   }
 
-  const toyboxRuntimeConfig = theme.toybox || {}
-  const toyboxRuntimeSettings = toyboxRuntimeConfig.settings || {}
-  const toyboxRuntimeColorMode = toyboxRuntimeSettings.color_mode || {}
-  const toyboxRuntimeLocale = toyboxRuntimeSettings.locale || {}
+  // Not named toyboxSettings: rightside.pug declares that const in the same compiled scope.
+  const runtimeSettings = (theme.toybox || {}).settings || {}
   const toybox = {
-    colorMode: toyboxRuntimeColorMode.default || 'auto',
-    locale: toyboxRuntimeLocale.default || 'zh-CN'
+    colorMode: (runtimeSettings.color_mode || {}).default || 'auto',
+    locale: (runtimeSettings.locale || {}).default || 'zh-CN'
   }
 
   let highlight
@@ -38,6 +36,11 @@
 
   // Fancybox is loaded on demand by btf.loadLightbox, only on pages with article images.
   const lightbox = theme.fancybox ? { css: toybox_asset(theme.asset.fancybox_css), js: toybox_asset(theme.asset.fancybox) } : null
+
+  let isHighlightShrink
+  if (theme.highlight_shrink == 'none') isHighlightShrink = 'undefined'
+  else if (page.highlight_shrink === true || page.highlight_shrink === false) isHighlightShrink = page.highlight_shrink
+  else isHighlightShrink = theme.highlight_shrink
 
 script.
   window.GLOBAL_CONFIG = {
@@ -68,4 +71,10 @@ script.
       toc: !{toJs(theme.toc.scroll_percent)},
       rightside: !{toJs(theme.rightside_scroll_percent)}
     }
+  }
+  var GLOBAL_CONFIG_SITE = {
+    title: !{toJs(String(pageTitle || ''))},
+    isPost: !{is_post()},
+    isHighlightShrink: !{isHighlightShrink},
+    isToc: !{showToc}
   }

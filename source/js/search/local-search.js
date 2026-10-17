@@ -115,10 +115,7 @@ class LocalSearch {
       const hitCount = indexOfTitle.length + indexOfContent.length
       if (hitCount === 0) return
 
-      const slicesOfTitle = []
-      if (indexOfTitle.length !== 0) {
-        slicesOfTitle.push(this.mergeIntoSlice(0, title.length, indexOfTitle))
-      }
+      const titleHtml = indexOfTitle.length ? this.highlightKeyword(title, this.mergeIntoSlice(0, title.length, indexOfTitle)) : title
 
       let slicesOfContent = []
       while (indexOfContent.length !== 0) {
@@ -146,17 +143,11 @@ class LocalSearch {
         slicesOfContent = slicesOfContent.slice(0, upperBound)
       }
 
-      let resultItem = ''
-
       url = new URL(url, location.origin)
       url.searchParams.append('highlight', keywords.join(' '))
       const href = url.href.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 
-      if (slicesOfTitle.length !== 0) {
-        resultItem += `<div class="local-search-hit-item"><a href="${href}"><span class="search-result-title">${this.highlightKeyword(title, slicesOfTitle[0])}</span>`
-      } else {
-        resultItem += `<div class="local-search-hit-item"><a href="${href}"><span class="search-result-title">${title}</span>`
-      }
+      let resultItem = `<div class="local-search-hit-item"><a href="${href}"><span class="search-result-title">${titleHtml}</span>`
 
       slicesOfContent.forEach(slice => {
         resultItem += `<p class="search-result">${this.highlightKeyword(content, slice)}...</p>`
@@ -279,12 +270,10 @@ class LocalSearch {
 
   const input = document.querySelector('#local-search-input input')
   const statsItem = document.getElementById('local-search-stats-wrap')
-  const $loadingStatus = document.getElementById('loading-status')
 
   const inputEventFunction = () => {
     if (!localSearch.isfetched) return
     const searchText = input.value.trim().toLowerCase()
-    if (searchText !== '') $loadingStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i>'
     const keywords = searchText.split(/[-\s]+/)
     const container = document.getElementById('local-search-results')
     let resultItems = []
@@ -316,8 +305,6 @@ class LocalSearch {
       container.innerHTML = `<div class="search-result-list">${resultItems.map(result => result.item).join('')}</div>`
       statsItem.innerHTML = `<hr><div class="search-result-stats">${stats}</div>`
     }
-
-    $loadingStatus.textContent = ''
   }
 
   const $searchMask = document.getElementById('search-mask')
@@ -369,14 +356,6 @@ class LocalSearch {
     if (previousFocus && previousFocus.isConnected) previousFocus.focus()
   }
 
-  const searchClickFn = () => {
-    const trigger = document.querySelector('#search-button > .search')
-    if (trigger && !trigger.dataset.searchBound) {
-      trigger.dataset.searchBound = 'true'
-      trigger.addEventListener('click', openSearch)
-    }
-  }
-
   // Results are rebuilt from the whole index, so wait for a short typing pause.
   let inputTimer = 0
   input.addEventListener('input', () => {
@@ -410,7 +389,8 @@ class LocalSearch {
     else setTimeout(() => localSearch.fetchData(), 1500)
   }
 
-  searchClickFn()
+  const trigger = document.querySelector('#search-button > .search')
+  if (trigger) trigger.addEventListener('click', openSearch)
   if (GLOBAL_CONFIG.localSearch.preload) {
     if (document.readyState === 'complete') preloadIndex()
     else window.addEventListener('load', preloadIndex, { once: true })
