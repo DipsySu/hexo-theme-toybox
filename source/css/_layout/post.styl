@@ -191,22 +191,6 @@ beautify()
           background: $light-blue
           color: var(--white)
 
-    .post_share
-      display: inline-block
-      float: right
-      margin: 8px 0 0
-      width: fit-content
-
-      .social-share
-        font-size: .85em
-
-        .social-share-icon
-          margin: 0 4px
-          width: w = 1.85em
-          height: w
-          font-size: 1.2em
-          line-height: w
-
   .post-copyright
     position: relative
     margin: 40px 0 10px
@@ -240,27 +224,3 @@ beautify()
 
           &:hover
             text-decoration: none
-
-  .post-outdate-notice
-    position: relative
-    margin: 0 0 20px
-    padding: .5em 1.2em
-    border-radius: 3px
-    background-color: $noticeOutdate-bg
-    color: $noticeOutdate-color
-
-    if hexo-config('noticeOutdate.style') == 'flat'
-      padding: .5em 1em .5em 2.6em
-      border-left: 5px solid $noticeOutdate-border
-
-      &:before
-        fontawesomeIcon()
-        position: absolute
-        top: 50%
-        left: .9em
-        color: $noticeOutdate-border
-        content: '\f071'
-        transform: translateY(-50%)
-
-  .ads-wrap
-    margin: 40px 0
