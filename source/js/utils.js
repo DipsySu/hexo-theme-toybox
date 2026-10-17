@@ -1,48 +1,24 @@
 const btf = {
-  throttle: function (func, wait, options) {
-    let timeout, context, args
+  // Runs func at most once per `wait` ms, with one trailing call after a burst.
+  // Callers ignore `this` and arguments.
+  throttle: (func, wait) => {
+    let timeout = null
     let previous = 0
-    if (!options) options = {}
-
-    const later = function () {
-      previous = options.leading === false ? 0 : new Date().getTime()
-      timeout = null
-      func.apply(context, args)
-      if (!timeout) context = args = null
-    }
-
-    const throttled = function () {
-      const now = new Date().getTime()
-      if (!previous && options.leading === false) previous = now
+    return () => {
+      const now = Date.now()
       const remaining = wait - (now - previous)
-      context = this
-      args = arguments
       if (remaining <= 0 || remaining > wait) {
-        if (timeout) {
-          clearTimeout(timeout)
-          timeout = null
-        }
+        clearTimeout(timeout)
+        timeout = null
         previous = now
-        func.apply(context, args)
-        if (!timeout) context = args = null
-      } else if (!timeout && options.trailing !== false) {
-        timeout = setTimeout(later, remaining)
+        func()
+      } else if (!timeout) {
+        timeout = setTimeout(() => { previous = Date.now(); timeout = null; func() }, remaining)
       }
     }
-
-    return throttled
   },
 
-  sidebarPaddingR: () => {
-    const innerWidth = window.innerWidth
-    const clientWidth = document.body.clientWidth
-    const paddingRight = innerWidth - clientWidth
-    if (innerWidth !== clientWidth) {
-      document.body.style.paddingRight = paddingRight + 'px'
-    }
-  },
-
-  diffDate: (d, more = false) => {
+  diffDate: d => {
     const dateNow = new Date()
     const datePost = new Date(d)
     const dateDiff = dateNow.getTime() - datePost.getTime()
@@ -51,8 +27,6 @@ const btf = {
     const day = hour * 24
     const month = day * 30
     const { dateSuffix } = GLOBAL_CONFIG
-
-    if (!more) return parseInt(dateDiff / day)
 
     const monthCount = dateDiff / month
     const dayCount = dateDiff / day
@@ -96,20 +70,6 @@ const btf = {
         window.scrollTo(0, pos)
       }
     })
-  },
-
-  animateIn: (ele, text) => {
-    ele.style.display = 'block'
-    ele.style.animation = text
-  },
-
-  animateOut: (ele, text) => {
-    ele.addEventListener('animationend', function f () {
-      ele.style.display = ''
-      ele.style.animation = ''
-      ele.removeEventListener('animationend', f)
-    })
-    ele.style.animation = text
   },
 
   /**
@@ -268,13 +228,8 @@ const btf = {
   },
 
   getScrollPercent: (currentTop, ele) => {
-    const docHeight = ele.clientHeight
     const winHeight = document.documentElement.clientHeight
-    const headerHeight = ele.offsetTop
-    const contentMath = (docHeight > winHeight) ? (docHeight - winHeight) : (document.documentElement.scrollHeight - winHeight)
-    const scrollPercent = (currentTop - headerHeight) / (contentMath)
-    const scrollPercentRounded = Math.round(scrollPercent * 100)
-    const percentage = (scrollPercentRounded > 100) ? 100 : (scrollPercentRounded <= 0) ? 0 : scrollPercentRounded
-    return percentage
+    const travel = ele.clientHeight > winHeight ? ele.clientHeight - winHeight : document.documentElement.scrollHeight - winHeight
+    return Math.min(100, Math.max(0, Math.round((currentTop - ele.offsetTop) / travel * 100)))
   }
 }
