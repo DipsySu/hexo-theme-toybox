@@ -136,13 +136,7 @@ function createRuntime(options = {}) {
   }
 }
 
-test('loads once between the settings and sprite runtimes', () => {
-  const scripts = read('layout/includes/additional-js.pug')
-  const settings = scripts.indexOf('/js/toybox-settings.js')
-  const save = scripts.indexOf('/js/toybox-save.js')
-  const particles = scripts.indexOf('/js/pixel-particles.js')
-  assert.ok(settings >= 0 && save > settings && particles > save)
-
+test('loading the runtime twice keeps one API', () => {
   const runtime = createRuntime()
   vm.runInContext(saveSource, runtime.context)
   assert.equal(runtime.context.ToyboxSave, runtime.api)

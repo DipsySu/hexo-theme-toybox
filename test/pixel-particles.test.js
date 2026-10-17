@@ -89,14 +89,6 @@ function createPostRuntime(options) {
   }, options))
 }
 
-test('loads the particle runtime before the animation controls', () => {
-  const scripts = read('layout/includes/additional-js.pug')
-  const particles = scripts.indexOf('/js/pixel-particles.js')
-  const controls = scripts.indexOf('/js/pixel-anim-toggle.js')
-  assert.ok(particles >= 0)
-  assert.ok(controls > particles)
-})
-
 test('keeps a visible but quiet homepage canvas ready for brief encounters', () => {
   const runtime = createRuntime()
 

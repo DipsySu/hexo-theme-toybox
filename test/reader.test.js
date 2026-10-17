@@ -36,27 +36,37 @@ test('post navigation is distinct from library pagination and honors the project
   assert.doesNotMatch(html, /common.nextPage|common.previousPage/)
 })
 
-test('reading progress is bounded and only completes at the end of the article', () => {
+test('reading progress is bounded, completes only at the end and skips unchanged meter writes', () => {
   let top = 600
-  let saved = 0
+  let writes = 0
   let value
+  let cleared = 0
   const saves = []
-  const target = { article: { isConnected: true, scrollHeight: 2000, getBoundingClientRect: () => ({ top }) }, meter: { isConnected: true, style: { setProperty() {} }, setAttribute: (_, next) => { value = next }, dataset: {} }, value: {}, path: '/post/' }
+  const target = {
+    article: { isConnected: true, scrollHeight: 2000, getBoundingClientRect: () => ({ top }) },
+    meter: { isConnected: true, style: { setProperty: () => { writes++ } }, setAttribute: (_, next) => { writes++; value = next }, dataset: {} },
+    value: { set textContent(_) { writes++ } },
+    path: '/post/'
+  }
   const ToyboxSave = { update: detail => saves.push([detail.path, detail.progress, detail.article === target.article]) }
-  const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave }, markClearedPath: () => { saved++; return true }, applyClearedState() {} }
+  const context = { readingProgressTarget: target, window: { innerHeight: 1000, ToyboxSave }, markClearedPath: () => { cleared++; return true }, applyClearedState() {} }
   const update = evaluate(section('source/js/pixel-anim-toggle.js', '  function updateReadingProgress()', '  function scheduleReadingProgress()'), context, 'updateReadingProgress')
   update()
+  update()
   assert.equal(value, '0')
-  assert.equal(saved, 0)
+  assert.equal(writes, 3)
   top = -445
   update()
+  update()
   assert.equal(value, '50')
-  assert.equal(saved, 0)
+  assert.equal(writes, 6)
+  assert.equal(cleared, 0)
   top = -3000
   update()
   assert.equal(value, '100')
-  assert.equal(saved, 1)
-  assert.deepEqual(saves, [['/post/', 0, true], ['/post/', 50, true], ['/post/', 100, true]])
+  assert.equal(cleared, 1)
+  assert.deepEqual(saves.map(save => save[1]), [0, 0, 50, 50, 100])
+  assert.ok(saves.every(([path, , article]) => path === '/post/' && article))
 })
 
 test('reading mode preserves the visible paragraph and does not create duplicate exits', () => {

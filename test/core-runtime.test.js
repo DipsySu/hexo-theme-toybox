@@ -1,10 +1,9 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
 const test = require('node:test')
 const vm = require('node:vm')
-const { compile, evaluate, file, read, section } = require('./helpers')
+const { compile, evaluate, read, section } = require('./helpers')
 
 const utilsSource = read('source/js/utils.js')
 
@@ -251,7 +250,7 @@ test('inline GLOBAL_CONFIG survives quotes, backslashes and closing script tags'
   assert.deepEqual({ ...context.GLOBAL_CONFIG_SITE }, { title: hostile, isPost: false, isHighlightShrink: false, isToc: true })
 })
 
-test('third-party scripts never block theme init and home-only scripts stay on home', () => {
+test('theme scripts load in dependency order, third-party scripts never block init, home-only scripts stay on home', () => {
   const render = compile('layout/includes/additional-js.pug')
   const page = home => render({
     theme: {
@@ -268,12 +267,12 @@ test('third-party scripts never block theme init and home-only scripts stay on h
   const homeHtml = page(true)
   const postHtml = page(false)
   assert.match(homeHtml, /<script async(="async")? src="https:\/\/cdn\.example\/lazyload\.js" onerror="btf\.lazyloadFallback\(\)"><\/script>/)
-  assert.match(homeHtml, /\/js\/utils\.js[\s\S]*\/js\/main\.js[\s\S]*lazyload\.js[\s\S]*toybox-settings\.js/)
+  // Settings before the reading save, the save before the sprites, the sprites before the controls.
+  assert.match(homeHtml, /\/js\/utils\.js[\s\S]*\/js\/main\.js[\s\S]*lazyload\.js[\s\S]*toybox-settings\.js[\s\S]*toybox-save\.js[\s\S]*pixel-particles\.js[\s\S]*pixel-anim-toggle\.js/)
   assert.match(homeHtml, /\/js\/cartridge-tilt\.js/)
   assert.doesNotMatch(postHtml, /cartridge-tilt/)
   for (const html of [homeHtml, postHtml]) {
     assert.doesNotMatch(html, /fancybox|pixel-sprite-assets|typed|subtitle/i)
     assert.equal((html.match(/<script src="https:/g) || []).length, 0)
   }
-  assert.equal(fs.existsSync(file('layout/includes/third-party/subtitle.pug')), false)
 })

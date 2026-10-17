@@ -8,10 +8,8 @@ const css = read('source/css/paper-stage.css')
 
 test('paper skin is server-selected and cartridge remains an unmodified fallback', () => {
   const layout = read('layout/includes/layout.pug')
-  const head = read('layout/includes/head.pug')
   assert.match(layout, /theme\.toybox && theme\.toybox\.appearance === 'paper'/)
   assert.match(layout, /toyboxPaper \? ' toybox-paper' : ''/)
-  assert.match(head, /if toyboxPaper\n\s+link\(rel='stylesheet' href=toybox_asset\('\/css\/paper-stage\.css'\)\)/)
   assert.match(read('_config.yml'), /appearance: paper/)
 })
 

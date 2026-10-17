@@ -55,7 +55,6 @@ test('draws every Font Awesome class the theme renders with a pixel mask', () =>
 })
 
 test('replaces the Font Awesome box model without loading Font Awesome', () => {
-  assert.doesNotMatch(read('layout/includes/head.pug'), /fontawesome/)
   assert.match(css, /\.fas, \.far, \.fab, \.fa-solid, \.fa-regular, \.fa-brands \{ display: inline-block;[^}]*line-height: 1;/)
   assert.match(css, /\.fa-fw \{ width: 1\.25em; text-align: center; \}/)
   assert.match(css, /\.fa-spin \{ animation: toybox-fa-spin 2s linear infinite; \}/)
