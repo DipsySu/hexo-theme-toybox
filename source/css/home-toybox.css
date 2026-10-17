@@ -102,21 +102,17 @@ body.toybox-home .toybox-library-pagination { display: flex; align-items: center
 .toybox-library-summary { display: flex; flex-direction: column; gap: 3px; white-space: nowrap; }
 .toybox-library-label { font-size: 13px; font-weight: 650; color: var(--color-ink); }
 .toybox-library-range { font-size: 11px; color: var(--color-muted); font-variant-numeric: tabular-nums; }
-.toybox-page-controls { display: flex; align-items: center; gap: 8px; }
 body.toybox-home .toybox-page-step { display: grid; place-items: center; flex: 0 0 48px; width: 48px; height: 48px; padding: 0; background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-border-strong); border-radius: 4px; box-shadow: inset 0 1px 0 var(--toybox-key-shine), 0 3px 0 var(--color-border-strong); }
 body.toybox-home .toybox-page-step.next { background: var(--toy-aqua-soft); border-color: var(--accent-secondary); }
 body.toybox-home .toybox-page-step:hover { border-color: var(--accent-secondary); }
 body.toybox-home .toybox-page-step:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
-.toybox-page-picker { position: relative; min-width: 150px; height: 52px; border: 1px solid var(--color-border-strong); border-radius: 4px; background: var(--color-surface-soft); box-shadow: inset 0 2px 0 #15253626, 0 1px 0 var(--toybox-key-shine); }
-.toybox-page-picker:focus-within { outline: 2px solid var(--accent-secondary); outline-offset: 3px; }
 .toybox-page-display { display: flex; align-items: center; gap: 12px; height: 100%; padding: 0 28px 0 12px; pointer-events: none; }
 .toybox-page-display-label { color: var(--color-muted); font-size: 10px; text-transform: uppercase; }
 .toybox-page-digits { display: flex; align-items: center; gap: 7px; color: var(--color-ink); font: 20px/1 'Fusion Pixel 12px M zh_hans', ui-monospace, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .toybox-page-current { color: var(--accent-secondary-depth); }
 .toybox-page-divider, .toybox-page-total { color: var(--color-muted); }
 /* The transparent native select keeps keyboard and mobile picker behavior. */
-.toybox-page-picker select { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; opacity: 0; cursor: pointer; }
-.toybox-page-picker > i { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 10px; color: var(--color-muted); }
+.toybox-library-pagination .toybox-page-picker select { position: absolute; inset: 0; display: block; width: 100%; height: 100%; padding: 0; opacity: 0; cursor: pointer; }
 .toybox-library-pagination[aria-busy='true'] .toybox-page-controls { opacity: .55; pointer-events: none; }
 .toybox-resume { display: flex; align-items: center; min-width: 0; max-width: 390px; width: 100%; justify-self: center; }
 .toybox-resume[hidden] { display: none; }
