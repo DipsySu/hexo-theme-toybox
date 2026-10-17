@@ -2,25 +2,21 @@
 
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
-const root = path.join(__dirname, '..')
-const read = file => fs.readFileSync(path.join(root, file), 'utf8')
+const { file, read } = require('./helpers')
 const css = read('source/css/paper-stage.css')
 
 test('paper skin is server-selected and cartridge remains an unmodified fallback', () => {
   const layout = read('layout/includes/layout.pug')
-  const head = read('layout/includes/head.pug')
   assert.match(layout, /theme\.toybox && theme\.toybox\.appearance === 'paper'/)
   assert.match(layout, /toyboxPaper \? ' toybox-paper' : ''/)
-  assert.match(head, /if toyboxPaper\n\s+link\(rel='stylesheet' href=toybox_asset\('\/css\/paper-stage\.css'\)\)/)
   assert.match(read('_config.yml'), /appearance: paper/)
 })
 
 test('paper backdrop is a bundled viewport background, not a scrolling content layer', () => {
   assert.match(css, /\.toybox-paper \.toybox-card-row\s*{[^}]*url\('\.\.\/img\/paper-stage\/meadow\.jpg'\)/s)
   assert.match(css, /background-attachment: scroll/)
-  assert.ok(fs.statSync(path.join(root, 'source/img/paper-stage/meadow.jpg')).size < 600000)
+  assert.ok(fs.statSync(file('source/img/paper-stage/meadow.jpg')).size < 600000)
   assert.doesNotMatch(read('layout/index.pug'), /toybox-paper-scenery/)
 })
 

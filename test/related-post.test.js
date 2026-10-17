@@ -1,17 +1,10 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
-const vm = require('node:vm')
+const { loadHexo } = require('./helpers')
 
-function loadHelper() {
-  let helper
-  const hexo = { extend: { helper: { register: (name, fn) => { assert.equal(name, 'related_posts'); helper = fn } } } }
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../scripts/helpers/related_post.js'), 'utf8'), { hexo })
-  return helper
-}
+const loadHelper = () => loadHexo('scripts/helpers/related_post.js').helpers.related_posts
 
 const post = (slug, day, extra = {}) => Object.assign({ title: slug, path: `${slug}/`, date: Date.UTC(2026, 0, day), updated: Date.UTC(2026, 5, day), cover: `/${slug}.png`, cover_type: 'img' }, extra)
 

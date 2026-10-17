@@ -22,6 +22,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - The search index preloads when the browser is idle after page load.
 - Related posts are ranked deterministically; social preview images match the
   cover shown on the page.
+- Dead and duplicated CSS, JavaScript, template code and tests were trimmed,
+  with no change in behaviour.
 
 ### Fixed
 

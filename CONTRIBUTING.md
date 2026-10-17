@@ -15,6 +15,14 @@ npm install
 npm test
 ```
 
+仓库内置了一套不含个人内容的 Pages 示例站，构建结果位于 `demo/public`：
+
+```bash
+npm ci --prefix demo
+npm run build --prefix demo
+npm run verify --prefix demo
+```
+
 要检查完整页面，请把仓库放到 Hexo 站点的 `themes/toybox`，使用
 `hexo clean && hexo generate` 构建，并在桌面和移动视口各检查一次。
 

@@ -1,18 +1,7 @@
-nav:
-  logo: /img/avatar-pixel.png
-  display_title: true
-  fixed: false
-
 menu:
-  主页: / || fas fa-home
-  归档: /archives/ || fas fa-archive
-  标签: /tags/ || fas fa-tags
-  分类: /categories/ || fas fa-folder-open
   GitHub: https://github.com/DipsySu/hexo-theme-toybox || fab fa-github
 
 cover:
-  index_enable: true
-  archives_enable: true
   default_cover:
     - /img/home-toybox/card-aqua-scene.jpg
     - /img/home-toybox/card-coral-scene.jpg
@@ -26,28 +15,8 @@ local_search:
   enable: true
   preload: true
   top_n_per_article: 3
-  unescape: false
-  CDN:
-
-wordcount:
-  enable: false
-
-busuanzi:
-  site_uv: false
-  site_pv: false
-  page_pv: false
 
 footer:
   owner:
-    enable: true
     since: 2026
   custom_text: Toybox GitHub Pages Demo
-  copyright: true
-
-toybox:
-  settings:
-    enable: true
-    color_mode:
-      default: auto
-    locale:
-      default: zh-CN

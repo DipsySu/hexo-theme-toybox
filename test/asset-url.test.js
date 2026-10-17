@@ -1,13 +1,12 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const crypto = require('node:crypto')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const test = require('node:test')
-const vm = require('node:vm')
-
-const source = fs.readFileSync(path.join(__dirname, '../scripts/helpers/asset-url.js'), 'utf8')
+const { loadHexo } = require('./helpers')
 
 function write(file, content) {
   fs.mkdirSync(path.dirname(file), { recursive: true })
@@ -36,26 +35,20 @@ function site() {
 // One "process": every fixture() call loads the helper fresh, like a new
 // `hexo generate` run on the same files.
 function fixture(dirs, { root = '/', theme = { lazyload: { enable: true } } } = {}) {
-  let helper
-  let regenerate
-  const hexo = {
+  const { hexo, helpers: { toybox_asset: helper }, filters: { before_generate: regenerate } } = loadHexo('scripts/helpers/asset-url.js', {
     source_dir: dirs.source_dir,
     theme_dir: dirs.theme_dir,
     theme: { config: theme },
     config: { highlight: { enable: true } },
     // Stand-in for hexo.render: the "rendered" CSS is the entry's own text.
-    render: { render: async ({ path: file }) => fs.readFileSync(file, 'utf8') },
-    extend: {
-      filter: { register: (name, callback) => { assert.equal(name, 'before_generate'); regenerate = callback } },
-      helper: { register: (name, callback) => { assert.equal(name, 'toybox_asset'); helper = callback } }
-    }
-  }
-  vm.runInNewContext(source, { require, hexo })
+    render: { render: async ({ path: file }) => fs.readFileSync(file, 'utf8') }
+  })
   const context = { url_for: value => /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(value) ? value : root + value.replace(/^\//, '') }
   return { hexo, url: value => helper.call(context, value), regenerate: () => regenerate() }
 }
 
 const version = url => new URL(url, 'https://example.com').searchParams.get('v')
+const md5 = text => crypto.createHash('md5').update(text).digest('hex').slice(0, 10)
 
 test('unchanged files keep the same version across builds', async () => {
   const dirs = site()
@@ -126,7 +119,6 @@ test('external CDN and data URLs are not rewritten', () => {
 test('rendered Stylus entries are versioned by their output and stale copies are dropped', async () => {
   const dirs = site()
   const assets = fixture(dirs)
-  const md5 = text => require('node:crypto').createHash('md5').update(text).digest('hex').slice(0, 10)
   let output = 'body{color:red}'
   assets.hexo.render = { render: async () => output }
   assets.hexo.public_dir = path.join(dirs.source_dir, '../public')
@@ -150,6 +142,6 @@ test('symlinked theme source files are versioned by their target and dangling li
   fs.symlinkSync(vendor, dirs.file('css/vendor'))
   fs.symlinkSync(path.join(vendor, 'missing'), dirs.file('css/dangling.css'))
   const assets = fixture(dirs)
-  assert.equal(version(assets.url('/css/vendor/x.css')), require('node:crypto').createHash('md5').update('a{}').digest('hex').slice(0, 10))
+  assert.equal(version(assets.url('/css/vendor/x.css')), md5('a{}'))
   assert.equal(version(assets.url('/css/dangling.css')), version(assets.url('/fonts/missing.woff2')))
 })

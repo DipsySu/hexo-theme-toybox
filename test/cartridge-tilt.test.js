@@ -1,30 +1,15 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const vm = require('node:vm')
 const test = require('node:test')
-const source = fs.readFileSync(path.join(__dirname, '../source/js/cartridge-tilt.js'), 'utf8')
-
-function target() {
-  const events = new Map()
-  return {
-    events,
-    addEventListener(name, fn) { events.set(name, [...(events.get(name) || []), fn]) },
-    emit(name, event = {}) { for (const fn of events.get(name) || []) fn(event) }
-  }
-}
-
-function classes(initial = []) {
-  const values = new Set(initial)
-  return { add: (...names) => names.forEach(n => values.add(n)), remove: (...names) => names.forEach(n => values.delete(n)), contains: n => values.has(n) }
-}
+const { classList, clock, eventTarget, read } = require('./helpers')
+const source = read('source/js/cartridge-tilt.js')
 
 function cartridge() {
   const styles = new Map()
   const card = {
-    classList: classes(), styles, isConnected: true,
+    classList: classList(), styles, isConnected: true,
     style: { setProperty: (key, value) => styles.set(key, value), removeProperty: key => styles.delete(key) },
     offsetParent: { getBoundingClientRect: () => ({ left: 20, top: 100 }) },
     offsetLeft: 10, offsetTop: 30, offsetWidth: 200, offsetHeight: 400,
@@ -35,21 +20,18 @@ function cartridge() {
 }
 
 function setup(options = {}) {
-  const pointer = Object.assign(target(), { matches: options.fine !== false })
-  const motion = Object.assign(target(), { matches: !!options.reduced })
-  const document = Object.assign(target(), { hidden: false, body: { classList: classes(['toybox-home']) } })
-  const frames = new Map()
-  let next = 0
-  const window = Object.assign(target(), {
+  const pointer = eventTarget({ matches: options.fine !== false })
+  const motion = eventTarget({ matches: !!options.reduced })
+  const document = eventTarget({ hidden: false, body: { classList: classList(['toybox-home']) } })
+  const time = clock()
+  const window = eventTarget({
     matchMedia: query => query.includes('reduced') ? motion : pointer,
     localStorage: { getItem() { if (options.storageBlocked) throw Error('blocked'); return options.off ? 'off' : null } },
-    requestAnimationFrame(fn) { frames.set(++next, fn); return next },
-    cancelAnimationFrame: id => frames.delete(id)
+    ...time.globals
   })
   const context = vm.createContext({ window, document })
   vm.runInContext(source, context)
-  return { document, window, pointer, motion, frames, context,
-    tick() { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(fn => fn()) },
+  return { document, window, pointer, motion, frames: time.frames, context, tick: time.frame,
     move(card, x = 130, y = 330, pointerType = 'mouse') { document.emit('pointermove', { target: card, clientX: x, clientY: y, pointerType }) }
   }
 }

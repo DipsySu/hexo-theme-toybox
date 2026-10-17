@@ -1,48 +1,9 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
-const vm = require('node:vm')
 const yaml = require('js-yaml')
-
-const root = path.join(__dirname, '..')
-const settingsSource = fs.readFileSync(
-  path.join(root, 'source/js/toybox-settings.js'),
-  'utf8'
-)
-const BOUND_SELECTOR = '[data-toybox-i18n], [data-toybox-i18n-title], [data-toybox-i18n-aria], [data-toybox-i18n-placeholder]'
-
-function createStorage(seed) {
-  const values = new Map(Object.entries(seed || {}))
-  return {
-    getItem(key) { return values.has(key) ? values.get(key) : null },
-    setItem(key, value) { values.set(key, String(value)) },
-    removeItem(key) { values.delete(key) },
-    values
-  }
-}
-
-function classList() {
-  const names = new Set()
-  return {
-    toggle(name, force) { if (force) names.add(name); else names.delete(name) },
-    contains(name) { return names.has(name) }
-  }
-}
-
-// Enough of a selector engine for `tag[data-a][data-b], [data-c]` lookups.
-function matchesSimple(el, selector) {
-  return selector.split(/\s*,\s*/).some(part => {
-    const match = part.match(/^([a-z]*)((?:\[[\w-]+\])+)$/)
-    if (!match || (match[1] && match[1].toUpperCase() !== el.tagName)) return false
-    return match[2].slice(1, -1).split('][').every(name => {
-      const key = name.replace(/^data-/, '').replace(/-(\w)/g, (_, letter) => letter.toUpperCase())
-      return key in el.dataset
-    })
-  })
-}
+const { BOUND_SELECTOR, classList, read, settingsRuntime: createRuntime, walk } = require('./helpers')
 
 function preferenceButton(dataset) {
   const attributes = {}
@@ -62,87 +23,6 @@ function boundElement(dataset, children, text) {
     getAttribute(key) { return key in attributes ? attributes[key] : null },
     setAttribute(key, value) { attributes[key] = String(value) }
   }
-}
-
-function createRuntime(options) {
-  const storage = createStorage(options && options.storage)
-  const attributes = Object.assign({}, options && options.attributes)
-  const events = []
-  const frames = []
-  const lookups = []
-  const queries = []
-  const observers = []
-  const bound = (options && options.bound) || []
-  const elements = (options && options.elements) || []
-  const media = {
-    matches: Boolean(options && options.prefersDark),
-    listener: null,
-    addEventListener(type, listener) {
-      if (type === 'change') this.listener = listener
-    }
-  }
-  const root = {
-    nodeType: 1,
-    tagName: 'HTML',
-    classList: classList(),
-    dataset: {},
-    lang: 'zh-CN',
-    matches() { return false },
-    querySelectorAll() { return [] },
-    setAttribute(key, value) { attributes[key] = String(value) },
-    getAttribute(key) { return attributes[key] || null }
-  }
-  const document = {
-    nodeType: 9,
-    readyState: 'complete',
-    body: {},
-    documentElement: root,
-    getElementById(id) { lookups.push(id); return null },
-    querySelector(selector) { lookups.push(selector); return null },
-    querySelectorAll(selector) {
-      queries.push(selector)
-      return selector === BOUND_SELECTOR ? bound : [root].concat(elements).filter(el => matchesSimple(el, selector))
-    },
-    addEventListener() {},
-    dispatchEvent(event) { events.push(event) }
-  }
-  class MutationObserver {
-    constructor(callback) {
-      this.callback = callback
-      observers.push(this)
-    }
-    disconnect() {}
-    observe(target, init) {
-      this.target = target
-      this.init = init
-    }
-  }
-  class CustomEvent {
-    constructor(type, init) {
-      this.type = type
-      this.detail = init && init.detail
-    }
-  }
-  const context = {
-    console,
-    CustomEvent,
-    document,
-    localStorage: storage,
-    MutationObserver,
-    setTimeout,
-    clearTimeout
-  }
-  context.window = context
-  context.GLOBAL_CONFIG = {
-    toybox: {
-      colorMode: options && options.defaultMode || 'auto',
-      locale: options && options.defaultLocale || 'zh-CN'
-    }
-  }
-  context.matchMedia = () => media
-  context.requestAnimationFrame = options && options.manualFrames ? callback => frames.push(callback) : callback => callback()
-  vm.runInNewContext(settingsSource, context, { filename: 'toybox-settings.js' })
-  return { attributes, context, events, frames, lookups, media, observers, queries, root, storage }
 }
 
 test('switches between all supported locales at runtime', () => {
@@ -299,15 +179,8 @@ test('keeps the three locale dictionaries in sync', () => {
 
 test('every literal i18n key the theme references exists in every locale', () => {
   const dictionaries = createRuntime().context.ToyboxSettings.dictionaries
-  const files = []
-  const collect = directory => fs.readdirSync(directory, { withFileTypes: true }).forEach(entry => {
-    const absolute = path.join(directory, entry.name)
-    if (entry.isDirectory()) collect(absolute)
-    else if (/\.(pug|js)$/.test(entry.name)) files.push(absolute)
-  })
-  ;['layout', 'scripts', 'source/js'].forEach(directory => collect(path.join(root, directory)))
-  const sources = files.map(file => {
-    const source = fs.readFileSync(file, 'utf8')
+  const sources = ['layout', 'scripts', 'source/js'].flatMap(directory => walk(directory, /\.(pug|js)$/)).map(file => {
+    const source = read(file)
     if (!file.endsWith('toybox-settings.js')) return source
     return source.slice(0, source.indexOf('var dictionaries = {')) + source.slice(source.indexOf('var themeConfig'))
   }).join('\n')
@@ -320,7 +193,7 @@ test('every literal i18n key the theme references exists in every locale', () =>
     const name = prefix ? prefix + '.' + key : key
     return child && typeof child === 'object' ? flatten(child, name) : [name]
   })
-  const ymlKeys = ['default.yml', 'en.yml', 'zh-CN.yml', 'zh-TW.yml'].map(file => [file, flatten(yaml.load(fs.readFileSync(path.join(root, 'languages', file), 'utf8')))])
+  const ymlKeys = ['default.yml', 'en.yml', 'zh-CN.yml', 'zh-TW.yml'].map(file => [file, flatten(yaml.load(read('languages/' + file)))])
   assert.ok(serverKeys.size > 25)
   ymlKeys.forEach(([file, keys]) => {
     assert.deepEqual(keys.slice().sort(), ymlKeys[0][1].slice().sort(), `${file} key set`)

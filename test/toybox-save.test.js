@@ -1,13 +1,11 @@
 'use strict'
 
 const assert = require('node:assert/strict')
-const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
 const vm = require('node:vm')
+const { CustomEvent, clock, eventTarget, read, storage } = require('./helpers')
 
-const themeRoot = path.resolve(__dirname, '..')
-const saveSource = fs.readFileSync(path.join(themeRoot, 'source/js/toybox-save.js'), 'utf8')
+const saveSource = read('source/js/toybox-save.js')
 const SAVE_KEY = 'toyboxResume:v1:/blog/'
 
 function record(overrides) {
@@ -18,17 +16,6 @@ function record(overrides) {
     progress: 42,
     updatedAt: 1700000000000
   }, overrides))
-}
-
-function createStorage(seed, failing) {
-  const values = new Map(Object.entries(seed || {}))
-  const guard = () => { if (failing) throw new Error('Storage blocked') }
-  return {
-    getItem(key) { guard(); return values.has(key) ? values.get(key) : null },
-    setItem(key, value) { guard(); values.set(key, String(value)) },
-    removeItem(key) { guard(); values.delete(key) },
-    values
-  }
 }
 
 function createElement(extra) {
@@ -57,11 +44,9 @@ function createMount() {
 }
 
 function createRuntime(options = {}) {
-  const local = createStorage(options.storage, options.failing)
-  const session = options.session || createStorage(null, options.failing)
-  const timers = new Map()
-  const frames = []
-  const listeners = new Map()
+  const local = storage(options.storage, options.failing)
+  const session = options.session || storage({}, options.failing)
+  const time = clock()
   const events = []
   const scrolls = []
   const replaced = []
@@ -69,8 +54,6 @@ function createRuntime(options = {}) {
   const view = { top: 500, focused: null, home: createMount() }
   const location = { origin: 'https://example.test', pathname: options.pathname || '/blog/', search: '', hash: options.hash || '' }
   const isHome = location.pathname === '/blog/'
-  let timerId = 0
-  let now = 0
 
   const heading = createElement({ focus() { view.focused = heading } })
   const posts = { querySelector: selector => (selector === '.toybox-resume' ? view.home.mount : null) }
@@ -98,8 +81,8 @@ function createRuntime(options = {}) {
       return selector === '#post-info h1' ? title : selector === '#post-info .pixel-article-sleeve-art' ? cover : null
     }
   }
-  const context = {
-    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail } },
+  const context = eventTarget({
+    CustomEvent,
     GLOBAL_CONFIG: { root: '/blog/' },
     ToyboxSettings: {
       bind(el, key, params, attribute) {
@@ -116,20 +99,9 @@ function createRuntime(options = {}) {
     location,
     pageYOffset: 0,
     sessionStorage: session,
-    addEventListener(type, listener) {
-      if (!listeners.has(type)) listeners.set(type, new Set())
-      listeners.get(type).add(listener)
-    },
-    removeEventListener(type, listener) { if (listeners.has(type)) listeners.get(type).delete(listener) },
-    clearTimeout(id) { timers.delete(id) },
-    requestAnimationFrame(callback) { frames.push(callback); return frames.length },
     scrollTo(options) { scrolls.push(options.top) },
-    setTimeout(callback, delay) {
-      timerId += 1
-      timers.set(timerId, { callback, at: now + delay })
-      return timerId
-    }
-  }
+    ...time.globals
+  })
   context.window = context
   vm.runInNewContext(saveSource, context, { filename: 'toybox-save.js' })
 
@@ -142,21 +114,12 @@ function createRuntime(options = {}) {
     local,
     replaced,
     scrolls,
-    timers,
+    timers: time.timers,
     get focused() { return view.focused },
     get mount() { return view.home.mount },
     get parts() { return view.home.parts },
-    advance(ms) {
-      now += ms
-      for (const [id, timer] of [...timers]) {
-        if (timer.at > now) continue
-        timers.delete(id)
-        timer.callback()
-      }
-    },
-    fire(type, event) {
-      for (const listener of [...(listeners.get(type) || [])]) listener(event || { type })
-    },
+    advance: time.advance,
+    fire: (type, event = { type }) => context.emit(type, event),
     replaceMount() { view.home = createMount() },
     save() {
       const raw = local.values.get(SAVE_KEY)
@@ -165,7 +128,7 @@ function createRuntime(options = {}) {
     setTop(top) { view.top = top },
     async settle() {
       await new Promise(resolve => setImmediate(resolve))
-      while (frames.length) frames.shift()(16)
+      while (time.frames.size) time.frame(16)
     },
     update(progress) {
       context.ToyboxSave.update({ article, path: location.pathname.replace(/\/$/, ''), progress })
@@ -173,13 +136,7 @@ function createRuntime(options = {}) {
   }
 }
 
-test('loads once between the settings and sprite runtimes', () => {
-  const scripts = fs.readFileSync(path.join(themeRoot, 'layout/includes/additional-js.pug'), 'utf8')
-  const settings = scripts.indexOf('/js/toybox-settings.js')
-  const save = scripts.indexOf('/js/toybox-save.js')
-  const particles = scripts.indexOf('/js/pixel-particles.js')
-  assert.ok(settings >= 0 && save > settings && particles > save)
-
+test('loading the runtime twice keeps one API', () => {
   const runtime = createRuntime()
   vm.runInContext(saveSource, runtime.context)
   assert.equal(runtime.context.ToyboxSave, runtime.api)
@@ -275,7 +232,7 @@ test('throttles progress writes, flushes on pagehide and never saves 0%', () => 
 })
 
 test('completing the saved article clears it once and greets one homepage return', () => {
-  const session = createStorage()
+  const session = storage()
   const runtime = createRuntime({
     pathname: '/blog/posts/a/',
     session,

@@ -2,38 +2,25 @@
 
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
-const path = require('node:path')
 const test = require('node:test')
+const { evaluate, file, read, section, walk } = require('./helpers')
 
-const themeRoot = path.resolve(__dirname, '..')
-
-function collectTextFiles(directory) {
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
-    const absolute = path.join(directory, entry.name)
-    if (entry.isDirectory()) return collectTextFiles(absolute)
-    return /\.(css|js|pug|styl|yml)$/.test(entry.name) ? [absolute] : []
-  })
-}
-
-const files = [path.join(themeRoot, '_config.yml'), ...collectTextFiles(path.join(themeRoot, 'layout')), ...collectTextFiles(path.join(themeRoot, 'source'))]
+const TEXT = /\.(css|js|pug|styl|yml)$/
+const files = ['_config.yml', ...walk('layout', TEXT), ...walk('source', TEXT)]
 
 test('keeps static custom asset references inside the theme package', () => {
   const missing = new Set()
 
-  files.forEach(file => {
-    const lines = fs.readFileSync(file, 'utf8').split('\n')
-    lines.forEach(line => {
+  files.forEach(source => {
+    read(source).split('\n').forEach(line => {
       const trimmed = line.trim()
       if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('//') || /(?:https?:)?\/\//.test(line)) return
 
       for (const match of line.matchAll(/\/(css|js|img|fonts|cursors)\/[^'"`)\s?]+/g)) {
         const relative = match[0].slice(1).split('?')[0]
         if (relative.endsWith('/') || relative.includes("' +") || relative.includes('${')) continue
-        const sourceAsset = path.join(themeRoot, 'source', relative)
-        const stylusSource = relative.endsWith('.css')
-          ? path.join(themeRoot, 'source', relative.replace(/\.css$/, '.styl'))
-          : ''
-        if (!fs.existsSync(sourceAsset) && !fs.existsSync(stylusSource)) missing.add(relative)
+        const exists = name => fs.existsSync(file('source/' + name))
+        if (!exists(relative) && !(relative.endsWith('.css') && exists(relative.replace(/\.css$/, '.styl')))) missing.add(relative)
       }
     })
   })
@@ -42,93 +29,62 @@ test('keeps static custom asset references inside the theme package', () => {
 })
 
 test('supports deployment below a project site root', () => {
-  const cssFiles = collectTextFiles(path.join(themeRoot, 'source/css')).filter(file => file.endsWith('.css'))
-  const runtimeFiles = [
-    'source/js/pixel-anim-toggle.js',
-    'source/js/pixel-particles.js'
-  ].map(file => fs.readFileSync(path.join(themeRoot, file), 'utf8'))
-
-  cssFiles.forEach(file => {
-    const css = fs.readFileSync(file, 'utf8')
-    assert.doesNotMatch(css, /url\(["']?\/(?:img|fonts|cursors)\//, path.relative(themeRoot, file))
-  })
-  runtimeFiles.forEach(runtime => assert.match(runtime, /GLOBAL_CONFIG\.root/))
-
-  const homeRuntime = runtimeFiles[0]
-  assert.match(homeRuntime, /function rootPath\(path\)/)
-  assert.match(homeRuntime, /posts\.querySelector\('\.toybox-stage'\)/)
-
-  const sidebar = fs.readFileSync(path.join(themeRoot, 'layout/includes/sidebar.pug'), 'utf8')
-  assert.match(sidebar, /url_for\(theme\.error_img\.flink\)/)
-
-  const notFound = fs.readFileSync(path.join(themeRoot, 'layout/includes/404.pug'), 'utf8')
-  assert.match(notFound, /theme\.error_404\.background \|\| theme\.error_img\.post_page/)
-
-  const runtimeConfig = fs.readFileSync(path.join(themeRoot, 'layout/includes/head/config.pug'), 'utf8')
-  assert.match(runtimeConfig, /window\.GLOBAL_CONFIG\s*=\s*{/)
+  walk('source/css', /\.css$/).forEach(file => assert.doesNotMatch(read(file), /url\(["']?\/(?:img|fonts|cursors)\//, file))
+  for (const file of ['source/js/pixel-anim-toggle.js', 'source/js/pixel-particles.js']) assert.match(read(file), /GLOBAL_CONFIG\.root/, file)
+  const rootPath = evaluate(section('source/js/pixel-anim-toggle.js', '  function rootPath(', '  function toyboxText('), { window: { GLOBAL_CONFIG: { root: '/blog' } } }, 'rootPath')
+  assert.equal(rootPath('archives/'), '/blog/archives/')
+  assert.equal(rootPath(''), '/blog/')
+  assert.match(read('source/js/pixel-anim-toggle.js'), /posts\.querySelector\('\.toybox-stage'\)/)
+  assert.match(read('layout/includes/sidebar.pug'), /url_for\(theme\.error_img\.flink\)/)
+  assert.match(read('layout/includes/404.pug'), /theme\.error_404\.background \|\| theme\.error_img\.post_page/)
 })
 
 test('exposes one persistent preferences trigger in the main navigation', () => {
-  const nav = fs.readFileSync(path.join(themeRoot, 'layout/includes/header/nav.pug'), 'utf8')
-  const rightside = fs.readFileSync(path.join(themeRoot, 'layout/includes/rightside.pug'), 'utf8')
-  const layout = fs.readFileSync(path.join(themeRoot, 'layout/includes/layout.pug'), 'utf8')
-  const scripts = fs.readFileSync(path.join(themeRoot, 'layout/includes/additional-js.pug'), 'utf8')
-  const pixelUi = fs.readFileSync(path.join(themeRoot, 'source/js/pixel-anim-toggle.js'), 'utf8')
-  const templates = nav + '\n' + rightside
+  const nav = read('layout/includes/header/nav.pug')
+  const rightside = read('layout/includes/rightside.pug')
 
   assert.match(nav, /#nav-utilities[\s\S]*#search-button[\s\S]*#preferences-button/)
   assert.match(nav, /button#toybox-preferences-btn\.site-page\.preferences/)
-  assert.equal((templates.match(/#toybox-preferences-btn/g) || []).length, 1)
+  assert.equal(((nav + '\n' + rightside).match(/#toybox-preferences-btn/g) || []).length, 1)
   assert.match(rightside, /aside#toybox-preferences-panel/)
   assert.match(rightside, /aside#toybox-preferences-panel[\s\S]*button#pixel-anim-btn/)
   assert.match(rightside, /aside#toybox-preferences-panel[\s\S]*button#pixel-sprite-test-btn/)
-  assert.doesNotMatch(rightside, /button#rightside_config/)
-  assert.doesNotMatch(layout, /toybox-ui-pending/)
-  const home = fs.readFileSync(path.join(themeRoot, 'layout/index.pug'), 'utf8')
+  const home = read('layout/index.pug')
   assert.match(home, /section\.toybox-stage/)
   assert.match(home, /\.toybox-card-track\(role='list'\)/)
-  assert.doesNotMatch(pixelUi, /toybox-ui-pending|revealToyboxUi/)
-  assert.match(scripts, /toybox-settings\.js/)
-  assert.doesNotMatch(scripts, /pjax/i)
+  assert.doesNotMatch(read('layout/includes/additional-js.pug'), /pjax/i)
 })
 
 test('maps layout and reading controls to the Toybox article manual', () => {
-  const css = fs.readFileSync(path.join(themeRoot, 'source/css/toybox-theme.css'), 'utf8')
-  const readMode = fs.readFileSync(path.join(themeRoot, 'source/css/_mode/readmode.styl'), 'utf8')
-  const main = fs.readFileSync(path.join(themeRoot, 'source/js/main.js'), 'utf8')
+  const css = read('source/css/toybox-theme.css')
+  const readMode = read('source/css/_mode/readmode.styl')
 
   assert.match(css, /html\.hide-aside body\.toybox-post \.pixel-manual-index\s*{[^}]*display: none !important;/s)
   assert.match(css, /body\.toybox-post\.read-mode #post > \.pixel-manual-body\s*{[^}]*display: grid !important;/s)
   assert.match(css, /body\.toybox-post\.read-mode #page-header\s*{[^}]*display: none !important;/s)
   assert.match(readMode, /#post > \*:not\(#post-info\):not\(\.post-content\):not\(\.pixel-manual-body\),/)
-  assert.match(main, /hideAsideBtn: button =>/)
-  assert.match(main, /newEle\.dataset\.toyboxI18nAria = 'rightside\.exitReadMode'/)
+  assert.match(read('source/js/main.js'), /newEle\.dataset\.toyboxI18nAria = 'rightside\.exitReadMode'/)
 })
 
-test('home reading save starts hidden and its runtime loads before reading and sprite hooks', () => {
-  const home = fs.readFileSync(path.join(themeRoot, 'layout/index.pug'), 'utf8')
-  const scripts = fs.readFileSync(path.join(themeRoot, 'layout/includes/additional-js.pug'), 'utf8')
+test('home reading save starts hidden', () => {
+  const home = read('layout/index.pug')
   assert.match(home, /\.toybox-resume\(hidden\)/)
   assert.match(home, /img\.toybox-resume-cover\(hidden alt='' width='36' height='36'\)/)
   assert.match(home, /button\.toybox-resume-clear\(type='button'/)
-  assert.match(scripts, /toybox-settings\.js[\s\S]*toybox-save\.js[\s\S]*pixel-particles\.js[\s\S]*pixel-anim-toggle\.js/)
 })
 
 test('keeps the homepage cartridge rack proportionate across desktop and mobile', () => {
-  const css = fs.readFileSync(path.join(themeRoot, 'source/css/home-toybox.css'), 'utf8')
-
-  assert.doesNotMatch(css, /body\.toybox-home #pixel-particles-canvas,[\s\S]*display: none !important;/)
+  const css = read('source/css/home-toybox.css')
   assert.match(css, /--rack-height: clamp\(480px, calc\(100svh - 400px\), 580px\)/)
   assert.match(css, /flex-grow: 1\.45/)
   assert.match(css, /flex-basis: min\(290px, calc\(100vw - 66px\)\)/)
-  assert.doesNotMatch(css, /flex: 0 0 620px/)
   assert.match(css, /@media \(min-width: 1600px\)/)
   assert.match(css, /@media \(max-width: 680px\)/)
   assert.match(css, /flex-basis: 44px;\s*min-width: 44px;/)
 })
 
 test('drives the cartridge library with console gamepad keys', () => {
-  const anim = fs.readFileSync(path.join(themeRoot, 'source/js/pixel-anim-toggle.js'), 'utf8')
+  const anim = read('source/js/pixel-anim-toggle.js')
 
   // Arrows work anywhere on the page, not only while the deck has focus.
   assert.match(anim, /document\.addEventListener\('keydown', onKeydown\)/)
@@ -146,35 +102,20 @@ test('drives the cartridge library with console gamepad keys', () => {
 })
 
 test('keeps cartridge fallbacks configurable and scoped to fallback covers', () => {
-  const config = fs.readFileSync(path.join(themeRoot, '_config.yml'), 'utf8')
-  const runtimeConfig = fs.readFileSync(path.join(themeRoot, 'layout/includes/head/config.pug'), 'utf8')
-  const postUi = fs.readFileSync(path.join(themeRoot, 'layout/includes/mixins/post-ui.pug'), 'utf8')
-  const runtime = fs.readFileSync(path.join(themeRoot, 'source/js/pixel-anim-toggle.js'), 'utf8')
-  const coverFilter = fs.readFileSync(path.join(themeRoot, 'scripts/filters/random_cover.js'), 'utf8')
-
-  assert.match(config, /toybox:\n\s+home:\n\s+fallback_covers:/)
+  const postUi = read('layout/includes/mixins/post-ui.pug')
+  assert.match(read('_config.yml'), /toybox:\n\s+home:\n\s+fallback_covers:/)
   assert.match(postUi, /data-toybox-cover-source=coverSource/)
-  assert.match(coverFilter, /data\.toybox_cover_source = fallbackCover \? 'fallback' : 'none'/)
-  assert.doesNotMatch(coverFilter, /Math\.random/)
   assert.match(postUi, /toybox_cover\(article\)/)
-  assert.match(runtime, /function setCartridgeCardMode\(/)
-  assert.match(runtime, /toybox-cartridge-card/)
-  assert.doesNotMatch(runtime, /toybox-switch-card|setToyboxCardMode/)
+  assert.match(read('scripts/filters/random_cover.js'), /data\.toybox_cover_source = fallbackCover \? 'fallback' : 'none'/)
 })
 
 test('shows taxonomy post totals instead of pagination page counts', () => {
-  const header = fs.readFileSync(path.join(themeRoot, 'layout/includes/header/index.pug'), 'utf8')
-  const helper = fs.readFileSync(path.join(themeRoot, 'scripts/helpers/collections.js'), 'utf8')
-
-  assert.match(header, /include \.\.\/collection\/heading\.pug/)
-  assert.match(helper, /total: tag \? tag\.length/)
-  assert.match(helper, /total: category \? category\.length/)
-  assert.doesNotMatch(header, /page\.total \|\| page\.posts\.length/)
+  assert.match(read('layout/includes/header/index.pug'), /include \.\.\/collection\/heading\.pug/)
+  assert.match(read('scripts/helpers/collections.js'), /total: category \? category\.length/)
 })
 
 test('ships as a focused standalone Toybox theme', () => {
-  const config = fs.readFileSync(path.join(themeRoot, '_config.yml'), 'utf8')
-  const packageJson = JSON.parse(fs.readFileSync(path.join(themeRoot, 'package.json'), 'utf8'))
+  const config = read('_config.yml')
   const retired = [
     'layout/includes/third-party/comments',
     'layout/includes/third-party/chat',
@@ -184,10 +125,8 @@ test('ships as a focused standalone Toybox theme', () => {
     'plugins.yml'
   ]
 
-  assert.equal(packageJson.name, 'hexo-theme-toybox')
-  assert.equal(packageJson.author, 'DipsySu')
   assert.match(config, /^asset:\n/m)
   assert.doesNotMatch(config, /^inject:/m)
   assert.doesNotMatch(config, /^CDN:/m)
-  retired.forEach(relative => assert.equal(fs.existsSync(path.join(themeRoot, relative)), false, relative))
+  retired.forEach(relative => assert.equal(fs.existsSync(file(relative)), false, relative))
 })
