@@ -4,7 +4,6 @@ footer:
 
 copy:
   success: 複製成功
-  error: 複製錯誤
   noSupport: 瀏覽器不支援
 
 page:

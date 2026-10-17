@@ -2,7 +2,7 @@
 - is_archive() ? page.title = findArchivesTitle(page, theme.menu, date) : ''
 - if (is_tag()) pageTitle = _p('page.tag') + ': ' + page.tag
 - else if (is_category()) pageTitle = _p('page.category') + ': ' + page.category
-- else if (is_current('/404.html', [strict])) pageTitle = _p('error404')
+- else if (page.type === '404') pageTitle = _p('error404')
 - else pageTitle = page.title || config.title || ''
 - var isSubtitle = config.subtitle ? ' - ' + config.subtitle : ''
 - var tabTitle = is_home() || !pageTitle ? config.title + isSubtitle : pageTitle + ' | ' + config.title

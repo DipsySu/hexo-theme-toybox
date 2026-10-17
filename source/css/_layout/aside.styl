@@ -1,15 +1,3 @@
-#aside-content
-  width: 26%
-
-  +minWidth900()
-    if hexo-config('aside.position') == 'right'
-      padding-left: 15px
-    else
-      padding-right: 15px
-
-  +maxWidth900()
-    width: 100%
-
 .avatar-img
   overflow: hidden
   margin: 0 auto
@@ -54,9 +42,6 @@
   html.hide-aside
     .layout
       justify-content: center
-
-      > .aside-content
-        display: none
 
       > div:first-child
         width: 80%

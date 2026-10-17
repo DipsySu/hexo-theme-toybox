@@ -1,7 +1,6 @@
 /* The rack is rendered by Pug; JavaScript only selects and paginates. */
 body.toybox-home #content-inner { display: block; width: calc(100% - 80px); max-width: var(--content-max); padding: 0; margin: 0 auto; }
 body.toybox-home #recent-posts { width: 100%; }
-body.toybox-home #aside-content { display: none; }
 body.toybox-home #rightside { display: none; }
 .toybox-stage { padding: 20px 0 16px; }
 .toybox-recent-deck { outline-offset: 8px; }

@@ -13,8 +13,6 @@ menu:
   分类: /categories/ || fas fa-folder-open
   GitHub: https://github.com/ || fab fa-github
 
-social: {}
-
 favicon: /img/favicon-lotus.png
 avatar:
   img: /img/avatar-pixel.png
@@ -73,7 +71,6 @@ anchor:
   button:
     enable: false
     always_show: false
-    icon:
   auto_update: false
 
 copy:
@@ -139,15 +136,6 @@ sharejs:
   enable: true
   sites: facebook,twitter,wechat,weibo,qq
 
-subtitle:
-  enable: false
-  effect: true
-  startDelay: 300
-  typeSpeed: 120
-  backSpeed: 45
-  loop: true
-  sub: []
-
 wordcount:
   enable: false
   post_wordcount: true
@@ -171,7 +159,6 @@ rightside-bottom: 40px
 category_ui:
 tag_ui:
 archive_date_format: MMMM YYYY
-css_prefix: true
 enter_transitions: true
 
 font:
@@ -208,8 +195,6 @@ asset:
   utils: /js/utils.js
   main: /js/main.js
   local_search: /js/search/local-search.js
-  fontawesome: https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css
-  typed: https://cdn.jsdelivr.net/npm/typed.js@2.0.16/dist/typed.umd.js
   lazyload: https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.8.3/dist/lazyload.iife.min.js
   fancybox_css: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.css
   fancybox: https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0.17/dist/fancybox/fancybox.umd.js
