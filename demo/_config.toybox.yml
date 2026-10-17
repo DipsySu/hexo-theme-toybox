@@ -10,17 +10,6 @@ menu:
   分类: /categories/ || fas fa-folder-open
   GitHub: https://github.com/DipsySu/hexo-theme-toybox || fab fa-github
 
-subtitle:
-  enable: true
-  effect: true
-  startDelay: 200
-  typeSpeed: 90
-  backSpeed: 35
-  loop: true
-  sub:
-    - Insert a story. Press start.
-    - 把文章装进像素卡带。
-
 cover:
   index_enable: true
   archives_enable: true
