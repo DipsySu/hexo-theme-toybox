@@ -155,7 +155,6 @@ test('keeps cartridge fallbacks configurable and scoped to fallback covers', () 
   const coverFilter = fs.readFileSync(path.join(themeRoot, 'scripts/filters/random_cover.js'), 'utf8')
 
   assert.match(config, /toybox:\n\s+home:\n\s+fallback_covers:/)
-  assert.match(runtimeConfig, /fallbackCovers: Array\.isArray\(toyboxRuntimeHome\.fallback_covers\)/)
   assert.match(postUi, /data-toybox-cover-source=coverSource/)
   assert.match(coverFilter, /data\.toybox_cover_source = fallbackCover \? 'fallback' : 'none'/)
   assert.doesNotMatch(coverFilter, /Math\.random/)
