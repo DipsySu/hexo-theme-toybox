@@ -41,3 +41,13 @@ test('emits only unprefixed CSS that current browsers need', () => {
     })
   })
 })
+
+test('draws Stylus pseudo-element icons as pixel masks instead of Font Awesome glyphs', () => {
+  stylusSources().forEach(file => {
+    const source = fs.readFileSync(file, 'utf8')
+    assert.doesNotMatch(source, /Font Awesome|fontawesomeIcon|content: '\\f[0-9a-f]{3}'/, path.relative(themeRoot, file))
+  })
+
+  const post = fs.readFileSync(path.join(cssRoot, '_layout/post.styl'), 'utf8')
+  assert.match(post, /\.post-copyright\n[\s\S]*?&:before\n\s+pixelIcon\(\$pixel-icon-copyright\)/)
+})

@@ -8,12 +8,15 @@
   overflow: hidden
   -webkit-box-orient: vertical
 
-fontawesomeIcon()
+// Pixel icon for a pseudo-element: currentColor seen through an SVG mask.
+// The box is 1em wide and one line tall, like the icon-font glyph it replaced.
+pixelIcon(icon)
   display: inline-block
-  font-weight: 600
-  font-family: 'Font Awesome 6 Free'
-  text-rendering: auto
-  -webkit-font-smoothing: antialiased
+  width: 1em
+  background-color: currentColor
+  content: '\00a0'
+  -webkit-mask: icon center / 1em 1em no-repeat
+  mask: icon center / 1em 1em no-repeat
 
 // card hover
 .cardHover
