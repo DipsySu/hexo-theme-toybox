@@ -64,8 +64,7 @@ test('single-page and empty collections keep valid ranges and both directions di
   }
 })
 
-test('archive pagination keeps its existing paginator', () => {
+test('collections use their own pager, so other views render no pagination', () => {
   const html = render({ is_post: () => false, is_home: () => false, paginator: () => '<span>archive pages</span>' })
-  assert.match(html, /archive pages/)
-  assert.doesNotMatch(html, /toybox-page-select/)
+  assert.equal(html, '')
 })

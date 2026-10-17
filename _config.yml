@@ -42,6 +42,7 @@ error_img:
 error_404:
   enable: true
   subtitle: Page not found
+  background: # 404 image; defaults to error_img.post_page
 
 post_meta:
   page:
@@ -165,8 +166,6 @@ readmode: true
 display_mode: light
 rightside_scroll_percent: false
 rightside-bottom: 40px
-rightside_item_order:
-  show: toc
 
 # Collection results: leave blank for compact rows, or use index for excerpts.
 category_ui:

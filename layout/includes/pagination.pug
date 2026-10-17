@@ -1,11 +1,4 @@
--
-  var options = {
-    prev_text: '<i class="fas fa-chevron-left fa-fw"></i>',
-    next_text: '<i class="fas fa-chevron-right fa-fw"></i>',
-    mid_size: 1,
-    escape: false
-  }
-
+//- Included by post.pug (previous/next article) and index.pug (library console).
 if is_post()
   - let prev = theme.post_pagination === 1 ? page.prev : page.next
   - let next = theme.post_pagination === 1 ? page.next : page.prev
@@ -74,7 +67,3 @@ else if is_home()
       else
         button.toybox-page-step.next(type='button' disabled aria-label='下一页' data-toybox-i18n-aria='common.nextPage')
           i.fas.fa-chevron-right(aria-hidden='true')
-else
-  nav#pagination
-    .pagination
-      !=paginator(options)
