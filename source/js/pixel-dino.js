@@ -15,21 +15,6 @@
   canvas.setAttribute('aria-hidden', 'true')
   canvas.style.cssText = 'display:block;width:100%;height:' + H + 'px;pointer-events:none;image-rendering:pixelated;'
 
-  // 挂载到 footer
-  function mount() {
-    if (document.body && document.body.classList.contains('toybox-home')) return
-    if (document.getElementById('pacman-canvas')) return
-    var footer = document.getElementById('footer') || document.querySelector('footer') || document.body
-    footer.appendChild(canvas)
-  }
-  function tryMount() {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', mount)
-    } else {
-      mount()
-    }
-  }
-  tryMount()
   var ctx = canvas.getContext('2d')
   var GY = H - 10
 
@@ -97,19 +82,23 @@
     })
   }
 
-  function isAnimationOff() {
+  // The motion toggle's stored choice: 'off', 'on' (overrides reduced motion) or null.
+  function motionPreference() {
     try {
-      return window.localStorage.getItem('pixelAnim') === 'off'
+      return window.localStorage.getItem('pixelAnim')
     } catch (err) {
-      return false
+      return null
     }
+  }
+
+  function isAnimationOff() {
+    return motionPreference() === 'off'
   }
   // 缓存“动效已关闭”状态，避免 loop 每帧同步读 localStorage（事件驱动的调用仍直接读，始终最新）
   var animationOff = isAnimationOff()
 
   function drawGhost(gx, gy, pal, eyeDir) {
-    var body = pal[0]
-    ctx.fillStyle = body
+    ctx.fillStyle = pal[0]
     var rows = [
       [2, 5], [1, 7], [0, 9], [0, 9], [0, 9],
       [0, 9], [0, 9], [0, 9], [0, 9]
@@ -134,13 +123,9 @@
     ctx.fillStyle = YELLOW
     ctx.beginPath()
     var sp = m * 0.15
-    if (dir === 1) {
-      ctx.moveTo(cx * S, cy * S)
-      ctx.arc(cx * S, cy * S, r * S, sp, Math.PI * 2 - sp)
-    } else {
-      ctx.moveTo(cx * S, cy * S)
-      ctx.arc(cx * S, cy * S, r * S, Math.PI + sp, Math.PI - sp, true)
-    }
+    ctx.moveTo(cx * S, cy * S)
+    if (dir === 1) ctx.arc(cx * S, cy * S, r * S, sp, Math.PI * 2 - sp)
+    else ctx.arc(cx * S, cy * S, r * S, Math.PI + sp, Math.PI - sp, true)
     ctx.closePath()
     ctx.fill()
     ctx.fillStyle = YDARK
@@ -216,13 +201,9 @@
     var dt = Math.min((now - lastTime) / 1000, MAX_DT)
     lastTime = now
 
-    if (!animationOff) {
-      tick(dt)
-      draw()
-    } else {
-      stop()
-      return
-    }
+    if (animationOff) return stop()
+    tick(dt)
+    draw()
     frameId = requestAnimationFrame(loop)
   }
 
@@ -239,25 +220,15 @@
     ctx.clearRect(0, 0, canvas.width, H)
   }
 
-  function explicitlyOn() {
-    try {
-      return window.localStorage.getItem('pixelAnim') === 'on'
-    } catch (err) {
-      return false
-    }
-  }
-
   // 是否应当循环动画：手动关闭 → 否；系统减弱动态且未手动开启 → 否（只画静态帧）；否则 → 是
   function shouldAnimate() {
-    if (isAnimationOff()) return false
-    if (reduceMotion && !explicitlyOn()) return false
-    return true
+    var preference = motionPreference()
+    return preference !== 'off' && (!reduceMotion || preference === 'on')
   }
 
-  // 仅当页脚进入视口、标签页可见、且应当动画时才启动循环
+  // 仅当页脚进入视口且应当动画时才启动循环（start 自己跳过隐藏的标签页）
   function maybeStart() {
-    if (!shouldAnimate() || document.hidden || !inView) return
-    start()
+    if (shouldAnimate() && inView) start()
   }
 
   // 进入视口时按状态决定动/静/空；离开视口立即停，避免读正文时页脚在屏幕外空跑 RAF
@@ -295,9 +266,13 @@
   })
   document.addEventListener('visibilitychange', handleVisibilityChange)
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupObserver)
-  } else {
+  // 挂载到 footer（404 页没有 footer 时退回 body），再开始观察视口
+  function init() {
+    var footer = document.getElementById('footer') || document.querySelector('footer') || document.body
+    footer.appendChild(canvas)
     setupObserver()
   }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
+  else init()
 })()

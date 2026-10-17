@@ -124,15 +124,11 @@
     }
   }
 
+  // Stores the record, or removes the save when called without one.
   function writeSave(record) {
     try {
-      window.localStorage.setItem(saveKey(), JSON.stringify(record))
-    } catch (error) {}
-  }
-
-  function removeSave() {
-    try {
-      window.localStorage.removeItem(saveKey())
+      if (record) window.localStorage.setItem(saveKey(), JSON.stringify(record))
+      else window.localStorage.removeItem(saveKey())
     } catch (error) {}
   }
 
@@ -304,7 +300,7 @@
     state.completed = true
     if (pending && pending.state === state) pending = null
     var saved = readSave()
-    if (saved && normPath(saved.path) === normPath(state.path)) removeSave()
+    if (saved && normPath(saved.path) === normPath(state.path)) writeSave(null)
     try {
       window.sessionStorage.setItem(completionKey(), JSON.stringify({ path: state.path, at: Date.now() }))
     } catch (error) {}
@@ -359,17 +355,14 @@
 
   function renderCover(image, cover) {
     if (!image) return
-    if (!cover) {
+    function hide() {
       image.hidden = true
       image.removeAttribute('src')
-      return
     }
+    if (!cover) return hide()
     if (!image.dataset.toyboxResumeBound) {
       image.dataset.toyboxResumeBound = '1'
-      image.addEventListener('error', function () {
-        image.hidden = true
-        image.removeAttribute('src')
-      })
+      image.addEventListener('error', hide)
     }
     if (image.getAttribute('src') !== cover) image.setAttribute('src', cover)
     image.hidden = false
@@ -388,7 +381,7 @@
     button.dataset.toyboxResumeBound = '1'
     button.addEventListener('click', function (event) {
       if (event && event.preventDefault) event.preventDefault()
-      removeSave()
+      writeSave(null)
       mount.hidden = true
       focusHomeHeading()
     })
