@@ -312,14 +312,16 @@ test('every literal i18n key the theme references exists in every locale', () =>
     return source.slice(0, source.indexOf('var dictionaries = {')) + source.slice(source.indexOf('var themeConfig'))
   }).join('\n')
 
-  const serverCall = /(?:\b_p|\b__|\btoybox_text)\(\s*(['"`])([^'"`$]+)\1/g
+  // Only _p/__ read languages/*.yml; toybox_text keys are checked against the
+  // dictionaries below.
+  const serverCall = /(?:\b_p|\b__)\(\s*(['"`])([^'"`$]+)\1/g
   const serverKeys = new Set([...sources.matchAll(serverCall)].map(match => match[2]))
   const flatten = (value, prefix) => Object.entries(value).flatMap(([key, child]) => {
     const name = prefix ? prefix + '.' + key : key
     return child && typeof child === 'object' ? flatten(child, name) : [name]
   })
   const ymlKeys = ['default.yml', 'en.yml', 'zh-CN.yml', 'zh-TW.yml'].map(file => [file, flatten(yaml.load(fs.readFileSync(path.join(root, 'languages', file), 'utf8')))])
-  assert.ok(serverKeys.size > 40)
+  assert.ok(serverKeys.size > 25)
   ymlKeys.forEach(([file, keys]) => {
     assert.deepEqual(keys.slice().sort(), ymlKeys[0][1].slice().sort(), `${file} key set`)
     serverKeys.forEach(key => assert.ok(keys.includes(key), `${file} is missing ${key}`))

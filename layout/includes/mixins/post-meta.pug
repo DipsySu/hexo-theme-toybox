@@ -1,0 +1,11 @@
+//- Created/updated stamps for the article header and the home cards.
+mixin metaDates(item, type, prefix, iconClass)
+  - var kinds = type === 'both' ? ['date', 'updated'] : [type === 'updated' ? 'updated' : 'date']
+  each kind, index in kinds
+    - var key = kind === 'updated' ? 'post.updated' : 'post.created'
+    - var label = toybox_text(key)
+    if index
+      span(class=prefix + '-separator') |
+    i(class=(kind === 'updated' ? 'fas fa-history' : 'far fa-calendar-alt') + iconClass)
+    span(class=prefix + '-label' data-toybox-i18n=key)= label
+    time(class=kinds.length > 1 ? (kind === 'updated' ? 'post-meta-date-updated' : 'post-meta-date-created') : false datetime=date_xml(item[kind]) title=label + ' ' + full_date(item[kind]))= date(item[kind], config.date_format)

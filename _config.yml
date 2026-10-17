@@ -32,7 +32,6 @@ category_per_img: {}
 cover:
   index_enable: true
   archives_enable: true
-  position: both
   default_cover: []
 
 error_img:
@@ -115,10 +114,6 @@ aside:
   hide: false
   button: true
   position: left
-  display:
-    archive: false
-    tag: false
-    category: false
 
 busuanzi:
   site_uv: false

@@ -43,6 +43,8 @@ function fixture(dirs, { root = '/', theme = { lazyload: { enable: true } } } = 
     theme_dir: dirs.theme_dir,
     theme: { config: theme },
     config: { highlight: { enable: true } },
+    // Stand-in for hexo.render: the "rendered" CSS is the entry's own text.
+    render: { render: async ({ path: file }) => fs.readFileSync(file, 'utf8') },
     extend: {
       filter: { register: (name, callback) => { assert.equal(name, 'before_generate'); regenerate = callback } },
       helper: { register: (name, callback) => { assert.equal(name, 'toybox_asset'); helper = callback } }
@@ -55,26 +57,29 @@ function fixture(dirs, { root = '/', theme = { lazyload: { enable: true } } } = 
 
 const version = url => new URL(url, 'https://example.com').searchParams.get('v')
 
-test('unchanged files keep the same version across builds', () => {
+test('unchanged files keep the same version across builds', async () => {
   const dirs = site()
   const first = fixture(dirs)
+  await first.regenerate()
   const urls = ['/css/index.css', '/css/toybox-theme.css', '/js/main.js', '/js/utils.js'].map(first.url)
   urls.forEach(url => assert.match(url, /\?v=[a-f0-9]{10}$/))
   assert.notEqual(version(urls[2]), version(urls[3]))
-  first.regenerate()
+  await first.regenerate()
   assert.deepEqual(urls.map(url => first.url(url.split('?')[0])), urls)
   const second = fixture(dirs)
+  await second.regenerate()
   assert.deepEqual(urls.map(url => second.url(url.split('?')[0])), urls)
 })
 
-test('editing one script changes only that script version', () => {
+test('editing one script changes only that script version', async () => {
   const dirs = site()
   const assets = fixture(dirs)
+  await assets.regenerate()
   const names = ['/css/index.css', '/css/toybox-theme.css', '/js/main.js', '/js/utils.js']
   const before = names.map(assets.url)
   write(dirs.file('js/main.js'), 'main(2)')
   assert.deepEqual(names.map(assets.url), before, 'versions are memoized within one generate')
-  assets.regenerate()
+  await assets.regenerate()
   const after = names.map(assets.url)
   assert.notEqual(after[2], before[2])
   assert.deepEqual([after[0], after[1], after[3]], [before[0], before[1], before[3]])
@@ -90,24 +95,13 @@ test('a site source file overrides the theme file it replaces', () => {
   assert.equal(version(fixture(dirs).url('/js/main.js')), siteVersion)
 })
 
-test('generated Stylus output follows its sources and the merged theme config', () => {
-  const dirs = site()
-  const css = version(fixture(dirs).url('/css/index.css'))
-  write(dirs.file('js/main.js'), 'main(3)')
-  assert.equal(version(fixture(dirs).url('/css/index.css')), css, 'scripts do not affect stylesheets')
-  write(dirs.file('css/.DS_Store'), 'finder')
-  assert.equal(version(fixture(dirs).url('/css/index.css')), css, 'hidden files are ignored')
-  assert.notEqual(version(fixture(dirs, { theme: { lazyload: { enable: false } } }).url('/css/index.css')), css)
-  write(dirs.file('css/_global/index.styl'), 'body\n  color: blue')
-  assert.notEqual(version(fixture(dirs).url('/css/index.css')), css)
-})
-
 test('assets that resolve nowhere share one per-build version', () => {
   const dirs = site()
   const assets = fixture(dirs)
   const missing = assets.url('/fonts/missing.woff2')
   assert.match(missing, /^\/fonts\/missing\.woff2\?v=[a-f0-9]{10}$/)
   assert.equal(version(assets.url('/img/missing.png')), version(missing))
+  assert.equal(version(assets.url('/css/generated.css')), version(missing), 'a stylesheet with no source or rendered entry')
   assert.notEqual(version(assets.url('/img/logo.png')), version(missing))
 })
 
@@ -149,11 +143,13 @@ test('rendered Stylus entries are versioned by their output and stale copies are
   assert.equal(fs.readFileSync(published, 'utf8'), output, 'an up-to-date render is left alone')
 })
 
-test('symlinked folders in the theme source are fingerprinted instead of crashing', { skip: process.platform === 'win32' }, () => {
+test('symlinked theme source files are versioned by their target and dangling links do not crash', { skip: process.platform === 'win32' }, () => {
   const dirs = site()
   const vendor = path.join(dirs.source_dir, '../vendor')
   write(path.join(vendor, 'x.css'), 'a{}')
   fs.symlinkSync(vendor, dirs.file('css/vendor'))
   fs.symlinkSync(path.join(vendor, 'missing'), dirs.file('css/dangling.css'))
-  assert.match(fixture(dirs).url('/css/bundle.css'), /\?v=[a-f0-9]{10}$/)
+  const assets = fixture(dirs)
+  assert.equal(version(assets.url('/css/vendor/x.css')), require('node:crypto').createHash('md5').update('a{}').digest('hex').slice(0, 10))
+  assert.equal(version(assets.url('/css/dangling.css')), version(assets.url('/fonts/missing.woff2')))
 })

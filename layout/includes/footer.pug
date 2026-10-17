@@ -8,11 +8,11 @@
       .copyright!= `&copy;${nowYear} By ${config.author}`
   if theme.footer.copyright
     .framework-info
-      span(data-toybox-i18n="footer.framework")= _p('footer.framework')
+      span(data-toybox-i18n="footer.framework")= toybox_text('footer.framework')
       span=' '
       a(href='https://hexo.io')= 'Hexo'
       span.footer-separator |
-      span(data-toybox-i18n="footer.theme")= _p('footer.theme')
+      span(data-toybox-i18n="footer.theme")= toybox_text('footer.theme')
       span=' '
       a(href='https://github.com/DipsySu/hexo-theme-toybox')= 'Toybox'
   if theme.footer.custom_text

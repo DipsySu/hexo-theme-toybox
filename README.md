@@ -130,8 +130,9 @@ npx hexo generate
 以下旧配置已不再生效，可以从 `_config.toybox.yml` 中删除：`toc.page`、
 `toc.style_simple`、`rightside_item_order`、`css_prefix`（不再输出旧浏览器前缀）、
 `anchor.button.icon` 与 `beautify.title-prefix-icon`（改用像素图标）、
-`asset.fontawesome` 与 `asset.typed`，以及首页隐藏标题区使用的 `subtitle`
-与 `social`（站点副标题仍由站点 `_config.yml` 的 `subtitle` 显示在导航中）。
+`asset.fontawesome` 与 `asset.typed`、`aside.display` 与 `cover.position`，以及
+首页隐藏标题区使用的 `subtitle` 与 `social`（站点副标题仍由站点 `_config.yml` 的
+`subtitle` 显示在导航中）。
 
 ## 功能边界
 

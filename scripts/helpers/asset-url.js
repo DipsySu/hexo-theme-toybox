@@ -6,9 +6,6 @@
 // - a stylesheet rendered from a theme Stylus entry (index.css,
 //   toybox-home.css): md5 of the rendered CSS, so the URL always names the
 //   bytes that are served;
-// - any other generated stylesheet or script with no source file: a
-//   fingerprint of every theme source file of that type plus the merged theme
-//   config, which together decide the output;
 // - anything else: one per-build value.
 
 const { Buffer } = require('node:buffer')
@@ -22,13 +19,11 @@ const LENGTH = 10
 
 // Memoized per generate, so `hexo server` picks up edited files.
 let revisions = new Map()
-let generated = new Map()
 let rendered = new Map()
 let buildRevision = randomBytes(LENGTH / 2).toString('hex')
 
 hexo.extend.filter.register('before_generate', () => {
   revisions = new Map()
-  generated = new Map()
   rendered = new Map()
   buildRevision = randomBytes(LENGTH / 2).toString('hex')
   return renderStylusEntries()
@@ -84,45 +79,6 @@ function readFile (file) {
   }
 }
 
-function listFiles (directory) {
-  let entries
-  try {
-    entries = fs.readdirSync(directory, { withFileTypes: true })
-  } catch {
-    return []
-  }
-  // Hidden files (.DS_Store and friends) are never published.
-  // Follow symlinks like Hexo does when it publishes the theme source.
-  return entries.filter(entry => !entry.name.startsWith('.')).flatMap(entry => {
-    const absolute = path.join(directory, entry.name)
-    let stat
-    try {
-      stat = fs.statSync(absolute)
-    } catch {
-      return []
-    }
-    return stat.isDirectory() ? listFiles(absolute) : stat.isFile() ? [absolute] : []
-  })
-}
-
-// Theme source/css (or source/js) decides every generated file of that type.
-function generatedRevision (extension) {
-  if (!generated.has(extension)) {
-    const directory = path.join(hexo.theme_dir, 'source', extension.slice(1))
-    const files = listFiles(directory).map(file => path.relative(directory, file).split(path.sep).join('/')).sort()
-    const { highlight, prismjs, stylus } = hexo.config || {}
-    generated.set(extension, digest(hash => {
-      files.forEach(file => {
-        const content = readFile(path.join(directory, file))
-        if (content) hash.update(file + '\0').update(content)
-      })
-      hash.update(JSON.stringify(hexo.theme.config || {}))
-      hash.update(JSON.stringify({ highlight, prismjs, stylus }))
-    }))
-  }
-  return generated.get(extension)
-}
-
 function revisionFor (pathname) {
   if (!revisions.has(pathname)) {
     let relative = pathname.replace(/^\/+/, '')
@@ -136,8 +92,6 @@ function revisionFor (pathname) {
         break
       }
     }
-    const extension = path.extname(relative).toLowerCase()
-    if (!revision && (extension === '.css' || extension === '.js') && hexo.theme_dir) revision = generatedRevision(extension)
     revisions.set(pathname, revision || buildRevision)
   }
   return revisions.get(pathname)

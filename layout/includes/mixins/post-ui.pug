@@ -1,13 +1,11 @@
+include ./post-meta.pug
+
 mixin postUI(posts)
   each article , index in posts
     .recent-post-item(class=index === 0 ? 'toybox-featured' : 'toybox-cartridge-card' data-toybox-slot=index data-toybox-number=index + 1 data-toybox-tone=['coral', 'aqua', 'yellow', 'green', 'aqua'][index % 5] role='listitem')
       -
         let link = article.link || article.path
         let title = article.title || _p('no_title')
-        const position = theme.cover.position
-        let leftOrRight = position === 'both'
-          ? index%2 == 0 ? 'left' : 'right'
-          : position === 'left' ? 'left' : 'right'
         let post_cover = toybox_cover(article)
         let no_cover = article.cover === false || !theme.cover.index_enable ? 'no-cover' : ''
         let coverSource = article.toybox_cover_source || (post_cover ? 'explicit' : 'none')
@@ -19,7 +17,7 @@ mixin postUI(posts)
         let eagerCover = is_home() && index < 5
       -
       if post_cover && theme.cover.index_enable
-        .post_cover(class=leftOrRight)
+        .post_cover
           a(href=url_for(link) title=title tabindex='-1' aria-hidden='true')
             if article.cover_type === 'img'
               img.post-bg(src=url_for(post_cover) width='480' height='480' onerror=`this.onerror=null;this.src='${url_for(theme.error_img.post_page)}'` alt='' data-toybox-cover-source=coverSource loading=eagerCover ? 'eager' : 'lazy' fetchpriority=eagerCover && index === 0 ? 'high' : false decoding=eagerCover && index === 0 ? false : 'async')
@@ -37,23 +35,7 @@ mixin postUI(posts)
               span.article-meta-separator |
           if (theme.post_meta.page.date_type)
             span.post-meta-date
-              if (theme.post_meta.page.date_type === 'both')
-                i.far.fa-calendar-alt
-                span.article-meta-label(data-toybox-i18n='post.created')=_p('post.created')
-                time.post-meta-date-created(datetime=date_xml(article.date) title=_p('post.created') + ' ' + full_date(article.date))=date(article.date, config.date_format)
-                span.article-meta-separator |
-                i.fas.fa-history
-                span.article-meta-label(data-toybox-i18n='post.updated')=_p('post.updated')
-                time.post-meta-date-updated(datetime=date_xml(article.updated) title=_p('post.updated') + ' ' + full_date(article.updated))=date(article.updated, config.date_format)
-              else
-                - let data_type_updated = theme.post_meta.page.date_type === 'updated'
-                - let date_type = data_type_updated ? 'updated' : 'date'
-                - let date_icon = data_type_updated ? 'fas fa-history' :'far fa-calendar-alt'
-                - let date_title = data_type_updated ? _p('post.updated') : _p('post.created')
-                - let date_i18n = data_type_updated ? 'post.updated' : 'post.created'
-                i(class=date_icon)
-                span.article-meta-label(data-toybox-i18n=date_i18n)=date_title
-                time(datetime=date_xml(article[date_type]) title=date_title + ' ' + full_date(article[date_type]))=date(article[date_type], config.date_format)
+              +metaDates(article, theme.post_meta.page.date_type, 'article-meta', '')
           if (theme.post_meta.page.categories && article.categories.data.length > 0)
             span.article-meta
               span.article-meta-separator |
