@@ -1,7 +1,7 @@
 #article-container
-  .flink
+  .flink(data-flink-url=page.flink_url ? url_for(page.flink_url) : false data-flink-fallback=page.flink_url ? url_for(theme.error_img.flink) : false)
     - let pageContent = page.content
-    if site.data.link
+    if !page.flink_url && site.data.link
       - let result = ""
       each i in site.data.link
         - let className = i.class_name ? markdown(`## ${i.class_name}`) : ""
@@ -10,14 +10,14 @@
         - let listResult = ""
 
         each j in i.link_list
-          - 
+          -
             listResult += `
               <div class="flink-list-item">
                 <a href="${j.link}" title="${j.name}" target="_blank">
                   <div class="flink-item-icon">
                     <img class="no-lightbox" src="${j.avatar}" onerror='this.onerror=null;this.src="${url_for(theme.error_img.flink)}"' alt="${j.name}" />
                   </div>
-                  <div class="flink-item-name">${j.name}</div> 
+                  <div class="flink-item-name">${j.name}</div>
                   <div class="flink-item-desc" title="${j.descr}">${j.descr}</div>
                 </a>
               </div>`
@@ -27,4 +27,5 @@
 
       - pageContent = result + pageContent
     != pageContent
-
+  if page.flink_url
+    script(defer src=toybox_asset('/js/flink.js'))

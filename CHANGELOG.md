@@ -27,6 +27,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Remote friend lists configured with `flink_url` render again, including
+  subdirectory deployments, safe text rendering, and avatar fallbacks.
 - Pages no longer stop initialising when jsDelivr is unreachable.
 - Saved color mode and reading layout apply before first paint.
 - Pages with headings but no article TOC no longer throw.
